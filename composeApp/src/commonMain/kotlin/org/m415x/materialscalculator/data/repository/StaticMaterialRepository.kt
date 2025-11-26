@@ -43,7 +43,7 @@ class StaticMaterialRepository : MaterialRepository {
         // H21: Hormigón ESTRUCTURAL estándar (Losas, vigas, columnas).
         // Es el más utilizado en construcción tradicional.
         TipoHormigon.H21 to DosificacionHormigon(
-            cementoKg = 320.0,
+            cementoKg = 350.0,
             arenaM3 = 0.55,
             piedraM3 = 0.75,
             relacionAguaCemento = 0.45

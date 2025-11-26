@@ -1,4 +1,4 @@
-package org.m415x.materialscalculator.ui
+package org.m415x.materialscalculator.ui.common
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

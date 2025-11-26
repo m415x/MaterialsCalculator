@@ -1,6 +1,5 @@
-package org.m415x.materialscalculator.ui
+package org.m415x.materialscalculator.ui.home
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -13,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.m415x.materialscalculator.ui.common.MenuCard
+import org.m415x.materialscalculator.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +59,7 @@ fun HomeScreen(
                 title = "Muros y Paredes",
                 description = "Ladrillos y mortero para tus paredes.",
                 icon = Icons.Default.Home,
-                onClick = { onNavigate(Screen.Muros) }
+                onClick = { onNavigate(Screen.Muro) }
             )
 
             // 3. Botón Estructuras

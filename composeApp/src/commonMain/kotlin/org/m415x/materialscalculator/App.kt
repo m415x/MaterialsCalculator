@@ -5,9 +5,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import org.m415x.materialscalculator.ui.concrete.ConcreteScreen
 
-import org.m415x.materialscalculator.ui.HomeScreen
-import org.m415x.materialscalculator.ui.Screen
+import org.m415x.materialscalculator.ui.home.HomeScreen
+import org.m415x.materialscalculator.ui.navigation.Screen
+import org.m415x.materialscalculator.ui.structure.StructureScreen
+import org.m415x.materialscalculator.ui.wall.WallScreen
 
 @Composable
 fun App() {
@@ -29,16 +32,19 @@ fun App() {
                     )
                 }
                 is Screen.Hormigon -> {
-                    // TODO: Aquí pondremos la pantalla de Hormigón real
-                    PantallaEnConstruccion("Calculadora de Hormigón", onBack = { currentScreen = Screen.Home })
+                    ConcreteScreen(
+                        onBack = { currentScreen = Screen.Home }
+                    )
                 }
-                is Screen.Muros -> {
-                    // TODO: Pantalla de Muros
-                    PantallaEnConstruccion("Calculadora de Muros", onBack = { currentScreen = Screen.Home })
+                is Screen.Muro -> {
+                    WallScreen(
+                        onBack = { currentScreen = Screen.Home }
+                    )
                 }
                 is Screen.Estructura -> {
-                    // TODO: Pantalla de Estructura
-                    PantallaEnConstruccion("Calculadora de Estructura", onBack = { currentScreen = Screen.Home })
+                    StructureScreen(
+                        onBack = { currentScreen = Screen.Home }
+                    )
                 }
             }
         }
