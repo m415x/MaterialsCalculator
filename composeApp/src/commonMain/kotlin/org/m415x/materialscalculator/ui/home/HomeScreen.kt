@@ -13,12 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.m415x.materialscalculator.ui.common.MenuCard
-import org.m415x.materialscalculator.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onNavigate: (Screen) -> Unit // Callback para navegar
+    onConcreteClick: () -> Unit,
+    onWallClick: () -> Unit,
+    onStructureClick: () -> Unit // Callback para navegar
 ) {
     Scaffold(
         topBar = {
@@ -49,25 +50,25 @@ fun HomeScreen(
             // 1. Botón Hormigón
             MenuCard(
                 title = "Hormigón / Concreto",
-                description = "Calcula losas, contrapisos y carpetas.",
+                description = "Losas, contrapisos y carpetas.",
                 icon = Icons.Default.Menu, // Puedes buscar íconos más específicos luego
-                onClick = { onNavigate(Screen.Hormigon) }
+                onClick = onConcreteClick
             )
 
             // 2. Botón Muros
             MenuCard(
                 title = "Muros y Paredes",
-                description = "Ladrillos y mortero para tus paredes.",
+                description = "Ladrillos y mortero.",
                 icon = Icons.Default.Home,
-                onClick = { onNavigate(Screen.Muro) }
+                onClick = onWallClick
             )
 
             // 3. Botón Estructuras
             MenuCard(
-                title = "Vigas y Columnas",
-                description = "Cálculo de hormigón y armadura (hierro).",
+                title = "Armaduras",
+                description = "Vigas y columnas. \nCálculo de hormigón.",
                 icon = Icons.Default.Build,
-                onClick = { onNavigate(Screen.Estructura) }
+                onClick = onStructureClick
             )
         }
     }

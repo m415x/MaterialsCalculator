@@ -3,15 +3,15 @@ package org.m415x.materialscalculator.domain.model
 /**
  * Define los tipos de ladrillos que el usuario puede elegir.
  */
-enum class TipoLadrillo {
-    COMUN,          // 5x12x25 cm (aprox)
-    LADRILLON,      // 18x12x25 cm
-    CERAMICO_8,     // 8x18x33 cm
-    CERAMICO_12,    // 12x18x33 cm
-    CERAMICO_18,    // 18x18x33 cm
-    BLOQUE_10,      // 9x19x39 cm
-    BLOQUE_15,      // 13x19x39 cm
-    BLOQUE_20       // 19x19x39 cm
+enum class TipoLadrillo(val descripcion: String) {
+    COMUN("Común"),             // 5x12x25 cm (aprox)
+    LADRILLON("Ladrillón"),     // 18x12x25 cm
+    CERAMICO_8("Cerámico 8"),   // 8x18x33 cm
+    CERAMICO_12("Cerámico 12"), // 12x18x33 cm
+    CERAMICO_18("Cerámico 18"), // 18x18x33 cm
+    BLOQUE_10("Bloque 10"),     // 9x19x39 cm
+    BLOQUE_15("Bloque 15"),     // 13x19x39 cm
+    BLOQUE_20("Bloque 20")      // 19x19x39 cm
 }
 
 /**

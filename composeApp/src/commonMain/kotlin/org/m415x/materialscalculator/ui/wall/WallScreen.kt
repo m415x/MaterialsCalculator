@@ -3,7 +3,6 @@ package org.m415x.materialscalculator.ui.wall
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -12,16 +11,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
 import org.m415x.materialscalculator.domain.model.Abertura
 import org.m415x.materialscalculator.domain.model.ResultadoMuro
 import org.m415x.materialscalculator.domain.model.TipoLadrillo
 import org.m415x.materialscalculator.domain.usecase.CalcularMuroUseCase
-import org.m415x.materialscalculator.ui.common.formatLadrilloName
+import org.m415x.materialscalculator.ui.common.AppInput
+import org.m415x.materialscalculator.ui.common.NumericInput
+import org.m415x.materialscalculator.ui.common.areValidDimensions
+import org.m415x.materialscalculator.ui.common.clearFocusOnTap
 import org.m415x.materialscalculator.ui.common.roundToDecimals
+import org.m415x.materialscalculator.ui.common.toSafeDoubleOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +55,13 @@ fun WallScreen(
     var resultado by remember { mutableStateOf<ResultadoMuro?>(null) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
 
+    // Definimos los FocusRequesters necesarios
+    val focusAncho = remember { FocusRequester() }
+    val focusAlto = remember { FocusRequester() }
+    val focusTipoLadrillo = remember { FocusRequester() }
+    val focusAnchoAbertura = remember { FocusRequester() }
+    val focusAltoAbertura = remember { FocusRequester() }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -71,9 +81,10 @@ fun WallScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .clearFocusOnTap()
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()), // Permite scrollear si el teclado tapa
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
@@ -81,21 +92,21 @@ fun WallScreen(
             Text("Dimensiones del Muro", style = MaterialTheme.typography.titleMedium)
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
+                NumericInput(
                     value = largoPared,
                     onValueChange = { largoPared = it },
-                    label = { Text("Largo (m)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    label = "Ancho (m)",
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    focusRequester = focusAncho,      // "Yo soy focusAncho"
+                    nextFocusRequester = focusAlto
                 )
-                OutlinedTextField(
+                NumericInput(
                     value = altoPared,
                     onValueChange = { altoPared = it },
-                    label = { Text("Alto (m)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    label = "Alto (m)",
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    focusRequester = focusAlto,      // "Yo soy focusAlto"
+                    nextFocusRequester = focusTipoLadrillo
                 )
             }
 
@@ -104,14 +115,22 @@ fun WallScreen(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded }
             ) {
-                OutlinedTextField(
-                    readOnly = true,
-                    value = formatLadrilloName(selectedLadrillo), // Función auxiliar abajo para que se vea bonito
+                AppInput(
+                    value = selectedLadrillo.descripcion,
                     onValueChange = { },
-                    label = { Text("Tipo de Ladrillo/Bloque") },
+                    label = "Tipo de Ladrillo/Bloque",
+                    readOnly = true,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+
+                    // Colores del menu
                     colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                    modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true).fillMaxWidth()
+
+                    modifier = Modifier
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
+                        .fillMaxWidth(),
+
+                    focusRequester = focusTipoLadrillo,      // "Yo soy focusTipoLadrillo"
+                    nextFocusRequester = focusAltoAbertura
                 )
                 ExposedDropdownMenu(
                     expanded = expanded,
@@ -119,7 +138,8 @@ fun WallScreen(
                 ) {
                     TipoLadrillo.entries.forEach { tipo ->
                         DropdownMenuItem(
-                            text = { Text(text = formatLadrilloName(tipo)) },
+                            // text = { Text(text = formatLadrilloName(tipo)) },
+                            text = { Text(text = tipo.descripcion) },
                             onClick = {
                                 selectedLadrillo = tipo
                                 expanded = false
@@ -141,31 +161,29 @@ fun WallScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedTextField(
+                NumericInput(
                     value = anchoAberturaInput,
                     onValueChange = { anchoAberturaInput = it },
-                    label = { Text("Ancho") },
-                    placeholder = { Text("m") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    label = "Ancho (m)",
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    focusRequester = focusAnchoAbertura,      // "Yo soy focusAnchoAbertura"
+                    nextFocusRequester = focusAltoAbertura
                 )
-                OutlinedTextField(
+                NumericInput(
                     value = altoAberturaInput,
                     onValueChange = { altoAberturaInput = it },
-                    label = { Text("Alto") },
-                    placeholder = { Text("m") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    label = "Alto (m)",
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    focusRequester = focusAltoAbertura,      // "Yo soy focusAltoAbertura"
+                    onDone = {}
                 )
                 // Botón Agregar (+)
                 FilledIconButton(
                     onClick = {
-                        val w = anchoAberturaInput.toDoubleOrNull()
-                        val h = altoAberturaInput.toDoubleOrNull()
-                        if (w != null && h != null) {
-                            aberturas.add(Abertura(w, h))
+                        val w = anchoAberturaInput.toSafeDoubleOrNull()
+                        val h = altoAberturaInput.toSafeDoubleOrNull()
+                        if (areValidDimensions(w, h)) {
+                            aberturas.add(Abertura(w!!, h!!))
                             // Limpiar inputs
                             anchoAberturaInput = ""
                             altoAberturaInput = ""
@@ -211,11 +229,11 @@ fun WallScreen(
                     val l = largoPared.toDoubleOrNull()
                     val h = altoPared.toDoubleOrNull()
 
-                    if (l != null && h != null) {
+                    if (areValidDimensions(l, h)) {
                         try {
                             resultado = calcularMuro(
-                                anchoMuroMetros = l, // OJO: El UseCase pide "anchoMuro" refiriéndose al largo horizontal
-                                altoMuroMetros = h,
+                                anchoMuroMetros = l!!, // OJO: El UseCase pide "anchoMuro" refiriéndose al largo horizontal
+                                altoMuroMetros = h!!,
                                 tipo = selectedLadrillo,
                                 aberturas = aberturas.toList() // Pasamos copia de la lista
                             )
@@ -224,7 +242,7 @@ fun WallScreen(
                             errorMsg = "Error en el cálculo: ${e.message}"
                         }
                     } else {
-                        errorMsg = "Por favor, ingresa las dimensiones del muro."
+                        errorMsg = "Por favor, ingresa las dimensiones del muro mayores a 0."
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp)

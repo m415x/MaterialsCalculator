@@ -1,63 +1,76 @@
 package org.m415x.materialscalculator
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import org.m415x.materialscalculator.ui.concrete.ConcreteScreen
 
-import org.m415x.materialscalculator.ui.home.HomeScreen
+import org.m415x.materialscalculator.ui.common.KmpBackHandler
 import org.m415x.materialscalculator.ui.navigation.Screen
-import org.m415x.materialscalculator.ui.structure.StructureScreen
+import org.m415x.materialscalculator.ui.home.HomeScreen
+import org.m415x.materialscalculator.ui.concrete.ConcreteScreen
 import org.m415x.materialscalculator.ui.wall.WallScreen
+import org.m415x.materialscalculator.ui.structure.StructureScreen
+import org.m415x.materialscalculator.ui.theme.AppTheme
+
+// 1. Define la pila de navegación (Back Stack)
+val screensStack = mutableStateListOf<Screen>(Screen.Home)
 
 @Composable
 fun App() {
-    MaterialTheme {
+    AppTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            // Estado para controlar en qué pantalla estamos
-            // "by remember" recuerda el valor aunque la UI se redibuje
-            var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
 
+            // 2. Determina la pantalla actual (la última de la pila)
+            val currentScreen = screensStack.last()
+
+            // 3. Función para navegar hacia atrás
+            val navigateBack: () -> Unit = {
+                if (screensStack.size > 1) screensStack.removeAt(screensStack.lastIndex) // Si hay más de una, saca la última.
+                // Si solo queda HomeScreen, no hacemos nada (la app se cerrará por el SO)
+            }
+
+            // 4. Intercepta el botón del sistema (Android)
+            KmpBackHandler(enabled = screensStack.size > 1) {
+                navigateBack()
+            }
+
+            // 5. Función para navegar a una nueva pantalla
+            val navigateTo: (Screen) -> Unit = { screen ->
+                screensStack.add(screen)
+            }
+
+            // 6. Renderiza la pantalla actual con la lógica de navegación
             when (currentScreen) {
                 is Screen.Home -> {
                     HomeScreen(
-                        onNavigate = { screenDestino ->
-                            currentScreen = screenDestino
-                        }
+                        onConcreteClick = { navigateTo(Screen.Hormigon) },
+                        onWallClick = { navigateTo(Screen.Muro) },
+                        onStructureClick = { navigateTo(Screen.Estructura) }
                     )
                 }
                 is Screen.Hormigon -> {
                     ConcreteScreen(
-                        onBack = { currentScreen = Screen.Home }
+                        onBack = navigateBack // Usa la función de la pila
                     )
                 }
                 is Screen.Muro -> {
                     WallScreen(
-                        onBack = { currentScreen = Screen.Home }
+                        onBack = navigateBack // Usa la función de la pila
                     )
                 }
                 is Screen.Estructura -> {
                     StructureScreen(
-                        onBack = { currentScreen = Screen.Home }
+                        onBack = navigateBack // Usa la función de la pila
                     )
                 }
             }
         }
-    }
-}
-
-// Un placeholder temporal para probar la navegación
-@Composable
-fun PantallaEnConstruccion(titulo: String, onBack: () -> Unit) {
-    androidx.compose.foundation.layout.Column {
-        androidx.compose.material3.Button(onClick = onBack) {
-            androidx.compose.material3.Text("Volver")
-        }
-        androidx.compose.material3.Text(text = "Aquí va: $titulo")
     }
 }

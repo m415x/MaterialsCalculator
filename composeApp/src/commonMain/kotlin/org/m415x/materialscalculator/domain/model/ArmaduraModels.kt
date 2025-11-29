@@ -18,5 +18,6 @@ data class ResultadoEstructura(
     // Materiales Armadura
     val hierroPrincipalKg: Double, // Peso total hierros largos
     val hierroEstribosKg: Double,  // Peso total estribos
-    val cantidadBarrasAcero: Int   // Cantidad de barras de 12m a comprar (aprox)
+    val cantidadHierroPrincipal: Int,   // Cantidad de barras de 12m a comprar (aprox)
+    val cantidadHierroEstribos: Int    // Cantidad de barras de 12m a comprar (aprox)
 )

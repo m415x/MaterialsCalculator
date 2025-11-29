@@ -1,7 +1,11 @@
 package org.m415x.materialscalculator.ui.common
 
-import org.m415x.materialscalculator.domain.model.TipoLadrillo
 import kotlin.math.round
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 
 /*
  * Función extendida para redondear Doubles fácilmente en toda la app
@@ -14,11 +18,24 @@ fun Double.roundToDecimals(decimals: Int): String {
 }
 
 /*
- * Función auxiliar para formatear nombre (ej. CERAMICO_12 -> Cerámico 12)
+ * Nueva función: Limpia y convierte el String a un formato numérico seguro para Kotlin
  */
-fun formatLadrilloName(tipo: TipoLadrillo): String {
-    return tipo.name
-        .replace("_", " ")
-        .lowercase()
-        .replaceFirstChar { it.uppercase() }
+fun String.toSafeDoubleOrNull(): Double? {
+    // 1. Reemplaza todas las comas por puntos.
+    val cleaned = this.replace(',', '.')
+
+    // 2. Intenta convertir el string limpio a Double.
+    return cleaned.toDoubleOrNull()
+}
+
+/*
+ * Extensión mágica para cerrar el teclado al tocar fuera
+ */
+fun Modifier.clearFocusOnTap(): Modifier = composed {
+    val focusManager = LocalFocusManager.current
+    this.pointerInput(Unit) {
+        detectTapGestures(onTap = {
+            focusManager.clearFocus()
+        })
+    }
 }

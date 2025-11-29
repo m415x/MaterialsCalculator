@@ -21,7 +21,8 @@ class CalcularHormigonUseCase(private val repository: MaterialRepository) {
         val dosificacion = repository.getDosificacionHormigon(tipo)
             ?: throw IllegalArgumentException("Tipo no soportado")
 
-        val volumen = ancho * alto * espesor
+        // val volumen = ancho * alto * espesor
+        val volumen = ancho * alto * espesor / 100 // Para espesor en cm
 
         val cementoTotalKg = volumen * dosificacion.cementoKg
         val arenaTotalM3 = volumen * dosificacion.arenaM3

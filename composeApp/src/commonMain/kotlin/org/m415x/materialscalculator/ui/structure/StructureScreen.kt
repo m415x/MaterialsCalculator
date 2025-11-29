@@ -3,7 +3,6 @@ package org.m415x.materialscalculator.ui.structure
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -12,15 +11,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
 import org.m415x.materialscalculator.domain.model.DiametroHierro
 import org.m415x.materialscalculator.domain.model.ResultadoEstructura
 import org.m415x.materialscalculator.domain.model.TipoHormigon
 import org.m415x.materialscalculator.domain.usecase.CalcularEstructuraUseCase
+import org.m415x.materialscalculator.ui.common.AppInput
+import org.m415x.materialscalculator.ui.common.NumericInput
+import org.m415x.materialscalculator.ui.common.areValidDimensions
+import org.m415x.materialscalculator.ui.common.clearFocusOnTap
 import org.m415x.materialscalculator.ui.common.roundToDecimals
+import org.m415x.materialscalculator.ui.common.toSafeDoubleOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +58,16 @@ fun StructureScreen(
     var resultado by remember { mutableStateOf<ResultadoEstructura?>(null) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
 
+    // Definimos los FocusRequesters necesarios
+    val focusLadoA = remember { FocusRequester() }
+    val focusLadoB = remember { FocusRequester() }
+    val focusLargo = remember { FocusRequester() }
+    val focusResistencia = remember { FocusRequester() }
+    val focusCantidadPrincipal = remember { FocusRequester() }
+    val focusHierroPrincipal = remember { FocusRequester() }
+    val focusSeparacionEstribos = remember { FocusRequester() }
+    val focusEstribos = remember { FocusRequester() }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -73,9 +87,10 @@ fun StructureScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .clearFocusOnTap()
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()), // Permite scrollear si el teclado tapa
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
@@ -89,36 +104,36 @@ fun StructureScreen(
 
             // --- 2. DIMENSIONES ---
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
+                NumericInput(
                     value = ladoA,
                     onValueChange = { ladoA = it },
-                    label = { Text(if (isCircular) "Diámetro (m)" else "Ancho (m)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    label = if (isCircular) "Diámetro (cm) " else "Lado A (cm)",
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    focusRequester = focusLadoA,      // "Yo soy focusLadoA"
+                    nextFocusRequester = focusLadoB
                 )
 
                 // El Lado B solo se muestra si NO es circular
                 if (!isCircular) {
-                    OutlinedTextField(
+                    NumericInput(
                         value = ladoB,
                         onValueChange = { ladoB = it },
-                        label = { Text("Alto (m)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        label = "Lado B (cm)",
                         modifier = Modifier.weight(1f),
-                        singleLine = true
+                        focusRequester = focusLadoB,      // "Yo soy focusLadoB"
+                        nextFocusRequester = focusLargo
                     )
                 }
             }
 
-            OutlinedTextField(
+            NumericInput(
                 value = largo,
                 onValueChange = { largo = it },
-                label = { Text("Largo Total (m)") },
-                placeholder = { Text("Largo viga o alto columna") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                label = "Largo Total (m)",
+                placeholder = "Largo viga o alto columna",
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                focusRequester = focusLargo,      // "Yo soy focusLargo"
+                nextFocusRequester = focusResistencia
             )
 
             HorizontalDivider()
@@ -130,14 +145,22 @@ fun StructureScreen(
                 expanded = expandedHormigon,
                 onExpandedChange = { expandedHormigon = !expandedHormigon }
             ) {
-                OutlinedTextField(
-                    readOnly = true,
+                AppInput(
                     value = selectedHormigon.name,
-                    onValueChange = {},
-                    label = { Text("Resistencia") },
+                    onValueChange = { },
+                    label = "Resistencia",
+                    readOnly = true,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedHormigon) },
+
+                    // Colores del menu
                     colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                    modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true).fillMaxWidth()
+
+                    modifier = Modifier
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
+                        .fillMaxWidth(),
+
+                    focusRequester = focusResistencia,      // "Yo soy focusResistencia"
+                    nextFocusRequester = focusCantidadPrincipal
                 )
                 ExposedDropdownMenu(
                     expanded = expandedHormigon,
@@ -160,13 +183,13 @@ fun StructureScreen(
             // Hierros Principales
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 // Cantidad
-                OutlinedTextField(
-                    value = cantidadVarillas,
-                    onValueChange = { cantidadVarillas = it },
-                    label = { Text("Cant.") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                NumericInput(
+                    value = largo,
+                    onValueChange = { largo = it },
+                    label = "Largo (m)",
                     modifier = Modifier.weight(0.4f),
-                    singleLine = true
+                    focusRequester = focusCantidadPrincipal,      // "Yo soy focusCantidadPrincipal"
+                    nextFocusRequester = focusHierroPrincipal
                 )
 
                 // Selector Diámetro Principal
@@ -175,14 +198,22 @@ fun StructureScreen(
                     onExpandedChange = { expandedHierroMain = !expandedHierroMain },
                     modifier = Modifier.weight(0.6f)
                 ) {
-                    OutlinedTextField(
-                        readOnly = true,
+                    AppInput(
                         value = "Ø ${selectedHierroMain.mm} mm",
-                        onValueChange = {},
-                        label = { Text("Hierro Principal") },
+                        onValueChange = { },
+                        label = "Hierro Principal",
+                        readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedHierroMain) },
+
+                        // Colores del menu
                         colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true).fillMaxWidth()
+
+                        modifier = Modifier
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
+                            .fillMaxWidth(),
+
+                        focusRequester = focusHierroPrincipal,      // "Yo soy focusHierroPrincipal"
+                        nextFocusRequester = focusSeparacionEstribos
                     )
                     ExposedDropdownMenu(
                         expanded = expandedHierroMain,
@@ -201,13 +232,13 @@ fun StructureScreen(
             // Estribos
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 // Separación
-                OutlinedTextField(
+                NumericInput(
                     value = separacionEstriboCm,
                     onValueChange = { separacionEstriboCm = it },
-                    label = { Text("Cada (cm)") }, // Pedimos CM, convertiremos a M
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    label = "Cada (cm)",
                     modifier = Modifier.weight(0.4f),
-                    singleLine = true
+                    focusRequester = focusSeparacionEstribos,      // "Yo soy focusSeparacionEstribos"
+                    nextFocusRequester = focusEstribos
                 )
 
                 // Selector Diámetro Estribo
@@ -216,14 +247,22 @@ fun StructureScreen(
                     onExpandedChange = { expandedEstribo = !expandedEstribo },
                     modifier = Modifier.weight(0.6f)
                 ) {
-                    OutlinedTextField(
-                        readOnly = true,
+                    AppInput(
                         value = "Ø ${selectedEstribo.mm} mm",
-                        onValueChange = {},
-                        label = { Text("Estribos") },
+                        onValueChange = { },
+                        label = "Estribos",
+                        readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedEstribo) },
+
+                        // Colores del menu
                         colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true).fillMaxWidth()
+
+                        modifier = Modifier
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
+                            .fillMaxWidth(),
+
+                        focusRequester = focusEstribos,      // "Yo soy focusEstribos"
+                        onDone = {}
                     )
                     ExposedDropdownMenu(
                         expanded = expandedEstribo,
@@ -242,32 +281,33 @@ fun StructureScreen(
             // --- 5. BOTÓN CALCULAR ---
             Button(
                 onClick = {
-                    val l = largo.toDoubleOrNull()
-                    val a = ladoA.toDoubleOrNull()
-                    val b = if (isCircular) 0.0 else ladoB.toDoubleOrNull() // Si es circular, b no importa
+                    val l = largo.toSafeDoubleOrNull()
+                    val a = ladoA.toSafeDoubleOrNull()
+                    val b = if (isCircular) 1.0 else ladoB.toSafeDoubleOrNull() // Si es circular, b no importa
                     val cantVarillas = cantidadVarillas.toIntOrNull()
-                    val sepCm = separacionEstriboCm.toDoubleOrNull()
+                    val sepCm = separacionEstriboCm.toSafeDoubleOrNull()
 
                     // Validación
-                    if (l != null && a != null && (isCircular || b != null) && cantVarillas != null && sepCm != null) {
+                    //if (l != null && a != null && (isCircular || b != null) && cantVarillas != null && sepCm != null) {
+                    if (areValidDimensions(l, a, b, cantVarillas, sepCm)) {
                         try {
                             resultado = calcularEstructura(
-                                largoMetros = l,
-                                ladoAMetros = a,
-                                ladoBMetros = if (isCircular) 0.0 else b!!,
+                                largoMetros = l!!,
+                                ladoACm = a!!,
+                                ladoBCm = if (isCircular) 0.0 else b!!, // Aquí sí pasamos el real
                                 esCircular = isCircular,
                                 tipoHormigon = selectedHormigon,
                                 diametroPrincipal = selectedHierroMain,
-                                cantidadVarillas = cantVarillas,
+                                cantidadVarillas = cantVarillas!!,
                                 diametroEstribo = selectedEstribo,
-                                separacionEstriboMetros = sepCm / 100.0 // Convertimos CM a M
+                                separacionEstriboCm = sepCm!!
                             )
                             errorMsg = null
                         } catch (e: Exception) {
                             errorMsg = "Error: ${e.message}"
                         }
                     } else {
-                        errorMsg = "Verifica todos los campos numéricos."
+                        errorMsg = "Verifica todos los campos numéricos (deben ser mayores a 0)."
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp)
@@ -347,7 +387,11 @@ fun StructureResultCard(res: ResultadoEstructura) {
                     Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Necesitas aprox. ${res.cantidadBarrasAcero} barras de 12m para los hierros principales.",
+                        text = """
+                            Necesitas aprox: 
+                            - ${res.cantidadHierroPrincipal} barra${if (res.cantidadHierroPrincipal != 1) "s" else ""} de 12 m para los hierros principales.
+                            - ${res.cantidadHierroEstribos} barra${if (res.cantidadHierroEstribos != 1) "s" else ""} de 12 m para los estribos.
+                            """.trimIndent(),
                         style = MaterialTheme.typography.labelSmall
                     )
                 }
