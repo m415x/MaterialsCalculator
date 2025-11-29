@@ -1,74 +1,99 @@
 package org.m415x.materialscalculator
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.material3.Surface
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-
+import org.m415x.materialscalculator.ui.common.AppBottomBar
+import org.m415x.materialscalculator.ui.common.AppTopBar
 import org.m415x.materialscalculator.ui.common.KmpBackHandler
-import org.m415x.materialscalculator.ui.navigation.Screen
-import org.m415x.materialscalculator.ui.home.HomeScreen
-import org.m415x.materialscalculator.ui.concrete.ConcreteScreen
-import org.m415x.materialscalculator.ui.wall.WallScreen
-import org.m415x.materialscalculator.ui.structure.StructureScreen
+import org.m415x.materialscalculator.ui.screens.concrete.ConcreteScreen
+import org.m415x.materialscalculator.ui.screens.home.HomeScreen
+import org.m415x.materialscalculator.ui.screens.navigation.BottomTab
+import org.m415x.materialscalculator.ui.screens.navigation.Screen
+import org.m415x.materialscalculator.ui.screens.saved.SavedScreen
+import org.m415x.materialscalculator.ui.screens.settings.SettingsScreen
+import org.m415x.materialscalculator.ui.screens.structure.StructureScreen
 import org.m415x.materialscalculator.ui.theme.AppTheme
-
-// 1. Define la pila de navegación (Back Stack)
-val screensStack = mutableStateListOf<Screen>(Screen.Home)
+import org.m415x.materialscalculator.ui.screens.wall.WallScreen
 
 @Composable
 fun App() {
     AppTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
+        // 1. Estado de la Pestaña Activa (Bottom Bar)
+        var currentTab by remember { mutableStateOf(BottomTab.CALCULATOR) }
 
-            // 2. Determina la pantalla actual (la última de la pila)
-            val currentScreen = screensStack.last()
+        // 2. Estado de la Pila de Navegación (Solo para la Calculadora)
+        val calculatorStack = remember { mutableStateListOf<Screen>(Screen.Home) }
 
-            // 3. Función para navegar hacia atrás
-            val navigateBack: () -> Unit = {
-                if (screensStack.size > 1) screensStack.removeAt(screensStack.lastIndex) // Si hay más de una, saca la última.
-                // Si solo queda HomeScreen, no hacemos nada (la app se cerrará por el SO)
+        // Lógica para saber qué pantalla mostrar
+        val activeScreen = when (currentTab) {
+            BottomTab.CALCULATOR -> calculatorStack.lastOrNull() ?: Screen.Home
+            BottomTab.SAVED -> Screen.Guardados
+            BottomTab.SETTINGS -> Screen.Configuracion
+        }
+
+        // Lógica de navegación atrás
+        val navigateBack: () -> Unit = {
+            if (currentTab == BottomTab.CALCULATOR && calculatorStack.size > 1) {
+                calculatorStack.removeAt(calculatorStack.lastIndex)
+            } else {
+                // Opcional: Si estás en Ajustes y das atrás, ¿vuelves a la calculadora?
+                // Por ahora no, para mantenerlo simple.
             }
+        }
 
-            // 4. Intercepta el botón del sistema (Android)
-            KmpBackHandler(enabled = screensStack.size > 1) {
-                navigateBack()
+        // Interceptor del botón físico
+        KmpBackHandler(enabled = currentTab == BottomTab.CALCULATOR && calculatorStack.size > 1) {
+            navigateBack()
+        }
+
+        Scaffold(
+            topBar = {
+                AppTopBar(
+                    title = activeScreen.title,
+                    showBackButton = activeScreen.showBackButton, // Esto viene de tu clase Screen
+                    onBack = navigateBack
+                )
+            },
+            bottomBar = {
+                AppBottomBar(
+                    currentTab = currentTab,
+                    onTabSelected = { newTab ->
+                        currentTab = newTab
+                        // Opcional: Si tocas "Calcular" y ya estabas ahí, podrías resetear al Home
+                        if (newTab == BottomTab.CALCULATOR && currentTab == BottomTab.CALCULATOR) {
+                            if (calculatorStack.size > 1) {
+                                calculatorStack.clear()
+                                calculatorStack.add(Screen.Home)
+                            }
+                        }
+                    }
+                )
             }
-
-            // 5. Función para navegar a una nueva pantalla
-            val navigateTo: (Screen) -> Unit = { screen ->
-                screensStack.add(screen)
-            }
-
-            // 6. Renderiza la pantalla actual con la lógica de navegación
-            when (currentScreen) {
-                is Screen.Home -> {
-                    HomeScreen(
-                        onConcreteClick = { navigateTo(Screen.Hormigon) },
-                        onWallClick = { navigateTo(Screen.Muro) },
-                        onStructureClick = { navigateTo(Screen.Estructura) }
-                    )
-                }
-                is Screen.Hormigon -> {
-                    ConcreteScreen(
-                        onBack = navigateBack // Usa la función de la pila
-                    )
-                }
-                is Screen.Muro -> {
-                    WallScreen(
-                        onBack = navigateBack // Usa la función de la pila
-                    )
-                }
-                is Screen.Estructura -> {
-                    StructureScreen(
-                        onBack = navigateBack // Usa la función de la pila
-                    )
+        ) { paddingValues ->
+            // Contenedor principal con el padding del Scaffold
+            Surface(
+                modifier = Modifier.padding(paddingValues),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                when (currentTab) {
+                    BottomTab.CALCULATOR -> {
+                        // Renderizamos la pila de la calculadora
+                        when (val screen = activeScreen) {
+                            is Screen.Home -> HomeScreen(
+                                onConcreteClick = { calculatorStack.add(Screen.Hormigon) },
+                                onWallClick = { calculatorStack.add(Screen.Muro) },
+                                onStructureClick = { calculatorStack.add(Screen.Estructura) }
+                            )
+                            is Screen.Hormigon -> ConcreteScreen()
+                            is Screen.Muro -> WallScreen()
+                            is Screen.Estructura -> StructureScreen()
+                            else -> {} // Caso imposible
+                        }
+                    }
+                    BottomTab.SAVED -> SavedScreen()
+                    BottomTab.SETTINGS -> SettingsScreen()
                 }
             }
         }
