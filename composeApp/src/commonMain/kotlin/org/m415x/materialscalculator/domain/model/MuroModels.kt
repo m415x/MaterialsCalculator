@@ -39,7 +39,8 @@ data class Abertura(
 data class DosificacionMortero(
     val cementoKg: Double, // Kg de cemento por m3 de mortero
     val calKg: Double,     // Kg de cal por m3 de mortero (0.0 si es para bloques)
-    val arenaM3: Double    // m3 de arena por m3 de mortero
+    val arenaM3: Double,    // m3 de arena por m3 de mortero
+    val relacionAguaCemento: Double
 )
 
 /**
@@ -50,6 +51,7 @@ data class ResultadoMuro(
     val cantidadLadrillos: Int,
     val morteroM3: Double,
     val cementoBolsas: Int,
-    val calBolsas: Int, // Asumiremos bolsas de 25kg o 30kg para cal
-    val arenaTotalM3: Double
+    val calBolsas: Int,
+    val arenaTotalM3: Double,
+    val aguaLitros: Double
 )

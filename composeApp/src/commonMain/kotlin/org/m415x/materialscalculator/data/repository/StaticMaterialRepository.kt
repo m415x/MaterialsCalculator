@@ -6,8 +6,18 @@ import org.m415x.materialscalculator.domain.model.*
 class StaticMaterialRepository : MaterialRepository {
 
     // Base de datos de mezclas (Valores estándar por m3 de mortero)
-    private val mezclaCalReforzada = DosificacionMortero(210.0, 150.0, 1.0) // 1:3 (+cemento)
-    private val mezclaCementoArena = DosificacionMortero(350.0, 0.0, 1.1)   // 1:3 (Para bloques)
+    private val mezclaCalReforzada = DosificacionMortero(
+        cementoKg = 210.0,
+        calKg = 150.0,
+        arenaM3 = 1.0,
+        relacionAguaCemento = 0.6
+    ) // 1:3 (+cemento)
+    private val mezclaCementoArena = DosificacionMortero(
+        cementoKg = 350.0,
+        calKg = 0.0,
+        arenaM3 = 1.1,
+        relacionAguaCemento = 0.5
+    )   // 1:3 (Para bloques)
 
     /**
      * Base de datos interna de dosificaciones de hormigones.

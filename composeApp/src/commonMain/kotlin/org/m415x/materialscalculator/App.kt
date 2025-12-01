@@ -1,9 +1,13 @@
 package org.m415x.materialscalculator
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.launch
+
 import org.m415x.materialscalculator.ui.common.AppBottomBar
 import org.m415x.materialscalculator.ui.common.AppTopBar
 import org.m415x.materialscalculator.ui.common.KmpBackHandler
@@ -20,10 +24,17 @@ import org.m415x.materialscalculator.ui.screens.wall.WallScreen
 @Composable
 fun App() {
     AppTheme {
-        // 1. Estado de la Pestaña Activa (Bottom Bar)
-        var currentTab by remember { mutableStateOf(BottomTab.CALCULATOR) }
+        // 1. Estado del Pager (Controla el deslizamiento)
+        // Le decimos que tenemos tantos "pasos" como tabs haya en el enum (3)
+        val pagerState = rememberPagerState(pageCount = { BottomTab.entries.size })
 
-        // 2. Estado de la Pila de Navegación (Solo para la Calculadora)
+        // Necesitamos un CoroutineScope para mover el pager cuando hacemos click en los botones
+        val scope = rememberCoroutineScope()
+
+        // 2. Calculamos el Tab Actual basándonos en la página del Pager
+        val currentTab = BottomTab.entries[pagerState.currentPage]
+
+        // 3. Estado de la Pila de Navegación (Solo para la Calculadora - Tab 0)
         val calculatorStack = remember { mutableStateListOf<Screen>(Screen.Home) }
 
         // Lógica para saber qué pantalla mostrar
@@ -33,18 +44,25 @@ fun App() {
             BottomTab.SETTINGS -> Screen.Configuracion
         }
 
-        // Lógica de navegación atrás
+        // --- LÓGICA DE BACK ---
         val navigateBack: () -> Unit = {
             if (currentTab == BottomTab.CALCULATOR && calculatorStack.size > 1) {
+                // Si estamos en la calculadora y hay sub-pantallas, volvemos atrás
                 calculatorStack.removeAt(calculatorStack.lastIndex)
-            } else {
-                // Opcional: Si estás en Ajustes y das atrás, ¿vuelves a la calculadora?
-                // Por ahora no, para mantenerlo simple.
+            } else if (currentTab != BottomTab.CALCULATOR) {
+                // OPCIONAL: Si estamos en "Guardados" o "Ajustes" y damos atrás,
+                // volvemos a la pestaña principal ("Calculadora") deslizando.
+                scope.launch { pagerState.animateScrollToPage(BottomTab.CALCULATOR.ordinal) }
             }
         }
 
-        // Interceptor del botón físico
-        KmpBackHandler(enabled = currentTab == BottomTab.CALCULATOR && calculatorStack.size > 1) {
+        // Activamos el BackHandler si:
+        // 1. Estamos en la calculadora y hay historial de pantallas.
+        // 2. O si estamos en otra pestaña (para volver a la calculadora antes de salir).
+        KmpBackHandler(
+            enabled = (currentTab == BottomTab.CALCULATOR && calculatorStack.size > 1) ||
+                    (currentTab != BottomTab.CALCULATOR)
+        ) {
             navigateBack()
         }
 
@@ -60,8 +78,12 @@ fun App() {
                 AppBottomBar(
                     currentTab = currentTab,
                     onTabSelected = { newTab ->
-                        currentTab = newTab
-                        // Opcional: Si tocas "Calcular" y ya estabas ahí, podrías resetear al Home
+                        // Al hacer click, lanzamos la animación del Pager
+                        scope.launch {
+                            pagerState.animateScrollToPage(newTab.ordinal)
+                        }
+
+                        // Reseteo opcional: Si tocas "Calcular" y ya estabas ahí, volver al Home
                         if (newTab == BottomTab.CALCULATOR && currentTab == BottomTab.CALCULATOR) {
                             if (calculatorStack.size > 1) {
                                 calculatorStack.clear()
@@ -77,23 +99,39 @@ fun App() {
                 modifier = Modifier.padding(paddingValues),
                 color = MaterialTheme.colorScheme.background
             ) {
-                when (currentTab) {
-                    BottomTab.CALCULATOR -> {
-                        // Renderizamos la pila de la calculadora
-                        when (val screen = activeScreen) {
-                            is Screen.Home -> HomeScreen(
-                                onConcreteClick = { calculatorStack.add(Screen.Hormigon) },
-                                onWallClick = { calculatorStack.add(Screen.Muro) },
-                                onStructureClick = { calculatorStack.add(Screen.Estructura) }
-                            )
-                            is Screen.Hormigon -> ConcreteScreen()
-                            is Screen.Muro -> WallScreen()
-                            is Screen.Estructura -> StructureScreen()
-                            else -> {} // Caso imposible
+                HorizontalPager(
+                    state = pagerState,
+                    // Opcional: userScrollEnabled = false (si quisieras bloquear el swipe)
+                ) { pageIndex ->
+
+                    // Renderizamos el contenido según la página (0, 1 o 2)
+                    when (BottomTab.entries[pageIndex]) {
+
+                        BottomTab.CALCULATOR -> {
+                            // Pestaña 1: La Calculadora con su propia navegación interna
+                            when (val screen = calculatorStack.lastOrNull() ?: Screen.Home) {
+                                is Screen.Home -> HomeScreen(
+                                    onConcreteClick = { calculatorStack.add(Screen.Hormigon) },
+                                    onWallClick = { calculatorStack.add(Screen.Muro) },
+                                    onStructureClick = { calculatorStack.add(Screen.Estructura) }
+                                )
+                                is Screen.Hormigon -> ConcreteScreen()
+                                is Screen.Muro -> WallScreen()
+                                is Screen.Estructura -> StructureScreen()
+                                else -> {}
+                            }
+                        }
+
+                        BottomTab.SAVED -> {
+                            // Pestaña 2
+                            SavedScreen()
+                        }
+
+                        BottomTab.SETTINGS -> {
+                            // Pestaña 3
+                            SettingsScreen()
                         }
                     }
-                    BottomTab.SAVED -> SavedScreen()
-                    BottomTab.SETTINGS -> SettingsScreen()
                 }
             }
         }

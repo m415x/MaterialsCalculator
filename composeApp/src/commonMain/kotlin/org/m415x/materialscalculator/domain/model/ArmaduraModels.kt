@@ -15,9 +15,14 @@ data class ResultadoEstructura(
     val cementoBolsas: Int,
     val arenaM3: Double,
     val piedraM3: Double,
+    val aguaLitros: Double,
     // Materiales Armadura
+    val diametroPrincipal: DiametroHierro,
+    val diametroEstribo: DiametroHierro,
     val hierroPrincipalKg: Double, // Peso total hierros largos
     val hierroEstribosKg: Double,  // Peso total estribos
+    val hierroPrincipalMetros: Double, // Metros totales hierros largos
+    val hierroEstribosMetros: Double,  // Metros totales estribos
     val cantidadHierroPrincipal: Int,   // Cantidad de barras de 12m a comprar (aprox)
     val cantidadHierroEstribos: Int    // Cantidad de barras de 12m a comprar (aprox)
 )

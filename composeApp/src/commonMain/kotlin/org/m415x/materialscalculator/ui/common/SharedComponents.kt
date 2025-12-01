@@ -14,6 +14,9 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.runtime.*
 
 /**
  * COMPONENTE GENÉRICO MAESTRO
@@ -112,5 +115,82 @@ fun NumericInput(
         onDone = onDone,
         keyboardType = KeyboardType.Number,
         maxLines = 1 // Los números siempre son 1 línea
+    )
+}
+
+/**
+ * INPUT ESPECIAL PARA CENTÍMETROS (Estilo Cajero Automático)
+ * El usuario escribe "123" y se visualiza "1.23".
+ * Siempre devuelve un String con formato decimal.
+ */
+
+@Composable
+fun CmInput(
+    value: String,              // El valor actual (ej: "0.20")
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    placeholder: String? = null,
+    focusRequester: FocusRequester? = null,
+    nextFocusRequester: FocusRequester? = null,
+    onDone: (() -> Unit)? = null
+) {
+    // 1. Estado interno para controlar el cursor
+    // Inicializamos con el valor que viene de fuera y el cursor al final
+    var textFieldValue by remember(value) {
+        mutableStateOf(
+            TextFieldValue(
+                text = value,
+                selection = TextRange(value.length) // Cursor al final
+            )
+        )
+    }
+
+    val imeAction = if (nextFocusRequester != null) ImeAction.Next else ImeAction.Done
+
+    OutlinedTextField(
+        value = textFieldValue,
+        onValueChange = { newValue ->
+            // 2. Lógica de Cajero Automático
+            val digits = newValue.text.filter { it.isDigit() }
+
+            // Si el usuario borra todo, volvemos a vacío
+            val formattedText = if (digits.isEmpty()) {
+                ""
+            } else {
+                // Rellenamos con ceros (ej: "5" -> "005")
+                val padded = digits.padStart(3, '0')
+//                val partEntera = padded.substring(0, padded.length - 2).trimStart('0').ifEmpty { "0" }
+                val partEntera = padded.dropLast(2).trimStart('0').ifEmpty { "0" }
+
+                val partDecimal = padded.takeLast(2)
+                "$partEntera.$partDecimal"
+            }
+
+            // 3. Actualizamos el estado forzando el cursor al final
+            textFieldValue = TextFieldValue(
+                text = formattedText,
+                selection = TextRange(formattedText.length) // ¡Aquí está la magia!
+            )
+
+            // 4. Avisamos al padre del cambio real
+            if (formattedText != value) {
+                onValueChange(formattedText)
+            }
+        },
+        label = { Text(label) },
+        placeholder = if (placeholder != null) { { Text(placeholder) } } else null,
+        modifier = modifier.then(
+            if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier
+        ),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Number,
+            imeAction = imeAction
+        ),
+        keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+            onNext = { nextFocusRequester?.requestFocus() },
+            onDone = { onDone?.invoke() }
+        )
     )
 }

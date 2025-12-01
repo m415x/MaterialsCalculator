@@ -4,23 +4,27 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
 import org.m415x.materialscalculator.domain.model.Abertura
 import org.m415x.materialscalculator.domain.model.ResultadoMuro
 import org.m415x.materialscalculator.domain.model.TipoLadrillo
 import org.m415x.materialscalculator.domain.usecase.CalcularMuroUseCase
 import org.m415x.materialscalculator.ui.common.AppInput
+import org.m415x.materialscalculator.ui.common.AppResultCard
 import org.m415x.materialscalculator.ui.common.NumericInput
+import org.m415x.materialscalculator.ui.common.ResultRow
 import org.m415x.materialscalculator.ui.common.areValidDimensions
 import org.m415x.materialscalculator.ui.common.clearFocusOnTap
 import org.m415x.materialscalculator.ui.common.roundToDecimals
@@ -54,7 +58,7 @@ fun WallScreen() {
     var errorMsg by remember { mutableStateOf<String?>(null) }
 
     // Definimos los FocusRequesters necesarios
-    val focusAncho = remember { FocusRequester() }
+    val focusLargo = remember { FocusRequester() }
     val focusAlto = remember { FocusRequester() }
     val focusTipoLadrillo = remember { FocusRequester() }
     val focusAnchoAbertura = remember { FocusRequester() }
@@ -76,9 +80,9 @@ fun WallScreen() {
             NumericInput(
                 value = largoPared,
                 onValueChange = { largoPared = it },
-                label = "Ancho (m)",
+                label = "Largo (m)",
                 modifier = Modifier.weight(1f),
-                focusRequester = focusAncho,      // "Yo soy focusAncho"
+                focusRequester = focusLargo,      // "Yo soy focusLargo"
                 nextFocusRequester = focusAlto
             )
             NumericInput(
@@ -213,7 +217,7 @@ fun WallScreen() {
                 if (areValidDimensions(l, h)) {
                     try {
                         resultado = calcularMuro(
-                            anchoMuroMetros = l!!, // OJO: El UseCase pide "anchoMuro" refiriéndose al largo horizontal
+                            largoMuroMetros = l!!,
                             altoMuroMetros = h!!,
                             tipo = selectedLadrillo,
                             aberturas = aberturas.toList() // Pasamos copia de la lista
@@ -237,66 +241,41 @@ fun WallScreen() {
 
         // --- SECCIÓN 5: Resultados ---
         if (resultado != null) {
-            WallResultCard(resultado!!)
-        }
-    }
-}
+            AppResultCard {
+                Text(
+                    "Área Neta: ${resultado!!.areaNetaM2.roundToDecimals(2)} m²",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
 
-@Composable
-fun WallResultCard(res: ResultadoMuro) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Resultados Estimados",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-            Text(
-                text = "Área Neta a cubrir: ${res.areaNetaM2.roundToDecimals(2)} m²",
-                style = MaterialTheme.typography.bodyMedium
-            )
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+                ResultRow(label = "Ladrillos", value = "${resultado!!.cantidadLadrillos} u.")
+                Text("(Incluye 5% desperdicio)", style = MaterialTheme.typography.bodySmall)
 
-            // Ladrillos
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Ladrillos / Bloques", style = MaterialTheme.typography.titleMedium)
-                Text("${res.cantidadLadrillos} u.", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            }
-            Text("(Incluye 5% desperdicio)", style = MaterialTheme.typography.bodySmall)
+                Spacer(modifier = Modifier.height(16.dp))
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                Text(
+                    "Mezcla (${resultado!!.morteroM3.roundToDecimals(2)} m³)",
+                    fontWeight = FontWeight.Bold
+                )
+                Text("(Incluye 15% desperdicio)", style = MaterialTheme.typography.bodySmall)
 
-            // Mezcla
-            Text("Materiales para Mezcla:", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            // Fila Cemento
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Cemento")
-                Text("${res.cementoBolsas} bolsas", fontWeight = FontWeight.Bold)
-            }
+                ResultRow(
+                    label = "Cemento",
+                    value = "${resultado!!.cementoBolsas} bolsa${if (resultado!!.cementoBolsas == 1) "" else "s"}"
+                )
 
-            // Fila Cal (Solo si es mayor a 0, los bloques no llevan cal)
-            if (res.calBolsas > 0) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Cal")
-                    Text("${res.calBolsas} bolsas", fontWeight = FontWeight.Bold)
+                if (resultado!!.calBolsas > 0) {
+                    ResultRow(label = "Cal", value = "${resultado!!.calBolsas} bolsas")
                 }
-            }
 
-            // Fila Arena
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Arena")
-                Text("${res.arenaTotalM3.roundToDecimals(2)} m³", fontWeight = FontWeight.Bold)
-            }
+                ResultRow(label = "Arena", value = "${resultado!!.arenaTotalM3.roundToDecimals(2)} m³")
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Volumen mezcla: ${res.morteroM3.roundToDecimals(2)} m³", style = MaterialTheme.typography.bodySmall)
+                ResultRow(label = "Agua", value = "${resultado!!.aguaLitros.roundToDecimals(1)} L")
+            }
         }
     }
 }

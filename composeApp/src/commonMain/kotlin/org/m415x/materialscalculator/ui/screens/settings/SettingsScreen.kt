@@ -22,7 +22,7 @@ fun SettingsScreen() {
         Spacer(modifier = Modifier.height(16.dp))
 
         // Ejemplo de lo que pediste
-        SettingItem("Peso Bolsa Cemento", "50 kg")
+        SettingItem("Peso Bolsa Cemento", "25 kg")
         SettingItem("Peso Bolsa Cal", "25 kg")
         SettingItem("Volumen Balde", "10 Litros")
         SettingItem("Volumen Carretilla", "70 Litros")

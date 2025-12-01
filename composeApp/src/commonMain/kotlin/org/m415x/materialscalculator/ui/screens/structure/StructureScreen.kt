@@ -5,7 +5,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,13 +13,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
 import org.m415x.materialscalculator.domain.model.DiametroHierro
 import org.m415x.materialscalculator.domain.model.ResultadoEstructura
 import org.m415x.materialscalculator.domain.model.TipoHormigon
 import org.m415x.materialscalculator.domain.usecase.CalcularEstructuraUseCase
 import org.m415x.materialscalculator.ui.common.AppInput
+import org.m415x.materialscalculator.ui.common.AppResultCard
+import org.m415x.materialscalculator.ui.common.CmInput
 import org.m415x.materialscalculator.ui.common.NumericInput
+import org.m415x.materialscalculator.ui.common.ResultRow
 import org.m415x.materialscalculator.ui.common.areValidDimensions
 import org.m415x.materialscalculator.ui.common.clearFocusOnTap
 import org.m415x.materialscalculator.ui.common.roundToDecimals
@@ -50,7 +53,7 @@ fun StructureScreen() {
 
     var expandedEstribo by remember { mutableStateOf(false) }
     var selectedEstribo by remember { mutableStateOf(DiametroHierro.HIERRO_6) }
-    var separacionEstriboCm by remember { mutableStateOf("20") } // Input en CM, convertir a M luego
+    var separacionEstriboCm by remember { mutableStateOf("0.20") }
 
     // Resultados
     var resultado by remember { mutableStateOf<ResultadoEstructura?>(null) }
@@ -61,7 +64,7 @@ fun StructureScreen() {
     val focusLadoB = remember { FocusRequester() }
     val focusLargo = remember { FocusRequester() }
     val focusResistencia = remember { FocusRequester() }
-    val focusCantidadPrincipal = remember { FocusRequester() }
+    val focusCantidadVarillas = remember { FocusRequester() }
     val focusHierroPrincipal = remember { FocusRequester() }
     val focusSeparacionEstribos = remember { FocusRequester() }
     val focusEstribos = remember { FocusRequester() }
@@ -85,21 +88,21 @@ fun StructureScreen() {
 
         // --- 2. DIMENSIONES ---
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            NumericInput(
+            CmInput(
                 value = ladoA,
                 onValueChange = { ladoA = it },
-                label = if (isCircular) "Diámetro (cm) " else "Lado A (cm)",
+                label = if (isCircular) "Diámetro (m)" else "Lado A (m)", // Aunque la etiqueta diga (m), el input visual ayuda a entender
                 modifier = Modifier.weight(1f),
                 focusRequester = focusLadoA,      // "Yo soy focusLadoA"
-                nextFocusRequester = focusLadoB
+                nextFocusRequester = if (!isCircular) focusLadoB else focusLargo // Lógica de foco inteligente
             )
 
             // El Lado B solo se muestra si NO es circular
             if (!isCircular) {
-                NumericInput(
+                CmInput(
                     value = ladoB,
                     onValueChange = { ladoB = it },
-                    label = "Lado B (cm)",
+                    label = "Lado B (m)",
                     modifier = Modifier.weight(1f),
                     focusRequester = focusLadoB,      // "Yo soy focusLadoB"
                     nextFocusRequester = focusLargo
@@ -141,7 +144,7 @@ fun StructureScreen() {
                     .fillMaxWidth(),
 
                 focusRequester = focusResistencia,      // "Yo soy focusResistencia"
-                nextFocusRequester = focusCantidadPrincipal
+                nextFocusRequester = focusCantidadVarillas
             )
             ExposedDropdownMenu(
                 expanded = expandedHormigon,
@@ -165,11 +168,11 @@ fun StructureScreen() {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             // Cantidad
             NumericInput(
-                value = largo,
-                onValueChange = { largo = it },
-                label = "Largo (m)",
-                modifier = Modifier.weight(0.4f),
-                focusRequester = focusCantidadPrincipal,      // "Yo soy focusCantidadPrincipal"
+                value = cantidadVarillas,
+                onValueChange = { cantidadVarillas = it },
+                label = "Cant. varillas",
+                modifier = Modifier.weight(0.5f),
+                focusRequester = focusCantidadVarillas,      // "Yo soy focusCantidadVarillas"
                 nextFocusRequester = focusHierroPrincipal
             )
 
@@ -177,7 +180,7 @@ fun StructureScreen() {
             ExposedDropdownMenuBox(
                 expanded = expandedHierroMain,
                 onExpandedChange = { expandedHierroMain = !expandedHierroMain },
-                modifier = Modifier.weight(0.6f)
+                modifier = Modifier.weight(0.5f)
             ) {
                 AppInput(
                     value = "Ø ${selectedHierroMain.mm} mm",
@@ -212,12 +215,11 @@ fun StructureScreen() {
 
         // Estribos
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            // Separación
-            NumericInput(
+            CmInput(
                 value = separacionEstriboCm,
                 onValueChange = { separacionEstriboCm = it },
                 label = "Cada (cm)",
-                modifier = Modifier.weight(0.4f),
+                modifier = Modifier.weight(0.5f),
                 focusRequester = focusSeparacionEstribos,      // "Yo soy focusSeparacionEstribos"
                 nextFocusRequester = focusEstribos
             )
@@ -226,7 +228,7 @@ fun StructureScreen() {
             ExposedDropdownMenuBox(
                 expanded = expandedEstribo,
                 onExpandedChange = { expandedEstribo = !expandedEstribo },
-                modifier = Modifier.weight(0.6f)
+                modifier = Modifier.weight(0.5f)
             ) {
                 AppInput(
                     value = "Ø ${selectedEstribo.mm} mm",
@@ -269,19 +271,18 @@ fun StructureScreen() {
                 val sepCm = separacionEstriboCm.toSafeDoubleOrNull()
 
                 // Validación
-                //if (l != null && a != null && (isCircular || b != null) && cantVarillas != null && sepCm != null) {
                 if (areValidDimensions(l, a, b, cantVarillas, sepCm)) {
                     try {
                         resultado = calcularEstructura(
                             largoMetros = l!!,
-                            ladoACm = a!!,
-                            ladoBCm = if (isCircular) 0.0 else b!!, // Aquí sí pasamos el real
+                            ladoAMetros = a!!,
+                            ladoBMetros = if (isCircular) 0.0 else b!!, // Aquí sí pasamos el real
                             esCircular = isCircular,
                             tipoHormigon = selectedHormigon,
                             diametroPrincipal = selectedHierroMain,
                             cantidadVarillas = cantVarillas!!,
                             diametroEstribo = selectedEstribo,
-                            separacionEstriboCm = sepCm!!
+                            separacionEstriboMetros = sepCm!!
                         )
                         errorMsg = null
                     } catch (e: Exception) {
@@ -302,7 +303,62 @@ fun StructureScreen() {
 
         // --- 6. RESULTADOS ---
         if (resultado != null) {
-            StructureResultCard(resultado!!)
+            AppResultCard {
+                // Sección Hormigón
+                Text(
+                    "Hormigón (${resultado!!.volumenHormigonM3.roundToDecimals(2)} m³)",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                ResultRow(label = "Cemento", value = "${resultado!!.cementoBolsas} bolsa${if (resultado!!.cementoBolsas == 1) "" else "s"}")
+                ResultRow(label = "Arena", value = "${resultado!!.arenaM3.roundToDecimals(2)} m³")
+                ResultRow(label = "Piedra", value = "${resultado!!.piedraM3.roundToDecimals(2)} m³")
+                ResultRow(label = "Agua", value = "${resultado!!.aguaLitros.roundToDecimals(1)} L")
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Sección Hierro
+                Text(
+                    "Acero / Hierro (${(resultado!!.hierroPrincipalKg + resultado!!.hierroEstribosKg).roundToDecimals(1)} kg)",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                ResultRow(
+                    label = "Principal (Ø ${resultado!!.diametroPrincipal.mm} mm)",
+                    value = "${resultado!!.hierroPrincipalMetros.roundToDecimals(1)} m"
+                )
+                Text("(${resultado!!.hierroPrincipalKg.roundToDecimals(1)} kg)", style = MaterialTheme.typography.bodySmall)
+
+                ResultRow(
+                    label = "Estribos (Ø ${resultado!!.diametroEstribo.mm} mm)",
+                    value = "${resultado!!.hierroEstribosMetros.roundToDecimals(1)} m"
+                )
+                Text("(${resultado!!.hierroEstribosKg.roundToDecimals(1)} kg)", style = MaterialTheme.typography.bodySmall)
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Tarjeta anidada para el consejo (Tip)
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                    Row(modifier = Modifier.padding(8.dp)) {
+                        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = """
+                            Necesitas aprox: 
+                            - ${resultado!!.cantidadHierroPrincipal} barra${if (resultado!!.cantidadHierroPrincipal != 1) "s" else ""} de 12 m para los hierros principales.
+                            - ${resultado!!.cantidadHierroEstribos} barra${if (resultado!!.cantidadHierroEstribos != 1) "s" else ""} de 12 m para los estribos.
+                            """.trimIndent(),
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -316,66 +372,5 @@ fun RadioButtonRow(selected: Boolean, text: String, onClick: () -> Unit) {
     ) {
         RadioButton(selected = selected, onClick = onClick)
         Text(text = text, style = MaterialTheme.typography.bodyLarge)
-    }
-}
-
-@Composable
-fun StructureResultCard(res: ResultadoEstructura) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Resultados Estimados",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onTertiaryContainer
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Sección Hormigón
-            Text("Hormigón (${res.volumenHormigonM3.roundToDecimals(2)} m³)", fontWeight = FontWeight.Bold)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Cemento")
-                Text("${res.cementoBolsas} bolsas", fontWeight = FontWeight.Bold)
-            }
-            Text("Arena: ${res.arenaM3.roundToDecimals(2)} m³ | Piedra: ${res.piedraM3.roundToDecimals(2)} m³", style = MaterialTheme.typography.bodySmall)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Sección Hierro
-            Text("Acero / Hierro", fontWeight = FontWeight.Bold)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Hierro Principal")
-                Text("${res.hierroPrincipalKg.roundToDecimals(1)} kg", fontWeight = FontWeight.Bold)
-            }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Estribos")
-                Text("${res.hierroEstribosKg.roundToDecimals(1)} kg", fontWeight = FontWeight.Bold)
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Dato útil de compra
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                Row(modifier = Modifier.padding(8.dp)) {
-                    Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = """
-                            Necesitas aprox: 
-                            - ${res.cantidadHierroPrincipal} barra${if (res.cantidadHierroPrincipal != 1) "s" else ""} de 12 m para los hierros principales.
-                            - ${res.cantidadHierroEstribos} barra${if (res.cantidadHierroEstribos != 1) "s" else ""} de 12 m para los estribos.
-                            """.trimIndent(),
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
-            }
-        }
     }
 }

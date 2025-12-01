@@ -11,12 +11,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
 import org.m415x.materialscalculator.domain.model.TipoHormigon
 import org.m415x.materialscalculator.domain.model.ResultadoHormigon
 import org.m415x.materialscalculator.domain.usecase.CalcularHormigonUseCase
 import org.m415x.materialscalculator.ui.common.AppInput
+import org.m415x.materialscalculator.ui.common.AppResultCard
+import org.m415x.materialscalculator.ui.common.CmInput
 import org.m415x.materialscalculator.ui.common.NumericInput
+import org.m415x.materialscalculator.ui.common.ResultRow
 import org.m415x.materialscalculator.ui.common.areValidDimensions
 import org.m415x.materialscalculator.ui.common.clearFocusOnTap
 import org.m415x.materialscalculator.ui.common.roundToDecimals
@@ -77,14 +81,13 @@ fun ConcreteScreen() {
             nextFocusRequester = focusEspesor
         )
 
-        NumericInput(
+        CmInput(
             value = espesor,
             onValueChange = { espesor = it },
-            label = "Espesor (cm)",
-            placeholder = "Ej: 10 para 0.1 m",
+            label = "Espesor (m)",
             modifier = Modifier.fillMaxWidth(),
             focusRequester = focusEspesor, // "Yo soy focusEspesor"
-            nextFocusRequester = focusResistencia // "El siguiente es focusResistencia"
+            nextFocusRequester = focusResistencia
         )
 
         // --- Selector de Tipo de Hormigón (Dropdown) ---
@@ -138,9 +141,9 @@ fun ConcreteScreen() {
                 // 2. Usamos la función de validación
                     if (areValidDimensions(a, l, e)) {
                         resultado = calcularHormigon(
-                            ancho = a!!, // El !! es seguro aquí porque areValidDimensions ya chequeó que no sea null
-                            alto = l!!,
-                            espesor = e!!,
+                            anchoMetros = a!!, // El !! es seguro aquí porque areValidDimensions ya chequeó que no sea null
+                            largoMetros = l!!,
+                            espesorMetros = e!!,
                             tipo = selectedTipo
                         )
                         errorMsg = null
@@ -165,43 +168,27 @@ fun ConcreteScreen() {
 
         // --- Tarjeta de Resultados ---
         if (resultado != null) {
-            ResultCard(resultado!!)
-        }
-    }
-}
+            AppResultCard {
+                Text(
+                    "Volumen Total (${resultado!!.volumenTotalM3.roundToDecimals(2)} m³)",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
 
-// Componente visual para mostrar la tarjeta de resultados de forma limpia
-@Composable
-fun ResultCard(res: ResultadoHormigon) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Resultados Estimados",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Text("Volumen Total: ${res.volumenTotalM3.roundToDecimals(2)} m³")
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                ResultRow(
+                    label = "Cemento",
+                    value = "${resultado!!.cementoBolsas} bolsa${if (resultado!!.cementoBolsas == 1) "" else "s"}"
+                )
+                Text("Total: ${resultado!!.cementoKg.roundToDecimals(1)} kg", style = MaterialTheme.typography.bodySmall)
 
-            // Fila de Cemento
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Cemento (Bolsas)", style = MaterialTheme.typography.titleMedium)
-                Text("${res.cementoBolsas}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                ResultRow(label = "Arena", value = "${resultado!!.arenaM3.roundToDecimals(2)} m³")
+                ResultRow(label = "Piedra/Grava", value = "${resultado!!.piedraM3.roundToDecimals(2)} m³")
+                ResultRow(label = "Agua", value = "${resultado!!.aguaLitros.roundToDecimals(1)} L")
             }
-            Text("Total: ${res.cementoKg.roundToDecimals(1)} kg", style = MaterialTheme.typography.bodySmall)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Arena y Piedra
-            Text("Arena: ${res.arenaM3.roundToDecimals(2)} m³")
-            Text("Piedra/Grava: ${res.piedraM3.roundToDecimals(2)} m³")
-            Text("Agua: ${res.aguaLitros.roundToDecimals(0)} Litros (aprox)")
         }
     }
 }

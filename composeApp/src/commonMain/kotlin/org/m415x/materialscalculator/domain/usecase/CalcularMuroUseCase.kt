@@ -11,7 +11,7 @@ class CalcularMuroUseCase(private val repository: MaterialRepository) {
 
     // Función 'invoke' permite llamar a la clase como si fuera una función
     operator fun invoke(
-        anchoMuroMetros: Double, // Nota: Este input podría ser ignorado si usas el estándar del ladrillo
+        largoMuroMetros: Double,
         altoMuroMetros: Double,
         tipo: TipoLadrillo,
         aberturas: List<Abertura>,
@@ -27,7 +27,7 @@ class CalcularMuroUseCase(private val repository: MaterialRepository) {
             ?: throw IllegalArgumentException("Dosificación no encontrada")
 
         // 2. Calcular Áreas
-        val areaPared = anchoMuroMetros * altoMuroMetros
+        val areaPared = largoMuroMetros * altoMuroMetros
         val areaAberturas = aberturas.sumOf { it.anchoMetros * it.altoMetros }
         val areaNeta = (areaPared - areaAberturas).coerceAtLeast(0.0)
 
@@ -68,13 +68,17 @@ class CalcularMuroUseCase(private val repository: MaterialRepository) {
         // Arena
         val arenaTotal = volumenMortero * dosificacion.arenaM3
 
+        // Agua
+        val aguaTotalLitros = cementoTotalKg * dosificacion.relacionAguaCemento
+
         return ResultadoMuro(
             areaNetaM2 = areaNeta,
             cantidadLadrillos = ceil(totalLadrillos).toInt(),
             morteroM3 = volumenMortero,
             cementoBolsas = cementoBolsas,
             calBolsas = calBolsas,
-            arenaTotalM3 = arenaTotal
+            arenaTotalM3 = arenaTotal,
+            aguaLitros = aguaTotalLitros
         )
     }
 }

@@ -11,9 +11,9 @@ class CalcularHormigonUseCase(private val repository: MaterialRepository) {
 
     // Función 'invoke' permite llamar a la clase como si fuera una función
     operator fun invoke(
-        ancho: Double,
-        alto: Double,
-        espesor: Double,
+        anchoMetros: Double,
+        largoMetros: Double,
+        espesorMetros: Double,
         tipo: TipoHormigon,
         pesoBolsaCementoKg: Double = 25.0 // Asumimos bolsas de 25kg
     ): ResultadoHormigon {
@@ -22,7 +22,7 @@ class CalcularHormigonUseCase(private val repository: MaterialRepository) {
             ?: throw IllegalArgumentException("Tipo no soportado")
 
         // val volumen = ancho * alto * espesor
-        val volumen = ancho * alto * espesor / 100 // Para espesor en cm
+        val volumen = anchoMetros * largoMetros * espesorMetros
 
         val cementoTotalKg = volumen * dosificacion.cementoKg
         val arenaTotalM3 = volumen * dosificacion.arenaM3
