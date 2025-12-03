@@ -1,23 +1,24 @@
-package org.m415x.materialscalculator.ui.screens.concrete
+package org.m415x.materialscalculator.ui.screen.concrete
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
 import org.m415x.materialscalculator.domain.model.TipoHormigon
 import org.m415x.materialscalculator.domain.model.ResultadoHormigon
-import org.m415x.materialscalculator.domain.usecase.CalcularHormigonUseCase
+import org.m415x.materialscalculator.domain.usecase.CalculateConcreteUseCase
 import org.m415x.materialscalculator.ui.common.AppInput
-import org.m415x.materialscalculator.ui.common.AppResultCard
+import org.m415x.materialscalculator.ui.common.AppResultBottomSheet
 import org.m415x.materialscalculator.ui.common.CmInput
 import org.m415x.materialscalculator.ui.common.NumericInput
 import org.m415x.materialscalculator.ui.common.ResultRow
@@ -29,10 +30,13 @@ import org.m415x.materialscalculator.ui.common.toSafeDoubleOrNull
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConcreteScreen() {
+    // Obtenemos el controlador del teclado
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     // --- 1. Inyección de Dependencias (Manual por ahora) ---
     // En una app grande usaríamos Koin, pero aquí lo instanciamos directo
     val repository = remember { StaticMaterialRepository() }
-    val calcularHormigon = remember { CalcularHormigonUseCase(repository) }
+    val calcularHormigon = remember { CalculateConcreteUseCase(repository) }
 
     // --- 2. Estado de la UI (Lo que el usuario escribe) ---
     var ancho by remember { mutableStateOf("") }
@@ -47,6 +51,9 @@ fun ConcreteScreen() {
     var resultado by remember { mutableStateOf<ResultadoHormigon?>(null) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
 
+    // Para controlar la visibilidad del Modal
+    var showResultSheet by remember { mutableStateOf(false) }
+
     // Definimos los FocusRequesters necesarios
     val focusLargo = remember { FocusRequester() }
     val focusEspesor = remember { FocusRequester() }
@@ -56,8 +63,8 @@ fun ConcreteScreen() {
         modifier = Modifier
             .fillMaxSize()
             .clearFocusOnTap()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()), // Permite scrollear si el teclado tapa
+            .verticalScroll(rememberScrollState()) // Permite scrollear si el teclado tapa
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
@@ -120,7 +127,18 @@ fun ConcreteScreen() {
             ) {
                 TipoHormigon.entries.forEach { tipo ->
                     DropdownMenuItem(
-                        text = { Text(text = tipo.name) },
+                        text = {
+                            // Mismo diseño mejorado
+                            Column {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(text = tipo.name, style = MaterialTheme.typography.bodyLarge)
+                                    Text(text = " - ${tipo.endurance}", style = MaterialTheme.typography.bodySmall)
+                                }
+                                Text(text = tipo.uses, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        },
                         onClick = {
                             selectedTipo = tipo
                             expanded = false
@@ -133,6 +151,9 @@ fun ConcreteScreen() {
         // --- Botón Calcular ---
         Button(
             onClick = {
+                // Escondemos el teclado
+                keyboardController?.hide()
+
                 // 1. Convertimos los Strings a Double? (usando tu extensión segura)
                 val a = ancho.toSafeDoubleOrNull()
                 val l = largo.toSafeDoubleOrNull()
@@ -147,6 +168,9 @@ fun ConcreteScreen() {
                             tipo = selectedTipo
                         )
                         errorMsg = null
+
+                        // Se abre el Modal
+                        showResultSheet = true
                     } else {
                         // Mensaje más preciso
                         errorMsg = "Por favor, ingresa dimensiones válidas mayores a 0."
@@ -167,8 +191,14 @@ fun ConcreteScreen() {
         }
 
         // --- Tarjeta de Resultados ---
-        if (resultado != null) {
-            AppResultCard {
+        if (showResultSheet && resultado != null) {
+            AppResultBottomSheet(
+                onDismissRequest = { showResultSheet = false },
+                onSave = { /* ... */ },
+                onEdit = { showResultSheet = false },
+                // MANTENEMOS TU PERSONALIZACIÓN DE COLOR
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            ) {
                 Text(
                     "Volumen Total (${resultado!!.volumenTotalM3.roundToDecimals(2)} m³)",
                     fontWeight = FontWeight.Bold,

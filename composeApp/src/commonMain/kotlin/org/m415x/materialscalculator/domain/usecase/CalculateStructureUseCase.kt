@@ -6,7 +6,7 @@ import kotlin.math.PI
 import kotlin.math.ceil
 import kotlin.math.pow
 
-class CalcularEstructuraUseCase(private val repository: MaterialRepository) {
+class CalculateStructureUseCase(private val repository: MaterialRepository) {
 
     operator fun invoke(
         // Dimensiones generales

@@ -1,4 +1,4 @@
-package org.m415x.materialscalculator.ui.screens.saved
+package org.m415x.materialscalculator.ui.screen.saved
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons

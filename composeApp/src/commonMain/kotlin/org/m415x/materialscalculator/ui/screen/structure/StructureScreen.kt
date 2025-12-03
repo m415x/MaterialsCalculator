@@ -1,4 +1,4 @@
-package org.m415x.materialscalculator.ui.screens.structure
+package org.m415x.materialscalculator.ui.screen.structure
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,16 +11,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
 import org.m415x.materialscalculator.domain.model.DiametroHierro
 import org.m415x.materialscalculator.domain.model.ResultadoEstructura
 import org.m415x.materialscalculator.domain.model.TipoHormigon
-import org.m415x.materialscalculator.domain.usecase.CalcularEstructuraUseCase
+import org.m415x.materialscalculator.domain.usecase.CalculateStructureUseCase
 import org.m415x.materialscalculator.ui.common.AppInput
-import org.m415x.materialscalculator.ui.common.AppResultCard
+import org.m415x.materialscalculator.ui.common.AppResultBottomSheet
 import org.m415x.materialscalculator.ui.common.CmInput
 import org.m415x.materialscalculator.ui.common.NumericInput
 import org.m415x.materialscalculator.ui.common.ResultRow
@@ -32,9 +34,15 @@ import org.m415x.materialscalculator.ui.common.toSafeDoubleOrNull
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StructureScreen() {
+    // Obtenemos el controlador del teclado
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     // Dependencias
     val repository = remember { StaticMaterialRepository() }
-    val calcularEstructura = remember { CalcularEstructuraUseCase(repository) }
+    val calcularEstructura = remember { CalculateStructureUseCase(repository) }
+
+    // Filtramos la lista para obtener solo los estructurales (H17+)
+    val tiposDisponibles = remember { TipoHormigon.entries.filter { it.esAptoEstructura } }
 
     // Estado Geometría
     var isCircular by remember { mutableStateOf(false) } // False = Rectangular, True = Columna Redonda
@@ -59,6 +67,9 @@ fun StructureScreen() {
     var resultado by remember { mutableStateOf<ResultadoEstructura?>(null) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
 
+    // Para controlar la visibilidad del Modal
+    var showResultSheet by remember { mutableStateOf(false) }
+
     // Definimos los FocusRequesters necesarios
     val focusLadoA = remember { FocusRequester() }
     val focusLadoB = remember { FocusRequester() }
@@ -73,8 +84,8 @@ fun StructureScreen() {
         modifier = Modifier
             .fillMaxSize()
             .clearFocusOnTap()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()), // Permite scrollear si el teclado tapa
+            .verticalScroll(rememberScrollState()) // Permite scrollear si el teclado tapa
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
@@ -150,9 +161,15 @@ fun StructureScreen() {
                 expanded = expandedHormigon,
                 onDismissRequest = { expandedHormigon = false }
             ) {
-                TipoHormigon.entries.forEach { tipo ->
+                tiposDisponibles.forEach { tipo ->
                     DropdownMenuItem(
-                        text = { Text(tipo.name) },
+                        text = {
+                            // 3. Diseño mejorado: Nombre en negrita + Uso pequeño abajo
+                            Column {
+                                Text(text = tipo.name, style = MaterialTheme.typography.titleMedium)
+                                Text(text = tipo.uses, style = MaterialTheme.typography.bodySmall)
+                            }
+                        },
                         onClick = { selectedHormigon = tipo; expandedHormigon = false }
                     )
                 }
@@ -264,6 +281,9 @@ fun StructureScreen() {
         // --- 5. BOTÓN CALCULAR ---
         Button(
             onClick = {
+                // Escondemos el teclado
+                keyboardController?.hide()
+
                 val l = largo.toSafeDoubleOrNull()
                 val a = ladoA.toSafeDoubleOrNull()
                 val b = if (isCircular) 1.0 else ladoB.toSafeDoubleOrNull() // Si es circular, b no importa
@@ -285,11 +305,15 @@ fun StructureScreen() {
                             separacionEstriboMetros = sepCm!!
                         )
                         errorMsg = null
+
+                        // Se abre el Modal
+                        showResultSheet = true
                     } catch (e: Exception) {
                         errorMsg = "Error: ${e.message}"
                     }
                 } else {
                     errorMsg = "Verifica todos los campos numéricos (deben ser mayores a 0)."
+                    resultado = null
                 }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp)
@@ -302,8 +326,14 @@ fun StructureScreen() {
         }
 
         // --- 6. RESULTADOS ---
-        if (resultado != null) {
-            AppResultCard {
+        if (showResultSheet && resultado != null) {
+            AppResultBottomSheet(
+                onDismissRequest = { showResultSheet = false },
+                onSave = { /* ... */ },
+                onEdit = { showResultSheet = false },
+                // MANTENEMOS TU PERSONALIZACIÓN DE COLOR
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            ) {
                 // Sección Hormigón
                 Text(
                     "Hormigón (${resultado!!.volumenHormigonM3.roundToDecimals(2)} m³)",

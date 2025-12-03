@@ -1,4 +1,4 @@
-package org.m415x.materialscalculator.ui.screens.wall
+package org.m415x.materialscalculator.ui.screen.wall
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,9 +21,9 @@ import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
 import org.m415x.materialscalculator.domain.model.Abertura
 import org.m415x.materialscalculator.domain.model.ResultadoMuro
 import org.m415x.materialscalculator.domain.model.TipoLadrillo
-import org.m415x.materialscalculator.domain.usecase.CalcularMuroUseCase
+import org.m415x.materialscalculator.domain.usecase.CalculateWallUseCase
 import org.m415x.materialscalculator.ui.common.AppInput
-import org.m415x.materialscalculator.ui.common.AppResultCard
+import org.m415x.materialscalculator.ui.common.AppResultBottomSheet
 import org.m415x.materialscalculator.ui.common.NumericInput
 import org.m415x.materialscalculator.ui.common.ResultRow
 import org.m415x.materialscalculator.ui.common.areValidDimensions
@@ -33,9 +34,12 @@ import org.m415x.materialscalculator.ui.common.toSafeDoubleOrNull
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WallScreen() {
+    // Obtenemos el controlador del teclado
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     // Dependencias
     val repository = remember { StaticMaterialRepository() }
-    val calcularMuro = remember { CalcularMuroUseCase(repository) }
+    val calcularMuro = remember { CalculateWallUseCase(repository) }
 
     // Estado Pared
     var largoPared by remember { mutableStateOf("") }
@@ -57,6 +61,9 @@ fun WallScreen() {
     var resultado by remember { mutableStateOf<ResultadoMuro?>(null) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
 
+    // Para controlar la visibilidad del Modal
+    var showResultSheet by remember { mutableStateOf(false) }
+
     // Definimos los FocusRequesters necesarios
     val focusLargo = remember { FocusRequester() }
     val focusAlto = remember { FocusRequester() }
@@ -68,8 +75,8 @@ fun WallScreen() {
         modifier = Modifier
             .fillMaxSize()
             .clearFocusOnTap()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()), // Permite scrollear si el teclado tapa
+            .verticalScroll(rememberScrollState()) // Permite scrollear si el teclado tapa
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
@@ -211,8 +218,11 @@ fun WallScreen() {
         Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = {
-                val l = largoPared.toDoubleOrNull()
-                val h = altoPared.toDoubleOrNull()
+                // Escondemos el teclado
+                keyboardController?.hide()
+
+                val l = largoPared.toSafeDoubleOrNull()
+                val h = altoPared.toSafeDoubleOrNull()
 
                 if (areValidDimensions(l, h)) {
                     try {
@@ -223,11 +233,15 @@ fun WallScreen() {
                             aberturas = aberturas.toList() // Pasamos copia de la lista
                         )
                         errorMsg = null
+
+                        // Se abre el Modal
+                        showResultSheet = true
                     } catch (e: Exception) {
                         errorMsg = "Error en el cálculo: ${e.message}"
                     }
                 } else {
                     errorMsg = "Por favor, ingresa las dimensiones del muro mayores a 0."
+                    resultado = null
                 }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp)
@@ -240,8 +254,14 @@ fun WallScreen() {
         }
 
         // --- SECCIÓN 5: Resultados ---
-        if (resultado != null) {
-            AppResultCard {
+        if (showResultSheet && resultado != null) {
+            AppResultBottomSheet(
+                onDismissRequest = { showResultSheet = false },
+                onSave = { /* ... */ },
+                onEdit = { showResultSheet = false },
+                // MANTENEMOS TU PERSONALIZACIÓN DE COLOR
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            ) {
                 Text(
                     "Área Neta: ${resultado!!.areaNetaM2.roundToDecimals(2)} m²",
                     fontWeight = FontWeight.Bold,

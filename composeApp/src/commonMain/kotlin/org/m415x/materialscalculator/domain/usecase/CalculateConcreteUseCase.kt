@@ -7,7 +7,7 @@ import kotlin.math.ceil
 /**
  * Calcula los materiales para un volumen de hormigón.
  */
-class CalcularHormigonUseCase(private val repository: MaterialRepository) {
+class CalculateConcreteUseCase(private val repository: MaterialRepository) {
 
     // Función 'invoke' permite llamar a la clase como si fuera una función
     operator fun invoke(

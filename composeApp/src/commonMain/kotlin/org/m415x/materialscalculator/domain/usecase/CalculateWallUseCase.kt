@@ -2,12 +2,13 @@ package org.m415x.materialscalculator.domain.usecase
 
 import org.m415x.materialscalculator.domain.repository.MaterialRepository
 import org.m415x.materialscalculator.domain.model.*
+import org.m415x.materialscalculator.ui.common.roundToDecimals
 import kotlin.math.ceil
 
 /**
  * Calcula los materiales para un volumen de hormigón.
  */
-class CalcularMuroUseCase(private val repository: MaterialRepository) {
+class CalculateWallUseCase(private val repository: MaterialRepository) {
 
     // Función 'invoke' permite llamar a la clase como si fuera una función
     operator fun invoke(
@@ -27,9 +28,17 @@ class CalcularMuroUseCase(private val repository: MaterialRepository) {
             ?: throw IllegalArgumentException("Dosificación no encontrada")
 
         // 2. Calcular Áreas
-        val areaPared = largoMuroMetros * altoMuroMetros
+        val areaMuro = largoMuroMetros * altoMuroMetros
         val areaAberturas = aberturas.sumOf { it.anchoMetros * it.altoMetros }
-        val areaNeta = (areaPared - areaAberturas).coerceAtLeast(0.0)
+
+        if (areaAberturas >= areaMuro) {
+            // Lanzamos una excepción explicativa.
+            throw IllegalArgumentException(
+                "El área de las aberturas (${areaAberturas.roundToDecimals(2)} m²) es mayor o igual al área del muro (${areaMuro.roundToDecimals(2)} m²). Revisa las medidas."
+            )
+        }
+
+        val areaNeta = (areaMuro - areaAberturas).coerceAtLeast(0.0)
 
         // 3. Calcular Ladrillos por m2
         // Fórmula: 1 / ((Largo + Junta) * (Alto + Junta))

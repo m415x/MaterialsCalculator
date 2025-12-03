@@ -1,6 +1,11 @@
 package org.m415x.materialscalculator
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.*
@@ -11,15 +16,15 @@ import kotlinx.coroutines.launch
 import org.m415x.materialscalculator.ui.common.AppBottomBar
 import org.m415x.materialscalculator.ui.common.AppTopBar
 import org.m415x.materialscalculator.ui.common.KmpBackHandler
-import org.m415x.materialscalculator.ui.screens.concrete.ConcreteScreen
-import org.m415x.materialscalculator.ui.screens.home.HomeScreen
-import org.m415x.materialscalculator.ui.screens.navigation.BottomTab
-import org.m415x.materialscalculator.ui.screens.navigation.Screen
-import org.m415x.materialscalculator.ui.screens.saved.SavedScreen
-import org.m415x.materialscalculator.ui.screens.settings.SettingsScreen
-import org.m415x.materialscalculator.ui.screens.structure.StructureScreen
+import org.m415x.materialscalculator.ui.screen.concrete.ConcreteScreen
+import org.m415x.materialscalculator.ui.screen.home.HomeScreen
+import org.m415x.materialscalculator.ui.navigation.BottomTab
+import org.m415x.materialscalculator.ui.navigation.Screen
+import org.m415x.materialscalculator.ui.screen.saved.SavedScreen
+import org.m415x.materialscalculator.ui.screen.settings.SettingsScreen
+import org.m415x.materialscalculator.ui.screen.structure.StructureScreen
 import org.m415x.materialscalculator.ui.theme.AppTheme
-import org.m415x.materialscalculator.ui.screens.wall.WallScreen
+import org.m415x.materialscalculator.ui.screen.wall.WallScreen
 
 @Composable
 fun App() {
@@ -74,9 +79,11 @@ fun App() {
                     onBack = navigateBack
                 )
             },
+            contentWindowInsets = WindowInsets.systemBars, // Esto hace que el Scaffold (y la BottomBar) NO se muevan cuando sale el teclado.
             bottomBar = {
                 AppBottomBar(
                     currentTab = currentTab,
+//                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
                     onTabSelected = { newTab ->
                         // Al hacer click, lanzamos la animación del Pager
                         scope.launch {
@@ -96,7 +103,11 @@ fun App() {
         ) { paddingValues ->
             // Contenedor principal con el padding del Scaffold
             Surface(
-                modifier = Modifier.padding(paddingValues),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues) // Aplica padding de barras de sistema
+                    .consumeWindowInsets(paddingValues) // Buena práctica en M3
+                    .imePadding(), // Aplicamos el padding del teclado SOLO al contenido.
                 color = MaterialTheme.colorScheme.background
             ) {
                 HorizontalPager(

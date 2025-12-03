@@ -4,7 +4,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import org.m415x.materialscalculator.ui.screens.navigation.BottomTab
+import androidx.compose.ui.Modifier
+import org.m415x.materialscalculator.ui.navigation.BottomTab
 
 // --- TOP BAR REUTILIZABLE ---
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,9 +38,12 @@ fun AppTopBar(
 @Composable
 fun AppBottomBar(
     currentTab: BottomTab,
-    onTabSelected: (BottomTab) -> Unit
+    onTabSelected: (BottomTab) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    NavigationBar {
+    NavigationBar (
+        modifier = modifier,
+    ){
         BottomTab.entries.forEach { tab ->
             NavigationBarItem(
                 icon = { Icon(tab.icon, contentDescription = tab.title) },

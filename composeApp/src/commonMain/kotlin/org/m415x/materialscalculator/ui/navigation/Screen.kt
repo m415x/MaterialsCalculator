@@ -1,4 +1,4 @@
-package org.m415x.materialscalculator.ui.screens.navigation
+package org.m415x.materialscalculator.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Calculate
