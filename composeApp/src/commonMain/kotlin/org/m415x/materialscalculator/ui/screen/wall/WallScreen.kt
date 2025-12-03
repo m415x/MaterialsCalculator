@@ -108,7 +108,7 @@ fun WallScreen() {
             onExpandedChange = { expanded = !expanded }
         ) {
             AppInput(
-                value = selectedLadrillo.descripcion,
+                value = selectedLadrillo.nombre,
                 onValueChange = { },
                 label = "Tipo de Ladrillo/Bloque",
                 readOnly = true,
@@ -129,9 +129,41 @@ fun WallScreen() {
                 onDismissRequest = { expanded = false }
             ) {
                 TipoLadrillo.entries.forEach { tipo ->
+                    // 1. Buscamos las propiedades físicas en el repositorio
+                    val props = repository.getPropiedadesLadrillo(tipo)
+
+                    // 2. Formateamos el texto a Centímetros (CM)
+                    // Convertimos de metros a cm (* 100) y pasamos a Entero para quitar decimales
+                    val medidasTexto = if (props != null) {
+                        val ancho = (props.anchoMuro * 100).toInt()
+                        val alto = (props.altoUnidad * 100).toInt()
+                        val largo = (props.largoUnidad * 100).toInt()
+                        "($ancho x $alto x $largo cm)"
+                    } else {
+                        ""
+                    }
                     DropdownMenuItem(
-                        // text = { Text(text = formatLadrilloName(tipo)) },
-                        text = { Text(text = tipo.descripcion) },
+                        text = {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = tipo.nombre,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.weight(1f) // Ocupa todo el espacio disponible
+                                )
+                                if (medidasTexto.isNotEmpty()) {
+                                    Text(
+                                        text = medidasTexto,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(start = 8.dp) // Margen izquierdo para separar
+                                    )
+                                }
+                            }
+                        },
                         onClick = {
                             selectedLadrillo = tipo
                             expanded = false

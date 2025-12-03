@@ -235,7 +235,7 @@ fun StructureScreen() {
             CmInput(
                 value = separacionEstriboCm,
                 onValueChange = { separacionEstriboCm = it },
-                label = "Cada (cm)",
+                label = "Estribo cada (cm)",
                 modifier = Modifier.weight(0.5f),
                 focusRequester = focusSeparacionEstribos,      // "Yo soy focusSeparacionEstribos"
                 nextFocusRequester = focusEstribos

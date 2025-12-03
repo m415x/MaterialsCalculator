@@ -236,18 +236,32 @@ private val highContrastDarkColorScheme = darkColorScheme(
 
 @Composable
 fun AppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: ThemeMode = ThemeMode.System, // Cómo se debe comportar
+    contrastMode: ContrastMode = ContrastMode.Standard, // Contraste
     content: @Composable () -> Unit
 ) {
-    // Lógica simplificada para KMP: Solo Light o Dark
-    val colorScheme = if (darkTheme) darkScheme else lightScheme
+    // 1. Determinar el estado Dark/Light REAL
+    val actualDarkTheme = when (themeMode) {
+        ThemeMode.System -> isSystemInDarkTheme()
+        ThemeMode.Light -> false
+        ThemeMode.Dark -> true
+    }
 
-    // Llamamos a la función para obtener la tipografía con las fuentes cargadas
-    val typography = getAppTypography()
+    // 2. Seleccionar el esquema de colores basado en el modo y el contraste
+    val colorScheme = when {
+        // Modo Oscuro y Alto Contraste (para máxima legibilidad nocturna)
+        actualDarkTheme && contrastMode == ContrastMode.HighContrast -> highContrastDarkColorScheme
+        // Modo Oscuro estándar
+        actualDarkTheme -> darkScheme
+        // Modo Claro y Alto Contraste (ideal para exteriores y glare)
+        !actualDarkTheme && contrastMode == ContrastMode.HighContrast -> highContrastLightColorScheme
+        // Modo Claro estándar
+        else -> lightScheme
+    }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = typography,
+        typography = getAppTypography(),
         content = content
     )
 }

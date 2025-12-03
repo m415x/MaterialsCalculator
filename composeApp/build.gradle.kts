@@ -46,6 +46,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(compose.materialIconsExtended)
             implementation(compose.ui)
+            implementation("androidx.datastore:datastore-preferences:1.1.1")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -65,8 +66,8 @@ android {
         applicationId = "org.m415x.materialscalculator"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.0.0-beta.1"
     }
     packaging {
         resources {

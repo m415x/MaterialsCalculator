@@ -3,7 +3,7 @@ package org.m415x.materialscalculator.domain.model
 /**
  * Define los tipos de ladrillos que el usuario puede elegir.
  */
-enum class TipoLadrillo(val descripcion: String) {
+enum class TipoLadrillo(val nombre: String) {
     COMUN("Común"),             // 5x12x25 cm (aprox)
     LADRILLON("Ladrillón"),     // 18x12x25 cm
     CERAMICO_8("Cerámico 8"),   // 8x18x33 cm

@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.launch
 
+import org.m415x.materialscalculator.ui.theme.*
 import org.m415x.materialscalculator.ui.common.AppBottomBar
 import org.m415x.materialscalculator.ui.common.AppTopBar
 import org.m415x.materialscalculator.ui.common.KmpBackHandler
@@ -25,10 +26,22 @@ import org.m415x.materialscalculator.ui.screen.settings.SettingsScreen
 import org.m415x.materialscalculator.ui.screen.structure.StructureScreen
 import org.m415x.materialscalculator.ui.theme.AppTheme
 import org.m415x.materialscalculator.ui.screen.wall.WallScreen
+import org.m415x.materialscalculator.data.repository.SettingsRepository
 
 @Composable
-fun App() {
-    AppTheme {
+fun App(
+    // Recibe el repositorio (Inyección de Dependencias manual)
+    settingsRepository: SettingsRepository
+) {
+    // Leer el estado desde el repositorio (collectAsState)
+    // Usamos el valor inicial System/Standard mientras carga el dato real
+    val themeMode by settingsRepository.themeMode.collectAsState(initial = ThemeMode.System)
+    val contrastMode by settingsRepository.contrastMode.collectAsState(initial = ContrastMode.Standard)
+
+    // Scope para lanzar corrutinas de guardado
+    val scope = rememberCoroutineScope()
+
+    AppTheme(themeMode, contrastMode) {
         // 1. Estado del Pager (Controla el deslizamiento)
         // Le decimos que tenemos tantos "pasos" como tabs haya en el enum (3)
         val pagerState = rememberPagerState(pageCount = { BottomTab.entries.size })
@@ -83,7 +96,6 @@ fun App() {
             bottomBar = {
                 AppBottomBar(
                     currentTab = currentTab,
-//                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
                     onTabSelected = { newTab ->
                         // Al hacer click, lanzamos la animación del Pager
                         scope.launch {
@@ -140,7 +152,17 @@ fun App() {
 
                         BottomTab.SETTINGS -> {
                             // Pestaña 3
-                            SettingsScreen()
+                            SettingsScreen(
+                                currentTheme = themeMode,
+                                currentContrast = contrastMode,
+                                onThemeChange = { newMode ->
+                                    // GUARDAR EN BACKGROUND
+                                    scope.launch { settingsRepository.saveThemeMode(newMode) }
+                                },
+                                onContrastChange = { newMode ->
+                                    scope.launch { settingsRepository.saveContrastMode(newMode) }
+                                }
+                            )
                         }
                     }
                 }
