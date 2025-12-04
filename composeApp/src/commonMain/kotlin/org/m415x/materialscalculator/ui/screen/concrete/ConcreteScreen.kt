@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import kotlinx.coroutines.delay
 
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
 import org.m415x.materialscalculator.domain.model.TipoHormigon
@@ -55,9 +56,17 @@ fun ConcreteScreen() {
     var showResultSheet by remember { mutableStateOf(false) }
 
     // Definimos los FocusRequesters necesarios
+    val focusAncho = remember { FocusRequester() }
     val focusLargo = remember { FocusRequester() }
     val focusEspesor = remember { FocusRequester() }
     val focusResistencia = remember { FocusRequester() }
+
+    // Auto-Foco al abrir
+    // LaunchedEffect(Unit) se ejecuta una sola vez cuando el componente entra en pantalla.
+    LaunchedEffect(Unit) {
+        delay(100)
+        focusAncho.requestFocus()
+    }
 
     Column(
         modifier = Modifier
@@ -76,6 +85,7 @@ fun ConcreteScreen() {
             onValueChange = { ancho = it },
             label = "Ancho (m)",
             modifier = Modifier.fillMaxWidth(),
+            focusRequester = focusAncho,      // "Yo soy focusLargo"
             nextFocusRequester = focusLargo
         )
 
@@ -133,10 +143,10 @@ fun ConcreteScreen() {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    Text(text = tipo.name, style = MaterialTheme.typography.bodyLarge)
-                                    Text(text = " - ${tipo.endurance}", style = MaterialTheme.typography.bodySmall)
+                                    Text(text = tipo.name, style = MaterialTheme.typography.titleMedium)
+                                    Text(text = " - ${tipo.uses}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                Text(text = tipo.uses, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(text = "(${tipo.endurance})", style = MaterialTheme.typography.labelSmall)
                             }
                         },
                         onClick = {
@@ -195,9 +205,7 @@ fun ConcreteScreen() {
             AppResultBottomSheet(
                 onDismissRequest = { showResultSheet = false },
                 onSave = { /* ... */ },
-                onEdit = { showResultSheet = false },
-                // MANTENEMOS TU PERSONALIZACIÓN DE COLOR
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                onEdit = { showResultSheet = false }
             ) {
                 Text(
                     "Volumen Total (${resultado!!.volumenTotalM3.roundToDecimals(2)} m³)",

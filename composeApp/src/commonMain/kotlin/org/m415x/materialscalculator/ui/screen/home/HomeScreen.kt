@@ -7,11 +7,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Build // Usaremos íconos genéricos por ahora
+import androidx.compose.material.icons.filled.FormatPaint
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+
 import org.m415x.materialscalculator.ui.common.MenuCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -19,7 +21,8 @@ import org.m415x.materialscalculator.ui.common.MenuCard
 fun HomeScreen(
     onConcreteClick: () -> Unit,
     onWallClick: () -> Unit,
-    onStructureClick: () -> Unit // Callback para navegar
+    onStructureClick: () -> Unit,
+    onPlasterClick: () -> Unit
 ) {
 
     Column(
@@ -39,7 +42,7 @@ fun HomeScreen(
         MenuCard(
             title = "Hormigón / Concreto",
             description = "Losas, contrapisos y carpetas.",
-            icon = Icons.Default.Menu, // Puedes buscar íconos más específicos luego
+            icon = Icons.Default.Menu,
             onClick = onConcreteClick
         )
 
@@ -57,6 +60,14 @@ fun HomeScreen(
             description = "Vigas y columnas. \nCálculo de hormigón.",
             icon = Icons.Default.Build,
             onClick = onStructureClick
+        )
+
+        // 4. Botón Revoques (enlucidos)
+        MenuCard(
+            title = "Revoques / Enlucidos",
+            description = "Calcula grueso y fino para tus paredes.",
+            icon = Icons.Default.FormatPaint,
+            onClick = onPlasterClick
         )
     }
 }

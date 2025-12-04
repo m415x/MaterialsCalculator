@@ -2,9 +2,14 @@ package org.m415x.materialscalculator.ui.common
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -192,5 +197,41 @@ fun CmInput(
             onNext = { nextFocusRequester?.requestFocus() },
             onDone = { onDone?.invoke() }
         )
+    )
+}
+
+/**
+ * Diálogo de confirmación genérico.
+ * Úsalo para borrar ítems o acciones irreversibles.
+ */
+@Composable
+fun AppConfirmDialog(
+    title: String = "Confirmar eliminación",
+    text: String = "¿Estás seguro? Esta acción no se puede deshacer.",
+    confirmText: String = "Eliminar",
+    dismissText: String = "Cancelar",
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Text(text) },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error, // Rojo de alerta
+                    contentColor = MaterialTheme.colorScheme.onError
+                )
+            ) {
+                Text(confirmText)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(dismissText)
+            }
+        }
     )
 }

@@ -1,5 +1,6 @@
 package org.m415x.materialscalculator.ui.screen.wall
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -16,12 +17,15 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow.Companion.Ellipsis
+import kotlinx.coroutines.delay
 
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
 import org.m415x.materialscalculator.domain.model.Abertura
 import org.m415x.materialscalculator.domain.model.ResultadoMuro
 import org.m415x.materialscalculator.domain.model.TipoLadrillo
 import org.m415x.materialscalculator.domain.usecase.CalculateWallUseCase
+import org.m415x.materialscalculator.ui.common.AppConfirmDialog
 import org.m415x.materialscalculator.ui.common.AppInput
 import org.m415x.materialscalculator.ui.common.AppResultBottomSheet
 import org.m415x.materialscalculator.ui.common.NumericInput
@@ -53,6 +57,12 @@ fun WallScreen() {
     // Usamos mutableStateList para que Compose reaccione cuando agregamos/borramos
     val aberturas = remember { mutableStateListOf<Abertura>() }
 
+    // Guarda el índice del ítem que se quiere borrar. Si es null, no hay diálogo.
+    var indexToDelete by remember { mutableStateOf<Int?>(null) }
+
+    // Variable para saber qué abertura estamos editando (null = ninguna)
+    var editingIndex by remember { mutableStateOf<Int?>(null) }
+
     // Estado Inputs Temporales para nueva abertura
     var anchoAberturaInput by remember { mutableStateOf("") }
     var altoAberturaInput by remember { mutableStateOf("") }
@@ -70,6 +80,13 @@ fun WallScreen() {
     val focusTipoLadrillo = remember { FocusRequester() }
     val focusAnchoAbertura = remember { FocusRequester() }
     val focusAltoAbertura = remember { FocusRequester() }
+
+    // Auto-Foco al abrir
+    // LaunchedEffect(Unit) se ejecuta una sola vez cuando el componente entra en pantalla.
+    LaunchedEffect(Unit) {
+        delay(100)
+        focusLargo.requestFocus()
+    }
 
     Column(
         modifier = Modifier
@@ -207,7 +224,14 @@ fun WallScreen() {
                     val w = anchoAberturaInput.toSafeDoubleOrNull()
                     val h = altoAberturaInput.toSafeDoubleOrNull()
                     if (areValidDimensions(w, h)) {
-                        aberturas.add(Abertura(w!!, h!!))
+                        // LÓGICA DE CREACIÓN POR DEFECTO
+                        val nuevoNombre = "Abertura ${aberturas.size + 1}"
+                        aberturas.add(Abertura(
+                            anchoMetros = w!!,
+                            altoMetros = h!!,
+                            cantidad = 1,
+                            nombre = nuevoNombre
+                        ))
                         // Limpiar inputs
                         anchoAberturaInput = ""
                         altoAberturaInput = ""
@@ -228,13 +252,45 @@ fun WallScreen() {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 4.dp, horizontal = 8.dp),
+                                .clickable { editingIndex = index } // CLICK PARA EDITAR
+                                .padding(vertical = 8.dp, horizontal = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Abertura ${index + 1}: ${abertura.anchoMetros}m x ${abertura.altoMetros}m")
+                            // FORMATO: "1 x Abertura 1: 1.0m x 1.0m"
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Cantidad (en negrita o color destacado)
+                                Text(
+                                    text = "${abertura.cantidad} x ",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(end = 4.dp) // Separación pequeña
+                                )
+
+                                // Nombre y Medidas
+                                Column {
+                                    Text(
+                                        text = abertura.nombre,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        maxLines = 1, // Limitar líneas
+                                        overflow = Ellipsis // "Nombre larg..."
+                                    )
+                                    Text(
+                                        text = "${abertura.anchoMetros}m x ${abertura.altoMetros}m",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                             IconButton(
-                                onClick = { aberturas.removeAt(index) },
+                                onClick = {
+                                    // EN LUGAR DE BORRAR, ACTIVAMOS EL DIÁLOGO
+                                    indexToDelete = index
+                                },
                                 modifier = Modifier.size(24.dp)
                             ) {
                                 Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
@@ -244,6 +300,38 @@ fun WallScreen() {
                     }
                 }
             }
+        }
+
+        // 3. LOGICA DEL DIÁLOGO MODAL
+        if (editingIndex != null) {
+            val index = editingIndex!!
+            // Aseguramos que el índice sigue siendo válido
+            if (index in aberturas.indices) {
+                EditAberturaDialog(
+                    abertura = aberturas[index],
+                    onDismiss = { editingIndex = null },
+                    onConfirm = { nuevaAbertura ->
+                        aberturas[index] = nuevaAbertura // Actualizamos la lista
+                        editingIndex = null
+                    }
+                )
+            }
+        }
+
+        // LÓGICA DEL DIÁLOGO (Al final del Composable, fuera de los loops)
+        if (indexToDelete != null) {
+            AppConfirmDialog(
+                title = "Borrar Abertura",
+                text = "¿Seguro que quieres quitar '${aberturas[indexToDelete!!].nombre}' de la lista?",
+                onConfirm = {
+                    // AQUÍ SÍ BORRAMOS
+                    aberturas.removeAt(indexToDelete!!)
+                    indexToDelete = null // Cerramos el diálogo
+                },
+                onDismiss = {
+                    indexToDelete = null // Solo cerramos, no pasó nada
+                }
+            )
         }
 
         // --- SECCIÓN 4: Botón Calcular ---
@@ -290,9 +378,7 @@ fun WallScreen() {
             AppResultBottomSheet(
                 onDismissRequest = { showResultSheet = false },
                 onSave = { /* ... */ },
-                onEdit = { showResultSheet = false },
-                // MANTENEMOS TU PERSONALIZACIÓN DE COLOR
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                onEdit = { showResultSheet = false }
             ) {
                 Text(
                     "Área Neta: ${resultado!!.areaNetaM2.roundToDecimals(2)} m²",
@@ -302,13 +388,13 @@ fun WallScreen() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                ResultRow(label = "Ladrillos", value = "${resultado!!.cantidadLadrillos} u.")
+                ResultRow(label = "Ladrillos", value = "${resultado!!.cantidadLadrillos} U")
                 Text("(Incluye 5% desperdicio)", style = MaterialTheme.typography.bodySmall)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    "Mezcla (${resultado!!.morteroM3.roundToDecimals(2)} m³)",
+                    "Mortero (${resultado!!.morteroM3.roundToDecimals(2)} m³)",
                     fontWeight = FontWeight.Bold
                 )
                 Text("(Incluye 15% desperdicio)", style = MaterialTheme.typography.bodySmall)

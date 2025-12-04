@@ -5,20 +5,6 @@ import org.m415x.materialscalculator.domain.model.*
 
 class StaticMaterialRepository : MaterialRepository {
 
-    // Base de datos de mezclas (Valores estándar por m3 de mortero)
-    private val mezclaCalReforzada = DosificacionMortero(
-        cementoKg = 210.0,
-        calKg = 150.0,
-        arenaM3 = 1.0,
-        relacionAguaCemento = 0.6
-    ) // 1:3 (+cemento)
-    private val mezclaCementoArena = DosificacionMortero(
-        cementoKg = 350.0,
-        calKg = 0.0,
-        arenaM3 = 1.1,
-        relacionAguaCemento = 0.5
-    )   // 1:3 (Para bloques)
-
     /**
      * Base de datos interna de dosificaciones de hormigones.
      * Aquí es donde "guardamos" las tablas que buscamos.
@@ -148,6 +134,38 @@ class StaticMaterialRepository : MaterialRepository {
         DiametroHierro.HIERRO_16 to 1.580
     )
 
+    // Base de datos de mezclas (Valores estándar por m3 de mortero)
+    private val mezclaCalReforzada = DosificacionMortero(
+        cementoKg = 210.0,
+        calKg = 150.0,
+        arenaM3 = 1.0,
+        relacionAguaCemento = 0.6
+    ) // 1:3 (+cemento)
+
+    private val mezclaCementoArena = DosificacionMortero(
+        cementoKg = 350.0,
+        calKg = 0.0,
+        arenaM3 = 1.1,
+        relacionAguaCemento = 0.5
+    )   // 1:3 (Para bloques)
+
+    // Dosificación para 1 m3 de Revoque Grueso (1/4 Cemento : 1 Cal : 3 Arena)
+    // Rendimiento estimado con desperdicio estándar
+    private val recetaGrueso = DosificacionMortero(
+        cementoKg = 75.0,  // Aprox 3 bolsas por m3 (es una mezcla "bastarda", lleva menos cemento que un concreto)
+        calKg = 160.0,     // Mucha cal para plasticidad
+        arenaM3 = 1.1,      // Arena común
+        relacionAguaCemento = 0.6
+    )
+
+    // Dosificación para 1 m3 de Revoque Fino Tradicional (1/8 Cemento : 1 Aérea : 2 Arena Fina)
+    private val recetaFino = DosificacionMortero(
+        cementoKg = 30.0,  // Muy poco, solo para ligar
+        calKg = 250.0,     // Pura cal aérea
+        arenaM3 = 1.0,      // Arena fina (voladora)
+        relacionAguaCemento = 0.5
+    )
+
     override fun getDosificacionHormigon(tipo: TipoHormigon) = hormigonDB[tipo]
 
     override fun getPropiedadesLadrillo(tipo: TipoLadrillo) = ladrilloDB[tipo]
@@ -164,4 +182,7 @@ class StaticMaterialRepository : MaterialRepository {
     override fun getPesoHierroPorMetro(diametro: DiametroHierro): Double {
         return pesosHierro[diametro] ?: 0.0
     }
+
+    fun getRecetaGrueso() = recetaGrueso
+    fun getRecetaFino() = recetaFino
 }

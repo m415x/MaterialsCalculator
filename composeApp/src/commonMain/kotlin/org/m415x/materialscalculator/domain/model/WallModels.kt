@@ -30,7 +30,9 @@ data class PropiedadesLadrillo(
  */
 data class Abertura(
     val anchoMetros: Double,
-    val altoMetros: Double
+    val altoMetros: Double,
+    val cantidad: Int = 1,          // Por defecto 1
+    val nombre: String = "Abertura" // Nombre descriptivo
 )
 
 /**

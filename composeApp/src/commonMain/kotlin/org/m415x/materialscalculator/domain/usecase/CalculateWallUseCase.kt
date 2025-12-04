@@ -29,7 +29,11 @@ class CalculateWallUseCase(private val repository: MaterialRepository) {
 
         // 2. Calcular Áreas
         val areaMuro = largoMuroMetros * altoMuroMetros
-        val areaAberturas = aberturas.sumOf { it.anchoMetros * it.altoMetros }
+
+        // Multiplicar por la cantidad de cada ítem
+        val areaAberturas = aberturas.sumOf {
+            it.anchoMetros * it.altoMetros * it.cantidad
+        }
 
         if (areaAberturas >= areaMuro) {
             // Lanzamos una excepción explicativa.

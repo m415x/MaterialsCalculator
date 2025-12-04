@@ -27,6 +27,7 @@ import org.m415x.materialscalculator.ui.screen.structure.StructureScreen
 import org.m415x.materialscalculator.ui.theme.AppTheme
 import org.m415x.materialscalculator.ui.screen.wall.WallScreen
 import org.m415x.materialscalculator.data.repository.SettingsRepository
+import org.m415x.materialscalculator.ui.screen.plaster.PlasterScreen
 
 @Composable
 fun App(
@@ -136,11 +137,13 @@ fun App(
                                 is Screen.Home -> HomeScreen(
                                     onConcreteClick = { calculatorStack.add(Screen.Hormigon) },
                                     onWallClick = { calculatorStack.add(Screen.Muro) },
-                                    onStructureClick = { calculatorStack.add(Screen.Estructura) }
+                                    onStructureClick = { calculatorStack.add(Screen.Estructura) },
+                                    onPlasterClick = { calculatorStack.add(Screen.Revoque) }
                                 )
                                 is Screen.Hormigon -> ConcreteScreen()
                                 is Screen.Muro -> WallScreen()
                                 is Screen.Estructura -> StructureScreen()
+                                is Screen.Revoque -> PlasterScreen()
                                 else -> {}
                             }
                         }

@@ -13,6 +13,7 @@ sealed class Screen(val title: String, val showBackButton: Boolean) {
     data object Hormigon : Screen("Hormigón", true)
     data object Muro : Screen("Muros", true)
     data object Estructura : Screen("Armaduras", true)
+    data object Revoque : Screen("Revoque", true)
 
     // Pantallas de las otras secciones (Son raíces, no tienen back button)
     data object Guardados : Screen("Cálculos Guardados", false)

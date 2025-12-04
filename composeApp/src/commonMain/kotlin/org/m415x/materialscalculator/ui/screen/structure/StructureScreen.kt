@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
 import org.m415x.materialscalculator.domain.model.DiametroHierro
@@ -79,6 +80,13 @@ fun StructureScreen() {
     val focusHierroPrincipal = remember { FocusRequester() }
     val focusSeparacionEstribos = remember { FocusRequester() }
     val focusEstribos = remember { FocusRequester() }
+
+    // Auto-Foco al abrir
+    // LaunchedEffect(Unit) se ejecuta una sola vez cuando el componente entra en pantalla.
+    LaunchedEffect(Unit) {
+        delay(100)
+        focusLadoA.requestFocus()
+    }
 
     Column(
         modifier = Modifier
@@ -165,9 +173,11 @@ fun StructureScreen() {
                     DropdownMenuItem(
                         text = {
                             // 3. Diseño mejorado: Nombre en negrita + Uso pequeño abajo
-                            Column {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
                                 Text(text = tipo.name, style = MaterialTheme.typography.titleMedium)
-                                Text(text = tipo.uses, style = MaterialTheme.typography.bodySmall)
+                                Text(text = " - ${tipo.uses}", style = MaterialTheme.typography.bodySmall)
                             }
                         },
                         onClick = { selectedHormigon = tipo; expandedHormigon = false }
@@ -235,7 +245,7 @@ fun StructureScreen() {
             CmInput(
                 value = separacionEstriboCm,
                 onValueChange = { separacionEstriboCm = it },
-                label = "Estribo cada (cm)",
+                label = "Estribo cada (m)",
                 modifier = Modifier.weight(0.5f),
                 focusRequester = focusSeparacionEstribos,      // "Yo soy focusSeparacionEstribos"
                 nextFocusRequester = focusEstribos
@@ -330,9 +340,7 @@ fun StructureScreen() {
             AppResultBottomSheet(
                 onDismissRequest = { showResultSheet = false },
                 onSave = { /* ... */ },
-                onEdit = { showResultSheet = false },
-                // MANTENEMOS TU PERSONALIZACIÓN DE COLOR
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                onEdit = { showResultSheet = false }
             ) {
                 // Sección Hormigón
                 Text(

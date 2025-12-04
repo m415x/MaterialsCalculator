@@ -46,7 +46,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(compose.materialIconsExtended)
             implementation(compose.ui)
-            implementation("androidx.datastore:datastore-preferences:1.1.1")
+            implementation(libs.androidx.datastore.preferences)
+            implementation(libs.androidx.material.icons.extended)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
