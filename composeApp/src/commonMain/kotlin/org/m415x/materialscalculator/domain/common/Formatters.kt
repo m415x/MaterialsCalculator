@@ -49,9 +49,9 @@ fun ResultadoHormigon.toShareText(
         
         *DETALLE DE OBRA*
         -------------------------
-        *Dimensiones:* ${ancho}m x ${largo}m
-        *Espesor:* ${espesor.metersToCm}cm
-        *Volumen Total:* ${volumenTotalM3.roundToDecimals(2)}m³
+        *Dimensiones:* $ancho x $largo m
+        *Espesor:* ${espesor.metersToCm} cm
+        *Volumen Total:* ${volumenTotalM3.roundToDecimals(2)} m³
         
         *Hormigón:* ${tipoHormigon.name} (${tipoHormigon.resistencia})
             └ ${tipoHormigon.usos}
@@ -59,11 +59,11 @@ fun ResultadoHormigon.toShareText(
         
         *MATERIALES ESTIMADOS*
         -------------------------
-        • Cemento: ${cementoKg.roundToDecimals(1)}kg
-            └ aprox. ${cementoKg.toPresentacion(bolsaCementoKg)} (${bolsaCementoKg}kg)
-        • Arena: ${arenaM3.roundToDecimals(2)}m³
-        • Piedra/Grava: ${piedraM3.roundToDecimals(2)}m³
-        • Agua: ${aguaLitros.roundToDecimals(1)}Lt
+        • Cemento: ${cementoKg.roundToDecimals(1)} kg
+            └ aprox. ${cementoKg.toPresentacion(bolsaCementoKg)} (${bolsaCementoKg} kg)
+        • Arena: ${arenaM3.roundToDecimals(2)} m³
+        • Piedra/Grava: ${piedraM3.roundToDecimals(2)} m³
+        • Agua: ${aguaLitros.roundToDecimals(1)} Lt
         
         *Proporción estimada:* 
         $dosificacionMezcla
@@ -99,7 +99,7 @@ fun ResultadoMuro.toShareText(
             "   (Sin aberturas)"
         } else {
             aberturas.joinToString("\n") { ab ->
-                "   • ${ab.cantidad} x ${ab.nombre}: ${ab.anchoMetros}m x ${ab.altoMetros}m"
+                "   • ${ab.cantidad} x ${ab.nombre}: ${ab.anchoMetros} x ${ab.altoMetros} m"
             }
         }
 
@@ -109,7 +109,7 @@ fun ResultadoMuro.toShareText(
         
         *DETALLE DE OBRA*
         -------------------------
-        *Dimensiones:* ${largo}m x ${alto}m
+        *Dimensiones:* $largo x $alto m
         *Ladrillo:* ${tipoLadrillo.nombre} 
             └ Dimensiones $detalleLadrillo
         
@@ -126,14 +126,14 @@ fun ResultadoMuro.toShareText(
         -------------------------
         *Ladrillos:* $cantidadLadrillos U
         
-        *Mortero (${morteroM3.roundToDecimals(2)}m³):*
+        *Mortero (${morteroM3.roundToDecimals(2)} m³):*
         
-        • Cemento: ${cementoKg.roundToDecimals(1)}kg
-            └ aprox. ${cementoKg.toPresentacion(bolsaCementoKg)} (${bolsaCementoKg}kg)
-        ${if (calKg > 0) "• Cal: ${calKg.roundToDecimals(1)}kg" else ""}
-        ${if (calKg > 0) "  └ aprox. ${calKg.toPresentacion(bolsaCalKg)} (${bolsaCalKg}kg)" else ""}
-        • Arena: ${arenaTotalM3.roundToDecimals(2)}m³
-        • Agua: ${aguaLitros.roundToDecimals(1)}Lt
+        • Cemento: ${cementoKg.roundToDecimals(1)} kg
+            └ aprox. ${cementoKg.toPresentacion(bolsaCementoKg)} (${bolsaCementoKg} kg)
+        ${if (calKg > 0) "• Cal: ${calKg.roundToDecimals(1)} kg" else ""}
+        ${if (calKg > 0) "  └ aprox. ${calKg.toPresentacion(bolsaCalKg)} (${bolsaCalKg} kg)" else ""}
+        • Arena: ${arenaTotalM3.roundToDecimals(2)} m³
+        • Agua: ${aguaLitros.roundToDecimals(1)} Lt
         
         *Proporción estimada:* 
         $proporcionMezcla
@@ -164,9 +164,9 @@ fun ResultadoEstructura.toShareText(
     // 1. Definimos la geometría para el texto
     val detalleGeometria =
         if (isCircular) {
-            "Columna Circular: Ø ${ladoA}m"
+            "Columna Circular: Ø $ladoA m"
         } else {
-            "Rectangular: ${ladoA}m x ${ladoB}m"
+            "Rectangular: $ladoA x $ladoB m"
         }
     return """
         *CÁLCULO DE ARMADURA*
@@ -174,19 +174,19 @@ fun ResultadoEstructura.toShareText(
         
         *DETALLE DE OBRA*
         -------------------------
-        *Largo Total:* ${largo}m
+        *Largo Total:* $largo m
         $detalleGeometria
         
         
-        *1. HORMIGÓN (${volumenHormigonM3.roundToDecimals(2)}m³)*
+        *1. HORMIGÓN (${volumenHormigonM3.roundToDecimals(2)} m³)*
         -------------------------
         Tipo: ${tipoHormigon.name} (${tipoHormigon.resistencia})
             
-        • Cemento: ${cementoKg.roundToDecimals(1)}kg
-            └ aprox. ${cementoKg.toPresentacion(bolsaCementoKg)} (${bolsaCementoKg}kg)
-        • Arena: ${arenaM3.roundToDecimals(2)}m³
-        • Piedra: ${piedraM3.roundToDecimals(2)}m³
-        • Agua: ${aguaLitros.roundToDecimals(0)}Lt
+        • Cemento: ${cementoKg.roundToDecimals(1)} kg
+            └ aprox. ${cementoKg.toPresentacion(bolsaCementoKg)} (${bolsaCementoKg} kg)
+        • Arena: ${arenaM3.roundToDecimals(2)} m³
+        • Piedra: ${piedraM3.roundToDecimals(2)} m³
+        • Agua: ${aguaLitros.roundToDecimals(0)} Lt
         
         *Proporción estimada:* 
         $dosificacionHormigon
@@ -195,15 +195,15 @@ fun ResultadoEstructura.toShareText(
         *2. ARMADURA (HIERROS)*
         -------------------------
         *Principal (Longitudinal):*
-            Varillas: Ø ${diametroPrincipal.mm}mm
-            Total Peso: ${hierroPrincipalKg.roundToDecimals(1)}kg
-                *Comprar:* $cantidadHierroPrincipal barras de 12m
+            Varillas: Ø ${diametroPrincipal.mm} mm
+            Total Peso: ${hierroPrincipalKg.roundToDecimals(1)} kg
+                *Comprar:* $cantidadHierroPrincipal barras de 12 m
         
         *Estribos (Transversal):*
-            Hierro: Ø ${diametroEstribo.mm}mm
-            Separación: cada ${separacionEstribosCm.roundToDecimals(0)}cm
-            Total Peso: ${hierroEstribosKg.roundToDecimals(1)}kg
-                *Comprar:* $cantidadHierroEstribos barras de 12m
+            Hierro: Ø ${diametroEstribo.mm} mm
+            Separación: cada ${separacionEstribosCm.roundToDecimals(0)} cm
+            Total Peso: ${hierroEstribosKg.roundToDecimals(1)} kg
+                *Comprar:* $cantidadHierroEstribos barras de 12 m
         
         _________________________
         _Generado con ${APP_NAME}_
@@ -233,21 +233,21 @@ fun ResultadoRevoque.toShareText(
         
         *DETALLE DE OBRA*
         -------------------------
-        *Pared:* ${largo}m x ${alto}m
-        *Superficie Total:* ${areaTotalM2.roundToDecimals(2)}m²
+        *Pared:* $largo x $alto m
+        *Superficie Total:* ${areaTotalM2.roundToDecimals(2)} m²
         $detalleCaras
         
         
         *1. REVOQUE GRUESO (Jaharro)*
         -------------------------
-        *Espesor:* ${espesorGruesoMetros.metersToCm}cm
-        *Volumen:* ${volumenGruesoM3.roundToDecimals(2)}m³
+        *Espesor:* ${espesorGruesoMetros.metersToCm} cm
+        *Volumen:* ${volumenGruesoM3.roundToDecimals(2)} m³
         
-        • Cemento: ${gruesoCementoKg.roundToDecimals(1)}kg
-            └ aprox. ${gruesoCementoKg.toPresentacion(bolsaCementoKg)} (${bolsaCementoKg}kg)
-        • Cal Hidratada: ${gruesoCalKg.roundToDecimals(1)}kg
-            └ aprox. ${gruesoCalKg.toPresentacion(bolsaCalKg)} (${bolsaCalKg}kg)
-        • Arena Común: ${gruesoArenaM3.roundToDecimals(2)}m³
+        • Cemento: ${gruesoCementoKg.roundToDecimals(1)} kg
+            └ aprox. ${gruesoCementoKg.toPresentacion(bolsaCementoKg)} (${bolsaCementoKg} kg)
+        • Cal Hidratada: ${gruesoCalKg.roundToDecimals(1)} kg
+            └ aprox. ${gruesoCalKg.toPresentacion(bolsaCalKg)} (${bolsaCalKg} kg)
+        • Arena Común: ${gruesoArenaM3.roundToDecimals(2)} m³
         
         *Proporción estimada:* 
         $dosificacionGrueso
@@ -256,13 +256,13 @@ fun ResultadoRevoque.toShareText(
         *2. REVOQUE FINO (Enlucido)*
         -------------------------
         *Opción A*
-        • Premezcla: ${finoPremezclaKg.roundToDecimals(1)}kg
-            └ aprox. ${finoPremezclaKg.toPresentacion(bolsaFinoPremezclaKg)} (${bolsaFinoPremezclaKg}kg)
+        • Premezcla: ${finoPremezclaKg.roundToDecimals(1)} kg
+            └ aprox. ${finoPremezclaKg.toPresentacion(bolsaFinoPremezclaKg)} (${bolsaFinoPremezclaKg} kg)
         
         *Opción B (Tradicional: A la cal)*
-        • Cal Aérea: ${finoCalKg.roundToDecimals(1)}kg
-            └ aprox. ${finoCalKg.toPresentacion(bolsaCalKg)} (${bolsaCalKg}kg)
-        • Arena Fina: ${finoArenaM3.roundToDecimals(2)}m³
+        • Cal Aérea: ${finoCalKg.roundToDecimals(1)} kg
+            └ aprox. ${finoCalKg.toPresentacion(bolsaCalKg)} (${bolsaCalKg} kg)
+        • Arena Fina: ${finoArenaM3.roundToDecimals(2)} m³
         • Cemento: (Mínimo para ligar)
         
         Proporción estimada: 

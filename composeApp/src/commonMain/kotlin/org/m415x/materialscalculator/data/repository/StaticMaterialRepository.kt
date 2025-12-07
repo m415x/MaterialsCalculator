@@ -181,7 +181,7 @@ class StaticMaterialRepository : MaterialRepository {
         dosificacionMezcla = "1/4:1:3 (Cem:Cal:Arena)",
         cementoKg = 210.0,
         calKg = 150.0,
-        arenaM3 = 1.0,
+        arenaM3 = 1.05,
         relacionAgua = 0.6
     )
 
