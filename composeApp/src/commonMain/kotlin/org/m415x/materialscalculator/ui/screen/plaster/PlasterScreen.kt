@@ -10,13 +10,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
+import org.m415x.materialscalculator.domain.common.toPresentacion
+import org.m415x.materialscalculator.domain.common.toShareText
 import org.m415x.materialscalculator.domain.model.ResultadoRevoque
 import org.m415x.materialscalculator.domain.usecase.CalculatePlasterUseCase
 import org.m415x.materialscalculator.ui.common.*
+import kotlin.math.ceil
 
+/**
+ * Pantalla principal de la calculadora de revoques.
+ *
+ * @return Unit
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlasterScreen() {
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -26,13 +38,17 @@ fun PlasterScreen() {
     // Estados Inputs
     var largo by remember { mutableStateOf("") }
     var alto by remember { mutableStateOf("") }
-    var espesorGrueso by remember { mutableStateOf("2.0") } // Valor por defecto sugerido
+    var espesorGrueso by remember { mutableStateOf("0.02") } // Valor por defecto sugerido
     var ambasCaras by remember { mutableStateOf(false) } // Switch
 
     // Estados Resultados
     var resultado by remember { mutableStateOf<ResultadoRevoque?>(null) }
-    var showResultSheet by remember { mutableStateOf(false) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
+
+    // Para controlar la visibilidad del Modal
+    var showResultSheet by remember { mutableStateOf(false) }
+
+    val shareManager = remember { getShareManager() }
 
     // Focos
     val focusLargo = remember { FocusRequester() }
@@ -84,8 +100,8 @@ fun PlasterScreen() {
         CmInput(
             value = espesorGrueso,
             onValueChange = { espesorGrueso = it },
-            label = "Espesor Grueso (cm)",
-            placeholder = "2.00",
+            label = "Espesor Grueso (m)",
+            placeholder = "0.02",
             focusRequester = focusEspesor,
             onDone = { keyboardController?.hide() }
         )
@@ -123,8 +139,8 @@ fun PlasterScreen() {
                         resultado = calcularRevoque(
                             largoParedMetros = l!!,
                             altoParedMetros = a!!,
-                            espesorGruesoCm = e!!,
-                            aplicarEnAmbasCaras = ambasCaras
+                            espesorGruesoMetros = e!!,
+                            isAmbasCaras = ambasCaras
                         )
                         errorMsg = null
                         showResultSheet = true
@@ -150,41 +166,106 @@ fun PlasterScreen() {
         AppResultBottomSheet(
             onDismissRequest = { showResultSheet = false },
             onSave = { /* TODO */ },
-            onEdit = { showResultSheet = false }
+            onEdit = { showResultSheet = false },
+            onShare = {
+                val l = largo.toSafeDoubleOrNull() ?: 0.0
+                val a = alto.toSafeDoubleOrNull() ?: 0.0
+                // El input ya es "2.0" (cm), lo usaremos para mostrar
+                val e = espesorGrueso.toSafeDoubleOrNull() ?: 2.0
+
+                val texto = resultado!!.toShareText(
+                    largo = l,
+                    alto = a,
+                    espesorGruesoMetros = e,
+                    ambasCaras = ambasCaras
+                )
+
+                shareManager.shareText(texto)
+            }
         ) {
             PlasterResultContent(resultado!!)
         }
     }
 }
 
+/**
+ * Composable que muestra el contenido del resultado.
+ *
+ * @param res Resultado del cálculo.
+ */
 @Composable
 fun PlasterResultContent(res: ResultadoRevoque) {
-    Text("Superficie Total: ${res.areaTotalM2.roundToDecimals(2)} m²")
+    Text(
+        "Superficie Total: ${res.areaTotalM2.roundToDecimals(2)} m²",
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp
+    )
 
     Spacer(modifier = Modifier.height(16.dp))
 
     // Sección GRUESO
-    Text("1. Revoque Grueso (Jaharro)", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-    ResultRow("Cemento", "${res.gruesoCementoBolsas} bolsas (50kg)")
-    ResultRow("Cal Hidratada", "${res.gruesoCalBolsas} bolsas (25kg)")
-    ResultRow("Arena Común", "${res.gruesoArenaM3.roundToDecimals(2)} m³")
-
-    Spacer(modifier = Modifier.height(24.dp))
-
-    // Sección FINO
-    Text("2. Revoque Fino (Enlucido)", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-    Text("Opciones (Elige una):", style = MaterialTheme.typography.labelSmall)
-    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-    // Opción A
-    ResultRow("A) Bolsa Premezcla", "${res.finoPremezclaBolsas} bolsas (25kg)")
+    Text(
+        "1. Revoque Grueso (Jaharro)",
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp
+    )
+    Text(
+        "(Incluye ${(res.porcentajeDesperdicioGrueso * 100).toInt()}% desperdicio)",
+        style = MaterialTheme.typography.bodySmall
+    )
 
     Spacer(modifier = Modifier.height(8.dp))
-    Text("ó", style = MaterialTheme.typography.labelMedium, modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+
+    ResultRow(
+        "Cemento",
+        res.gruesoCementoKg.toPresentacion(res.bolsaCementoKg),
+    )
+
+    ResultRow(
+        "Cal Hidratada",
+        res.gruesoCalKg.toPresentacion(res.bolsaCalKg),
+    )
+
+    ResultRow(
+        "Arena Común",
+        "${res.gruesoArenaM3.roundToDecimals(2)} m³"
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // Sección FINO
+    Text(
+        "2. Revoque Fino (Enlucido)",
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp
+    )
+    Text(
+        "(Incluye ${(res.porcentajeDesperdicioFino * 100).toInt()}% desperdicio)",
+        style = MaterialTheme.typography.bodySmall
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Text("Elige una opción:", style = MaterialTheme.typography.labelLarge)
+
+    Spacer(modifier = Modifier.height(8.dp))
+    
+    // Opción A
+    ResultRow(
+        "A) Premezcla",
+        res.finoPremezclaKg.toPresentacion(res.bolsaFinoPremezclaKg)
+    )
+
     Spacer(modifier = Modifier.height(8.dp))
 
     // Opción B
-    ResultRow("B) Cal Aérea", "${res.finoCalBolsas} bolsas (25kg)")
-    ResultRow("   Arena Fina", "${res.finoArenaM3.roundToDecimals(2)} m³")
+    ResultRow(
+        "B) Cal Aérea",
+        res.finoCalKg.toPresentacion(res.bolsaCalKg)
+    )
+
+    ResultRow(
+        "   Arena Fina",
+        "${res.finoArenaM3.roundToDecimals(2)} m³"
+    )
 }

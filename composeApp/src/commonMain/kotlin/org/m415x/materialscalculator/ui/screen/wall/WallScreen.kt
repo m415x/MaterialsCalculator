@@ -21,6 +21,8 @@ import androidx.compose.ui.text.style.TextOverflow.Companion.Ellipsis
 import kotlinx.coroutines.delay
 
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
+import org.m415x.materialscalculator.domain.common.toPresentacion
+import org.m415x.materialscalculator.domain.common.toShareText
 import org.m415x.materialscalculator.domain.model.Abertura
 import org.m415x.materialscalculator.domain.model.ResultadoMuro
 import org.m415x.materialscalculator.domain.model.TipoLadrillo
@@ -32,9 +34,14 @@ import org.m415x.materialscalculator.ui.common.NumericInput
 import org.m415x.materialscalculator.ui.common.ResultRow
 import org.m415x.materialscalculator.ui.common.areValidDimensions
 import org.m415x.materialscalculator.ui.common.clearFocusOnTap
+import org.m415x.materialscalculator.ui.common.getShareManager
 import org.m415x.materialscalculator.ui.common.roundToDecimals
 import org.m415x.materialscalculator.ui.common.toSafeDoubleOrNull
+import kotlin.math.ceil
 
+/**
+ * Pantalla principal de la calculadora de muros.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WallScreen() {
@@ -73,6 +80,8 @@ fun WallScreen() {
 
     // Para controlar la visibilidad del Modal
     var showResultSheet by remember { mutableStateOf(false) }
+
+    val shareManager = remember { getShareManager() }
 
     // Definimos los FocusRequesters necesarios
     val focusLargo = remember { FocusRequester() }
@@ -155,7 +164,7 @@ fun WallScreen() {
                         val ancho = (props.anchoMuro * 100).toInt()
                         val alto = (props.altoUnidad * 100).toInt()
                         val largo = (props.largoUnidad * 100).toInt()
-                        "($ancho x $alto x $largo cm)"
+                        "(${ancho}x${alto}x${largo}cm)"
                     } else {
                         ""
                     }
@@ -378,42 +387,98 @@ fun WallScreen() {
             AppResultBottomSheet(
                 onDismissRequest = { showResultSheet = false },
                 onSave = { /* ... */ },
-                onEdit = { showResultSheet = false }
-            ) {
-                Text(
-                    "Área Neta: ${resultado!!.areaNetaM2.roundToDecimals(2)} m²",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
+                onEdit = { showResultSheet = false },
+                onShare = {
+                    // 1. Recuperamos el string de medidas del repo (igual que en el dropdown)
+                    val props = repository.getPropiedadesLadrillo(selectedLadrillo)
+                    val medidasTexto = if (props != null) {
+                        val ancho = (props.anchoMuro * 100).toInt()
+                        val largo = (props.largoUnidad * 100).toInt()
+                        val alto = (props.altoUnidad * 100).toInt()
+                        "($ancho x $largo x $alto cm)"
+                    } else ""
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    // 2. Generamos el texto formateado
+                    val textoCompartir = resultado!!.toShareText(
+                        largo = largoPared.toSafeDoubleOrNull() ?: 0.0,
+                        alto = altoPared.toSafeDoubleOrNull() ?: 0.0,
+                        tipoLadrillo = selectedLadrillo,
+                        detalleLadrillo = medidasTexto,
+                        aberturas = aberturas.toList()
+                    )
 
-                ResultRow(label = "Ladrillos", value = "${resultado!!.cantidadLadrillos} U")
-                Text("(Incluye 5% desperdicio)", style = MaterialTheme.typography.bodySmall)
+                    // 2. Elegimos qué hacer (Texto o PDF)
+                    // Por ahora lanzamos directo texto para probar,
+                    // luego podrías poner un dialoguito "¿PDF o Texto?"
+                    shareManager.shareText(textoCompartir)
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    "Mortero (${resultado!!.morteroM3.roundToDecimals(2)} m³)",
-                    fontWeight = FontWeight.Bold
-                )
-                Text("(Incluye 15% desperdicio)", style = MaterialTheme.typography.bodySmall)
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                ResultRow(
-                    label = "Cemento",
-                    value = "${resultado!!.cementoBolsas} bolsa${if (resultado!!.cementoBolsas == 1) "" else "s"}"
-                )
-
-                if (resultado!!.calBolsas > 0) {
-                    ResultRow(label = "Cal", value = "${resultado!!.calBolsas} bolsas")
+                    // O probar PDF:
+                    // shareManager.generateAndSharePdf("Resultado Muro", textoCompartir)
                 }
-
-                ResultRow(label = "Arena", value = "${resultado!!.arenaTotalM3.roundToDecimals(2)} m³")
-
-                ResultRow(label = "Agua", value = "${resultado!!.aguaLitros.roundToDecimals(1)} L")
+            ) {
+                WallResultContent(resultado!!)
             }
         }
     }
+}
+
+/**
+ * Componente que muestra el contenido del resultado.
+ *
+ * @param res Resultado del cálculo.
+ */
+@Composable
+fun WallResultContent(res: ResultadoMuro) {
+    Text(
+        "Área Neta: ${res.areaNetaM2.roundToDecimals(2)} m²",
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    ResultRow(
+        label = "Ladrillos",
+        value = "${res.cantidadLadrillos} U"
+    )
+    Text(
+        "(Incluye ${(res.porcentajeDesperdicioLadrillos * 100).toInt()}% desperdicio)",
+        style = MaterialTheme.typography.bodySmall
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Text(
+        "Mortero (${res.morteroM3.roundToDecimals(2)} m³)",
+        fontWeight = FontWeight.Bold
+    )
+    Text(
+        "(Incluye ${(res.porcentajeDesperdicioMortero * 100).toInt()}% desperdicio)",
+        style = MaterialTheme.typography.bodySmall
+    )
+
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    ResultRow(
+        label = "Cemento",
+        value = res.cementoKg.toPresentacion(res.bolsaCementoKg)
+    )
+
+    if (res.calKg > 0) {
+        ResultRow(
+            label = "Cal",
+            value = res.calKg.toPresentacion(res.bolsaCalKg)
+        )
+    }
+
+    ResultRow(
+        label = "Arena",
+        value = "${res.arenaTotalM3.roundToDecimals(2)} m³"
+    )
+
+    ResultRow(
+        label = "Agua",
+        value = "${res.aguaLitros.roundToDecimals(1)} Lt"
+    )
 }

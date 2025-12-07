@@ -1,45 +1,63 @@
 package org.m415x.materialscalculator.domain.usecase
 
+import org.m415x.materialscalculator.domain.common.WasteRegistry
+import org.m415x.materialscalculator.domain.common.calculateWetMaterials
 import org.m415x.materialscalculator.domain.repository.MaterialRepository
 import org.m415x.materialscalculator.domain.model.*
-import kotlin.math.ceil
 
 /**
  * Calcula los materiales para un volumen de hormigón.
+ *
+ * @param repository Repositorio de materiales.
  */
 class CalculateConcreteUseCase(private val repository: MaterialRepository) {
 
-    // Función 'invoke' permite llamar a la clase como si fuera una función
+    /**
+     * Calcula los materiales para un volumen de hormigón.
+     *
+     * @param anchoMetros Ancho en metros.
+     * @param largoMetros Largo en metros.
+     * @param espesorMetros Espesor en metros.
+     * @param tipo Tipo de hormigón.
+     * @param pesoBolsaCementoKg Peso de la bolsa de cemento en kg.
+     * @return Resultado del cálculo.
+     */
     operator fun invoke(
         anchoMetros: Double,
         largoMetros: Double,
         espesorMetros: Double,
         tipo: TipoHormigon,
-        pesoBolsaCementoKg: Double = 25.0 // Asumimos bolsas de 25kg
+        pesoBolsaCementoKg: Int = 25
     ): ResultadoHormigon {
 
-        val dosificacion = repository.getDosificacionHormigon(tipo)
+        // 1. Geometría (Esta es la única responsabilidad única de este UseCase)
+        val volumenGeometrico = anchoMetros * largoMetros * espesorMetros
+
+        // 2. Datos
+        val receta = repository.getDosificacionHormigon(tipo)
             ?: throw IllegalArgumentException("Tipo no soportado")
 
-        // val volumen = ancho * alto * espesor
-        val volumen = anchoMetros * largoMetros * espesorMetros
+        // 3. Obtenemos desperdicio centralizado
+        val desperdicio = WasteRegistry.getForConcrete(tipo)
 
-        val cementoTotalKg = volumen * dosificacion.cementoKg
-        val arenaTotalM3 = volumen * dosificacion.arenaM3
-        val piedraTotalM3 = volumen * dosificacion.piedraM3
-        val aguaTotalLitros = cementoTotalKg * dosificacion.relacionAguaCemento
+        // 4. El motor hace el cálculo
+        val mats = calculateWetMaterials(
+            volumenM3 = volumenGeometrico,
+            receta = receta,
+            desperdicio = desperdicio,
+            pesoBolsaCemento = pesoBolsaCementoKg
+        )
 
-        // 4. Calcular bolsas de cemento (redondeando hacia arriba)
-        val bolsasDeCemento = ceil(cementoTotalKg / pesoBolsaCementoKg).toInt()
-
-        // 5. Devolver el resultado empaquetado
+        // 5. Mapeo al resultado final
         return ResultadoHormigon(
-            volumenTotalM3 = volumen,
-            cementoBolsas = bolsasDeCemento,
-            cementoKg = cementoTotalKg,
-            arenaM3 = arenaTotalM3,
-            piedraM3 = piedraTotalM3,
-            aguaLitros = aguaTotalLitros
+            volumenTotalM3 = volumenGeometrico * (1 + desperdicio),
+            cementoKg = mats.cementoKg,
+            arenaM3 = mats.arenaM3,
+            piedraM3 = mats.piedraM3,
+            aguaLitros = mats.aguaLitros,
+            bolsaCementoKg = pesoBolsaCementoKg,
+            porcentajeDesperdicioHormigon = desperdicio,
+            dosificacionMezcla = receta.dosificacionMezcla
         )
     }
 }

@@ -6,8 +6,13 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
-// 1. Pantallas de la Navegación (Stack)
-// Añadimos propiedades para configurar la TopBar automáticamente
+/**
+ * Enumeración que representa las pantallas de la aplicación.
+ * Cada pantalla tiene un título y un indicador de si debe mostrar el botón de regreso.
+ *
+ * @property title Título de la pantalla.
+ * @property showBackButton Indicador de si debe mostrar el botón de regreso.
+ */
 sealed class Screen(val title: String, val showBackButton: Boolean) {
     data object Home : Screen("Calculadora de Materiales", false)
     data object Hormigon : Screen("Hormigón", true)
@@ -20,7 +25,14 @@ sealed class Screen(val title: String, val showBackButton: Boolean) {
     data object Configuracion : Screen("Configuración", false)
 }
 
-// 2. Secciones del Menú Inferior (Bottom Bar)
+/**
+ * Enumeración que representa las secciones del menú inferior.
+ * Cada sección tiene un título, un icono y una pantalla asociada.
+ *
+ * @property title Título de la sección.
+ * @property icon Icono de la sección.
+ * @property screen Pantalla asociada a la sección.
+ */
 enum class BottomTab(
     val title: String,
     val icon: ImageVector,

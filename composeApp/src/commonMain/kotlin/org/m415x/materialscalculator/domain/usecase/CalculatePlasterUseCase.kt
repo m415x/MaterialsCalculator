@@ -1,60 +1,116 @@
 package org.m415x.materialscalculator.domain.usecase
 
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
-import org.m415x.materialscalculator.domain.common.cmToMeters
+import org.m415x.materialscalculator.domain.common.WasteRegistry
+import org.m415x.materialscalculator.domain.common.calculateWetMaterials
 import org.m415x.materialscalculator.domain.model.ResultadoRevoque
-import kotlin.math.ceil
+import kotlin.Double
 
+/**
+ * Calcula los materiales para un volumen de hormigón.
+ *
+ * @param repository Repositorio de materiales.
+ */
 class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) {
 
+    /**
+     * Calcula los materiales para un volumen de hormigón.
+     *
+     * @param largoParedMetros Largo de la pared en metros.
+     * @param altoParedMetros Alto de la pared en metros.
+     * @param espesorGruesoMetros Espesor del revoque grueso en metros.
+     * @param espesorFinoMetros Espesor del revoque fino en metros.
+     * @param isAmbasCaras Indica si se calcula para ambas caras.
+     * @param bolsaCementoKg Peso de la bolsa de cemento en kg.
+     * @param bolsaCalKg Peso de la bolsa de cal en kg.
+     * @param bolsaFinoPremezclaKg Peso de la bolsa de fino premezcla en kg.
+     * @return Resultado del cálculo.
+     */
     operator fun invoke(
         largoParedMetros: Double,
         altoParedMetros: Double,
-        espesorGruesoCm: Double, // Input en cm (default 2.0 en UI)
-        aplicarEnAmbasCaras: Boolean
+        espesorGruesoMetros: Double,
+        espesorFinoMetros: Double = 0.003,
+        isAmbasCaras: Boolean,
+        bolsaCementoKg: Int = 25,
+        bolsaCalKg: Int = 25,
+        bolsaFinoPremezclaKg: Int = 25
     ): ResultadoRevoque {
 
-        // 1. Calcular Superficie
+        // 1. Geometría Base
         val superficieBase = largoParedMetros * altoParedMetros
-        val superficieTotal = if (aplicarEnAmbasCaras) superficieBase * 2 else superficieBase
+        val superficieTotal = if (isAmbasCaras) superficieBase * 2 else superficieBase
 
-        // --- CÁLCULO GRUESO ---
-        // Convertimos espesor a metros (ej 2.0 cm -> 0.02 m)
-        val espesorGruesoM = espesorGruesoCm.cmToMeters
+        // ----------------------------------------------------
+        // CÁLCULO DE REVOQUE GRUESO (JAHARRO)
+        // ----------------------------------------------------
+        // A. Volumen Geométrico (Sin desperdicio aún)
+        val volumenGruesoGeo = superficieTotal * espesorGruesoMetros
 
-        // Volumen + 10% Desperdicio (El revoque siempre se cae un poco)
-        val volumenGrueso = (superficieTotal * espesorGruesoM) * 1.10
+        // B. Datos del Repo y Registro
+        val recetaGrueso = repository.getRecetaGrueso()
+        val desperdicioGrueso = WasteRegistry.getForRevoqueGrueso() // Centralizado (0.10)
 
-        val recetaG = repository.getRecetaGrueso()
+        // C. El motor calcula todo (cemento, cal, arena)
+        val matsGrueso = calculateWetMaterials(
+            volumenM3 = volumenGruesoGeo,
+            receta = recetaGrueso,
+            desperdicio = desperdicioGrueso,
+            pesoBolsaCemento = bolsaCementoKg,
+            pesoBolsaCal = bolsaCalKg
+        )
 
-        val gCemento = ceil((volumenGrueso * recetaG.cementoKg) / 50.0).toInt() // Bolsa 50kg
-        val gCal = ceil((volumenGrueso * recetaG.calKg) / 25.0).toInt()         // Bolsa 25kg
-        val gArena = volumenGrueso * recetaG.arenaM3
+        // ----------------------------------------------------
+        // CÁLCULO DE REVOQUE FINO (ENLUCIDO)
+        // ----------------------------------------------------
+        // A. Volumen Geométrico
+        val volumenFinoGeo = superficieTotal * espesorFinoMetros
+        val desperdicioFino = WasteRegistry.getForRevoqueFino() // Centralizado (0.15)
 
+        // B. Opción 1: Premezcla
+        // Rendimiento base: ~2.5 kg/m2. Le sumamos el desperdicio del fino para ser consistentes.
+        val consumoBasePremezcla = superficieTotal * 2.5
+        val finoPremezclaTotal = consumoBasePremezcla * (1 + desperdicioFino)
 
-        // --- CÁLCULO FINO ---
-        // Espesor fijo estándar: 3mm = 0.3 cm
-        val espesorFinoM = 0.3.cmToMeters
-        val volumenFino = (superficieTotal * espesorFinoM) * 1.15 // Más desperdicio en fino
+        // C. Opción 2: Tradicional (Motor de Cálculo)
+        val recetaFino = repository.getRecetaFino()
 
-        // Opción A: Premezcla (Rendimiento aprox: 10 a 12 m2 por bolsa de 25kg con 2-3mm espesor)
-        // Usamos un conservador 10m2 por bolsa.
-        val bolsasPremezcla = ceil(superficieTotal / 10.0).toInt()
+        val matsFino = calculateWetMaterials(
+            volumenM3 = volumenFinoGeo,
+            receta = recetaFino,
+            desperdicio = desperdicioFino,
+            pesoBolsaCal = bolsaCalKg
+            // El cemento es despreciable en fino tradicional o usa bolsa chica,
+            // pero el motor lo calculará igual si la receta lo tiene.
+        )
 
-        // Opción B: Tradicional (Materiales sueltos)
-        val recetaF = repository.getRecetaFino()
-        val fCal = ceil((volumenFino * recetaF.calKg) / 25.0).toInt()
-        val fArena = volumenFino * recetaF.arenaM3
-
+        // ----------------------------------------------------
+        // RESULTADO FINAL
+        // ----------------------------------------------------
         return ResultadoRevoque(
             areaTotalM2 = superficieTotal,
-            volumenGruesoM3 = volumenGrueso,
-            gruesoCementoBolsas = gCemento,
-            gruesoCalBolsas = gCal,
-            gruesoArenaM3 = gArena,
-            finoPremezclaBolsas = bolsasPremezcla,
-            finoCalBolsas = fCal,
-            finoArenaM3 = fArena
+
+            // Configuraciones de bolsas
+            bolsaCementoKg = bolsaCementoKg,
+            bolsaCalKg = bolsaCalKg,
+            bolsaFinoPremezclaKg = bolsaFinoPremezclaKg,
+
+            // Resultados Grueso (Vienen del objeto matsGrueso)
+            volumenGruesoM3 = volumenGruesoGeo * (1 + desperdicioGrueso),
+            gruesoCementoKg = matsGrueso.cementoKg,
+            gruesoCalKg = matsGrueso.calKg,
+            gruesoArenaM3 = matsGrueso.arenaM3,
+            porcentajeDesperdicioGrueso = desperdicioGrueso,
+            dosificacionGrueso = recetaGrueso.dosificacionMezcla, // Usamos la propiedad de la interfaz
+
+            // Resultados Fino
+            finoPremezclaKg = finoPremezclaTotal,
+
+            // Resultados Fino Tradicional (Vienen del objeto matsFino)
+            finoCalKg = matsFino.calKg,
+            finoArenaM3 = matsFino.arenaM3,
+            porcentajeDesperdicioFino = desperdicioFino,
+            dosificacionFino = recetaFino.dosificacionMezcla
         )
     }
 }

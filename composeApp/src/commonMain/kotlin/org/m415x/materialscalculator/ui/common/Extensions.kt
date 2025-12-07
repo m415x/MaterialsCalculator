@@ -7,8 +7,11 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 
-/*
+/**
  * Función extendida para redondear Doubles fácilmente en toda la app
+ *
+ * @param decimals Número de decimales a redondear
+ * @return Cadena de texto con el número redondeado
  */
 fun Double.roundToDecimals(decimals: Int): String {
     var multiplier = 1.0
@@ -17,8 +20,10 @@ fun Double.roundToDecimals(decimals: Int): String {
     return rounded.toString()
 }
 
-/*
- * Nueva función: Limpia y convierte el String a un formato numérico seguro para Kotlin
+/**
+ * Limpia y convierte el String a un formato numérico seguro para Kotlin
+ *
+ * @return Double? con el valor convertido o null si no es un número válido
  */
 fun String.toSafeDoubleOrNull(): Double? {
     // 1. Reemplaza todas las comas por puntos.
@@ -28,8 +33,10 @@ fun String.toSafeDoubleOrNull(): Double? {
     return cleaned.toDoubleOrNull()
 }
 
-/*
+/**
  * Extensión mágica para cerrar el teclado al tocar fuera
+ *
+ * @return Modifier con la funcionalidad agregada
  */
 fun Modifier.clearFocusOnTap(): Modifier = composed {
     val focusManager = LocalFocusManager.current

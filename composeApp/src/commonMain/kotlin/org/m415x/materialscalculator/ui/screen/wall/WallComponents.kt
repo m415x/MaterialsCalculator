@@ -25,6 +25,13 @@ import org.m415x.materialscalculator.ui.common.NumericInput
 import org.m415x.materialscalculator.ui.common.areValidDimensions
 import org.m415x.materialscalculator.ui.common.toSafeDoubleOrNull
 
+/**
+ * Dialogo para editar una abertura.
+ * 
+ * @param abertura Abertura a editar.
+ * @param onDismiss Acción al cerrar el dialogo.
+ * @param onConfirm Acción al confirmar el dialogo.
+ */
 @Composable
 fun EditAberturaDialog(
     abertura: Abertura,

@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
+import org.m415x.materialscalculator.domain.common.toPresentacion
+import org.m415x.materialscalculator.domain.common.toShareText
 import org.m415x.materialscalculator.domain.model.DiametroHierro
 import org.m415x.materialscalculator.domain.model.ResultadoEstructura
 import org.m415x.materialscalculator.domain.model.TipoHormigon
@@ -29,9 +31,13 @@ import org.m415x.materialscalculator.ui.common.NumericInput
 import org.m415x.materialscalculator.ui.common.ResultRow
 import org.m415x.materialscalculator.ui.common.areValidDimensions
 import org.m415x.materialscalculator.ui.common.clearFocusOnTap
+import org.m415x.materialscalculator.ui.common.getShareManager
 import org.m415x.materialscalculator.ui.common.roundToDecimals
 import org.m415x.materialscalculator.ui.common.toSafeDoubleOrNull
 
+/**
+ * Pantalla principal de la calculadora de estructuras.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StructureScreen() {
@@ -43,7 +49,7 @@ fun StructureScreen() {
     val calcularEstructura = remember { CalculateStructureUseCase(repository) }
 
     // Filtramos la lista para obtener solo los estructurales (H17+)
-    val tiposDisponibles = remember { TipoHormigon.entries.filter { it.esAptoEstructura } }
+    val tiposDisponibles = remember { TipoHormigon.entries.filter { it.isAptoEstructura } }
 
     // Estado Geometría
     var isCircular by remember { mutableStateOf(false) } // False = Rectangular, True = Columna Redonda
@@ -70,6 +76,8 @@ fun StructureScreen() {
 
     // Para controlar la visibilidad del Modal
     var showResultSheet by remember { mutableStateOf(false) }
+
+    val shareManager = remember { getShareManager() }
 
     // Definimos los FocusRequesters necesarios
     val focusLadoA = remember { FocusRequester() }
@@ -177,7 +185,7 @@ fun StructureScreen() {
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(text = tipo.name, style = MaterialTheme.typography.titleMedium)
-                                Text(text = " - ${tipo.uses}", style = MaterialTheme.typography.bodySmall)
+                                Text(text = " - ${tipo.usos}", style = MaterialTheme.typography.bodySmall)
                             }
                         },
                         onClick = { selectedHormigon = tipo; expandedHormigon = false }
@@ -307,7 +315,7 @@ fun StructureScreen() {
                             largoMetros = l!!,
                             ladoAMetros = a!!,
                             ladoBMetros = if (isCircular) 0.0 else b!!, // Aquí sí pasamos el real
-                            esCircular = isCircular,
+                            isCircular = isCircular,
                             tipoHormigon = selectedHormigon,
                             diametroPrincipal = selectedHierroMain,
                             cantidadVarillas = cantVarillas!!,
@@ -340,68 +348,45 @@ fun StructureScreen() {
             AppResultBottomSheet(
                 onDismissRequest = { showResultSheet = false },
                 onSave = { /* ... */ },
-                onEdit = { showResultSheet = false }
-            ) {
-                // Sección Hormigón
-                Text(
-                    "Hormigón (${resultado!!.volumenHormigonM3.roundToDecimals(2)} m³)",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
+                onEdit = { showResultSheet = false },
+                onShare = {
+                    // 1. Conversiones seguras
+                    val l = largo.toSafeDoubleOrNull() ?: 0.0
+                    val a = ladoA.toSafeDoubleOrNull() ?: 0.0
+                    val b = ladoB.toSafeDoubleOrNull() ?: 0.0
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    // Nota: separacionEstriboCm viene del input como "0.20" (metros visuales)
+                    // Lo convertimos a Double (0.20) y luego a CM reales (20) para el texto
+                    val sepM = separacionEstriboCm.toSafeDoubleOrNull() ?: 0.20
+                    val sepRealCm = sepM * 100
 
-                ResultRow(label = "Cemento", value = "${resultado!!.cementoBolsas} bolsa${if (resultado!!.cementoBolsas == 1) "" else "s"}")
-                ResultRow(label = "Arena", value = "${resultado!!.arenaM3.roundToDecimals(2)} m³")
-                ResultRow(label = "Piedra", value = "${resultado!!.piedraM3.roundToDecimals(2)} m³")
-                ResultRow(label = "Agua", value = "${resultado!!.aguaLitros.roundToDecimals(1)} L")
+                    // 2. Generar Texto
+                    val texto = resultado!!.toShareText(
+                        largo = l,
+                        ladoA = a,
+                        ladoB = b,
+                        isCircular = isCircular,
+                        tipoHormigon = selectedHormigon,
+                        separacionEstribosCm = sepRealCm
+                    )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Sección Hierro
-                Text(
-                    "Acero / Hierro (${(resultado!!.hierroPrincipalKg + resultado!!.hierroEstribosKg).roundToDecimals(1)} kg)",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                ResultRow(
-                    label = "Principal (Ø ${resultado!!.diametroPrincipal.mm} mm)",
-                    value = "${resultado!!.hierroPrincipalMetros.roundToDecimals(1)} m"
-                )
-                Text("(${resultado!!.hierroPrincipalKg.roundToDecimals(1)} kg)", style = MaterialTheme.typography.bodySmall)
-
-                ResultRow(
-                    label = "Estribos (Ø ${resultado!!.diametroEstribo.mm} mm)",
-                    value = "${resultado!!.hierroEstribosMetros.roundToDecimals(1)} m"
-                )
-                Text("(${resultado!!.hierroEstribosKg.roundToDecimals(1)} kg)", style = MaterialTheme.typography.bodySmall)
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Tarjeta anidada para el consejo (Tip)
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                    Row(modifier = Modifier.padding(8.dp)) {
-                        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = """
-                            Necesitas aprox: 
-                            - ${resultado!!.cantidadHierroPrincipal} barra${if (resultado!!.cantidadHierroPrincipal != 1) "s" else ""} de 12 m para los hierros principales.
-                            - ${resultado!!.cantidadHierroEstribos} barra${if (resultado!!.cantidadHierroEstribos != 1) "s" else ""} de 12 m para los estribos.
-                            """.trimIndent(),
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
+                    // 3. Compartir
+                    shareManager.shareText(texto)
                 }
+            ) {
+                StructureResultContent(resultado!!)
             }
         }
     }
 }
 
-// Pequeño componente local para los Radio Buttons
+/**
+ * Componente local para los Radio Buttons.
+ *
+ * @param selected Indica si el Radio Button está seleccionado.
+ * @param text Texto del Radio Button.
+ * @param onClick Acción al hacer clic en el Radio Button.
+ */
 @Composable
 fun RadioButtonRow(selected: Boolean, text: String, onClick: () -> Unit) {
     Row(
@@ -410,5 +395,91 @@ fun RadioButtonRow(selected: Boolean, text: String, onClick: () -> Unit) {
     ) {
         RadioButton(selected = selected, onClick = onClick)
         Text(text = text, style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+/**
+ * Componente que muestra el contenido del resultado.
+ *
+ * @param res Resultado del cálculo.
+ */
+@Composable
+fun StructureResultContent(res: ResultadoEstructura) {
+    // Sección Hormigón
+    Text(
+        "Hormigón (${res.volumenHormigonM3.roundToDecimals(2)} m³)",
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp
+    )
+    Text(
+        "(Incluye ${(res.porcentajeDesperdicioHormigon * 100).toInt()}% desperdicio)",
+        style = MaterialTheme.typography.bodySmall
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    ResultRow(
+        label = "Cemento",
+        value = res.cementoKg.toPresentacion(res.bolsaCementoKg)
+    )
+
+    ResultRow(
+        label = "Arena",
+        value = "${res.arenaM3.roundToDecimals(2)} m³"
+    )
+
+    ResultRow(
+        label = "Piedra",
+        value = "${res.piedraM3.roundToDecimals(2)} m³"
+    )
+
+    ResultRow(
+        label = "Agua",
+        value = "${res.aguaLitros.roundToDecimals(1)} Lt"
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // Sección Hierro
+    Text(
+        "Acero / Hierro (${(res.hierroPrincipalKg + res.hierroEstribosKg).roundToDecimals(1)} kg)",
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp
+    )
+    Text(
+        "(Incluye ${((res.porcentajeDesperdicioHierroPrincipal + res.porcentajeDesperdicioHierroEstribos) * 50).toInt()}% desperdicio)",
+        style = MaterialTheme.typography.bodySmall
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    ResultRow(
+        label = "Principal (Ø ${res.diametroPrincipal.mm} mm)",
+        value = "${res.hierroPrincipalMetros.roundToDecimals(1)} m"
+    )
+    Text("(${res.hierroPrincipalKg.roundToDecimals(1)} kg)", style = MaterialTheme.typography.bodySmall)
+
+    ResultRow(
+        label = "Estribos (Ø ${res.diametroEstribo.mm} mm)",
+        value = "${res.hierroEstribosMetros.roundToDecimals(1)} m"
+    )
+    Text("(${res.hierroEstribosKg.roundToDecimals(1)} kg)", style = MaterialTheme.typography.bodySmall)
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    // Tarjeta anidada para el consejo (Tip)
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+        Row(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+            Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = """
+                    Necesitas aprox: 
+                     - ${res.cantidadHierroPrincipal} barra${if (res.cantidadHierroPrincipal != 1) "s" else ""} de Ø ${res.diametroPrincipal.mm} mm de 12 m.
+                     - ${res.cantidadHierroEstribos} barra${if (res.cantidadHierroEstribos != 1) "s" else ""} de Ø ${res.diametroEstribo.mm} mm de 12 m.
+                """.trimIndent(),
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
     }
 }

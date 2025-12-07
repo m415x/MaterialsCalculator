@@ -1,6 +1,5 @@
 package org.m415x.materialscalculator
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import org.m415x.materialscalculator.data.repository.SettingsRepository
 

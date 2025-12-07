@@ -7,7 +7,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.m415x.materialscalculator.ui.navigation.BottomTab
 
-// --- TOP BAR REUTILIZABLE ---
+/**
+ * AppBar reutilizable para la aplicación.
+ *
+ * @param title Título de la AppBar.
+ * @param showBackButton Indica si se muestra el botón de volver.
+ * @param onBack Acción a realizar al presionar el botón de volver.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppTopBar(
@@ -22,7 +28,8 @@ fun AppTopBar(
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Volver"
+                        contentDescription = "Volver",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
             }
@@ -34,7 +41,13 @@ fun AppTopBar(
     )
 }
 
-// --- BOTTOM BAR REUTILIZABLE ---
+/**
+ * BottomBar reutilizable para la aplicación.
+ *
+ * @param currentTab Tab actual seleccionado.
+ * @param onTabSelected Acción a realizar al seleccionar un tab.
+ * @param modifier Modificador para personalizar el BottomBar.
+ */
 @Composable
 fun AppBottomBar(
     currentTab: BottomTab,

@@ -46,8 +46,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(compose.materialIconsExtended)
             implementation(compose.ui)
-            implementation(libs.androidx.datastore.preferences)
-            implementation(libs.androidx.material.icons.extended)
+            implementation("com.russhwolf:multiplatform-settings:1.3.0")
+            implementation("com.russhwolf:multiplatform-settings-coroutines:1.3.0")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -55,6 +55,26 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+        }
+        // Si usas un sourceSet compartido 'webMain' para JS y Wasm:
+        val webMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+                implementation(compose.ui)
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material3)
+                implementation("com.russhwolf:multiplatform-settings:1.3.0")
+                implementation("com.russhwolf:multiplatform-settings-coroutines:1.3.0")
+            }
+        }
+
+        val wasmJsMain by getting {
+            dependsOn(webMain)
+        }
+
+        val jsMain by getting {
+            dependsOn(webMain)
         }
     }
 }

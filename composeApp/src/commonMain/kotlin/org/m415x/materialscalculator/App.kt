@@ -29,6 +29,11 @@ import org.m415x.materialscalculator.ui.screen.wall.WallScreen
 import org.m415x.materialscalculator.data.repository.SettingsRepository
 import org.m415x.materialscalculator.ui.screen.plaster.PlasterScreen
 
+/**
+ * Composable principal de la aplicación.
+ * 
+ * @param settingsRepository Repositorio de configuración.
+ */
 @Composable
 fun App(
     // Recibe el repositorio (Inyección de Dependencias manual)

@@ -1,5 +1,7 @@
 package org.m415x.materialscalculator.domain.usecase
 
+import org.m415x.materialscalculator.domain.common.WasteRegistry
+import org.m415x.materialscalculator.domain.common.calculateWetMaterials
 import org.m415x.materialscalculator.domain.repository.MaterialRepository
 import org.m415x.materialscalculator.domain.model.*
 import org.m415x.materialscalculator.ui.common.roundToDecimals
@@ -7,91 +9,116 @@ import kotlin.math.ceil
 
 /**
  * Calcula los materiales para un volumen de hormigón.
+ *
+ * @param repository Repositorio de materiales.
  */
 class CalculateWallUseCase(private val repository: MaterialRepository) {
 
-    // Función 'invoke' permite llamar a la clase como si fuera una función
+    /**
+     * Calcula los materiales para un volumen de hormigón.
+     *
+     * @param largoMuroMetros Largo del muro en metros.
+     * @param altoMuroMetros Alto del muro en metros.
+     * @param tipo Tipo de ladrillo.
+     * @param aberturas Lista de aberturas en el muro.
+     * @param bolsaCementoKg Peso de la bolsa de cemento en kg.
+     * @param bolsaCalKg Peso de la bolsa de cal en kg.
+     * @return Resultado del cálculo.
+     */
     operator fun invoke(
         largoMuroMetros: Double,
         altoMuroMetros: Double,
         tipo: TipoLadrillo,
         aberturas: List<Abertura>,
-        porcentajeDesperdicio: Double = 0.05 // 5% de desperdicio por roturas (Estándar)
+        bolsaCementoKg: Int = 25,
+        bolsaCalKg: Int = 25
     ): ResultadoMuro {
 
-        // 1. Obtener datos del Repo
+        // ============================================================
+        // 1. OBTENCIÓN DE DATOS Y DESPERDICIOS
+        // ============================================================
         val props = repository.getPropiedadesLadrillo(tipo)
             ?: throw IllegalArgumentException("Tipo no soportado")
 
-        // Obtenemos la dosificación adecuada para este ladrillo (con o sin cal)
         val dosificacion = repository.getDosificacionMortero(tipo)
             ?: throw IllegalArgumentException("Dosificación no encontrada")
 
-        // 2. Calcular Áreas
+        // Desperdicios centralizados
+        val desperdicioLadrillo = WasteRegistry.getForLadrillos()
+        val desperdicioMortero = WasteRegistry.getForMorteroAsiento()
+
+        // ============================================================
+        // 2. GEOMETRÍA (ÁREA NETA)
+        // ============================================================
         val areaMuro = largoMuroMetros * altoMuroMetros
 
-        // Multiplicar por la cantidad de cada ítem
-        val areaAberturas = aberturas.sumOf {
-            it.anchoMetros * it.altoMetros * it.cantidad
-        }
+        val areaAberturas = aberturas.sumOf { it.anchoMetros * it.altoMetros * it.cantidad }
 
         if (areaAberturas >= areaMuro) {
-            // Lanzamos una excepción explicativa.
             throw IllegalArgumentException(
-                "El área de las aberturas (${areaAberturas.roundToDecimals(2)} m²) es mayor o igual al área del muro (${areaMuro.roundToDecimals(2)} m²). Revisa las medidas."
+                "El área de aberturas (${areaAberturas.roundToDecimals(2)} m²) supera al muro."
             )
         }
 
         val areaNeta = (areaMuro - areaAberturas).coerceAtLeast(0.0)
 
-        // 3. Calcular Ladrillos por m2
+        // ============================================================
+        // 3. CÁLCULO DE LADRILLOS (Unidades Físicas)
+        // ============================================================
         // Fórmula: 1 / ((Largo + Junta) * (Alto + Junta))
-        val superficieLadrilloConJunta = (props.largoUnidad + props.espesorJunta) * (props.altoUnidad + props.espesorJunta)
-        val ladrillosPorM2 = 1.0 / superficieLadrilloConJunta
+        val supLadrilloConJunta = (props.largoUnidad + props.espesorJunta) * (props.altoUnidad + props.espesorJunta)
+        val ladrillosPorM2 = 1.0 / supLadrilloConJunta
 
-        var totalLadrillos = areaNeta * ladrillosPorM2
-        // Sumamos desperdicio
-        totalLadrillos += totalLadrillos * porcentajeDesperdicio
+        // Cantidad Teórica
+        val totalLadrillosTeorico = areaNeta * ladrillosPorM2
 
-        // 4. Calcular Mortero (Mezcla)
-        // Método geométrico: Volumen Pared - Volumen Ladrillos (sin junta)
-        // Volumen de 1 m2 de pared = 1 * 1 * espesor
-        val volumenParedM3 = areaNeta * props.anchoMuro
+        // Cantidad Real (con desperdicio)
+        val totalLadrillosFinal = ceil(totalLadrillosTeorico * (1 + desperdicioLadrillo)).toInt()
 
-        // Volumen que ocupan SOLO los ladrillos (sin mezcla) en ese espacio
-        // Cantidad Real (sin desperdicio) * VolUnitario
-        val cantidadRealLadrillos = areaNeta * ladrillosPorM2
-        val volumenLadrillosM3 = cantidadRealLadrillos * (props.largoUnidad * props.altoUnidad * props.anchoMuro)
+        // ============================================================
+        // 4. CÁLCULO DE MORTERO (Mezcla Húmeda)
+        // ============================================================
 
-        var volumenMortero = volumenParedM3 - volumenLadrillosM3
-        // Sumamos un desperdicio mayor al mortero (se cae, se seca, etc -> 10% a 20%)
-        volumenMortero += volumenMortero * 0.15 // 15% desperdicio mezcla
+        // A. Volumen Geométrico del Muro (Área * Espesor)
+        val volumenMuroTotal = areaNeta * props.anchoMuro
 
-        // 5. Calcular Materiales finos
-        // Cemento
-        val cementoTotalKg = volumenMortero * dosificacion.cementoKg
-        // Asumimos bolsa de 25kg (puedes parametrizarlo igual que en hormigón)
-        val cementoBolsas = ceil(cementoTotalKg / 25.0).toInt()
+        // B. Volumen ocupado por Ladrillos (Sin desperdicio, ocupación física real)
+        val volumenLadrillosSolidos = totalLadrillosTeorico * (props.largoUnidad * props.altoUnidad * props.anchoMuro)
 
-        // Cal (Si la dosificación tiene calKg > 0)
-        val calTotalKg = volumenMortero * dosificacion.calKg
-        // Asumimos bolsa de 25kg para la cal hidratada estándar
-        val calBolsas = ceil(calTotalKg / 25.0).toInt()
+        // C. Volumen Geométrico de la Mezcla (Diferencia)
+        val volumenMorteroGeo = (volumenMuroTotal - volumenLadrillosSolidos).coerceAtLeast(0.0)
 
-        // Arena
-        val arenaTotal = volumenMortero * dosificacion.arenaM3
+        // D. ¡MOTOR DE CÁLCULO! (Aplica desperdicio 15% y calcula materiales)
+        val matsMortero = calculateWetMaterials(
+            volumenM3 = volumenMorteroGeo,
+            receta = dosificacion,
+            desperdicio = desperdicioMortero,
+            pesoBolsaCemento = bolsaCementoKg,
+            pesoBolsaCal = bolsaCalKg
+        )
 
-        // Agua
-        val aguaTotalLitros = cementoTotalKg * dosificacion.relacionAguaCemento
-
+        // ============================================================
+        // 5. RESULTADO FINAL
+        // ============================================================
         return ResultadoMuro(
             areaNetaM2 = areaNeta,
-            cantidadLadrillos = ceil(totalLadrillos).toInt(),
-            morteroM3 = volumenMortero,
-            cementoBolsas = cementoBolsas,
-            calBolsas = calBolsas,
-            arenaTotalM3 = arenaTotal,
-            aguaLitros = aguaTotalLitros
+
+            // Ladrillos
+            cantidadLadrillos = totalLadrillosFinal,
+            porcentajeDesperdicioLadrillos = desperdicioLadrillo,
+
+            // Mortero (Viene del motor)
+            morteroM3 = volumenMorteroGeo * (1 + desperdicioMortero),
+            cementoKg = matsMortero.cementoKg,
+            calKg = matsMortero.calKg,
+            arenaTotalM3 = matsMortero.arenaM3,
+            aguaLitros = matsMortero.aguaLitros,
+
+            // Configuración
+            bolsaCementoKg = bolsaCementoKg,
+            bolsaCalKg = bolsaCalKg,
+            proporcionMezcla = dosificacion.dosificacionMezcla,
+            porcentajeDesperdicioMortero = desperdicioMortero
         )
     }
 }

@@ -24,8 +24,23 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.runtime.*
 
 /**
- * COMPONENTE GENÉRICO MAESTRO
+ * Componente genérico maestro para inputs
  * Sirve para Texto, Números, Selects (Dropdowns) y TextAreas.
+ *
+ * @param value Valor actual del campo.
+ * @param onValueChange Acción al cambiar el valor.
+ * @param label Etiqueta del campo.
+ * @param modifier Modificador para personalizar el comportamiento.
+ * @param placeholder Texto de placeholder.
+ * @param readOnly Indica si el campo es de solo lectura.
+ * @param maxLines Número máximo de líneas para TextAreas.
+ * @param trailingIcon Ícono al final del campo.
+ * @param colors Colores del campo.
+ * @param visualTransformation Transformación visual del campo.
+ * @param keyboardType Tipo de teclado.
+ * @param focusRequester Solicitante de foco.
+ * @param nextFocusRequester Solicitante de foco siguiente.
+ * @param onDone Acción al presionar Done.
  */
 @Composable
 fun AppInput(
@@ -36,12 +51,12 @@ fun AppInput(
     placeholder: String? = null,
 
     // Configuración de Comportamiento
-    readOnly: Boolean = false, // NUEVO: Para Selects (Dropdowns)
-    maxLines: Int = 1,         // NUEVO: Para TextAreas
+    readOnly: Boolean = false,
+    maxLines: Int = 1,
 
     // Configuración Visual
-    trailingIcon: @Composable (() -> Unit)? = null, // Icono al final (flecha, ojo password, etc)
-    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(), // Permite personalizar los colores (ej. para Dropdowns)
+    trailingIcon: @Composable (() -> Unit)? = null,
+    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
     visualTransformation: VisualTransformation = VisualTransformation.None,
 
     // Configuración de Teclado
@@ -94,9 +109,18 @@ fun AppInput(
 }
 
 /**
- * WRAPPER (Ayudante) PARA NÚMEROS
+ * Wrapper (Ayudante) para números
  * Esto permite que tu código actual siga funcionando sin cambios masivos,
  * pero internamente usa el nuevo motor genérico.
+ *
+ * @param value Valor actual del campo.
+ * @param onValueChange Acción al cambiar el valor.
+ * @param label Etiqueta del campo.
+ * @param modifier Modificador para personalizar el comportamiento.
+ * @param placeholder Texto de placeholder.
+ * @param focusRequester Solicitante de foco.
+ * @param nextFocusRequester Solicitante de foco siguiente.
+ * @param onDone Acción al presionar Done.
  */
 @Composable
 fun NumericInput(
@@ -124,11 +148,19 @@ fun NumericInput(
 }
 
 /**
- * INPUT ESPECIAL PARA CENTÍMETROS (Estilo Cajero Automático)
+ * Input especial para centímetros (Estilo Cajero Automático)
  * El usuario escribe "123" y se visualiza "1.23".
  * Siempre devuelve un String con formato decimal.
+ *
+ * @param value Valor actual del campo.
+ * @param onValueChange Acción al cambiar el valor.
+ * @param label Etiqueta del campo.
+ * @param modifier Modificador para personalizar el comportamiento.
+ * @param placeholder Texto de placeholder.
+ * @param focusRequester Solicitante de foco.
+ * @param nextFocusRequester Solicitante de foco siguiente.
+ * @param onDone Acción al presionar Done.
  */
-
 @Composable
 fun CmInput(
     value: String,              // El valor actual (ej: "0.20")
@@ -203,6 +235,13 @@ fun CmInput(
 /**
  * Diálogo de confirmación genérico.
  * Úsalo para borrar ítems o acciones irreversibles.
+ *
+ * @param title Título del diálogo.
+ * @param text Texto del diálogo.
+ * @param confirmText Texto del botón de confirmación.
+ * @param dismissText Texto del botón de cancelación.
+ * @param onConfirm Acción al confirmar.
+ * @param onDismiss Acción al cancelar.
  */
 @Composable
 fun AppConfirmDialog(

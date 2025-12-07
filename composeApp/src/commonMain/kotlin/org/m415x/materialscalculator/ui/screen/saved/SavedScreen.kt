@@ -10,6 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
+/**
+ * Pantalla de historial de cálculos.
+ */
 @Composable
 fun SavedScreen() {
     Column(

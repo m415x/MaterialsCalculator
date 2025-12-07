@@ -15,6 +15,8 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import kotlinx.coroutines.delay
 
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
+import org.m415x.materialscalculator.domain.common.toPresentacion
+import org.m415x.materialscalculator.domain.common.toShareText
 import org.m415x.materialscalculator.domain.model.TipoHormigon
 import org.m415x.materialscalculator.domain.model.ResultadoHormigon
 import org.m415x.materialscalculator.domain.usecase.CalculateConcreteUseCase
@@ -25,9 +27,15 @@ import org.m415x.materialscalculator.ui.common.NumericInput
 import org.m415x.materialscalculator.ui.common.ResultRow
 import org.m415x.materialscalculator.ui.common.areValidDimensions
 import org.m415x.materialscalculator.ui.common.clearFocusOnTap
+import org.m415x.materialscalculator.ui.common.getShareManager
 import org.m415x.materialscalculator.ui.common.roundToDecimals
 import org.m415x.materialscalculator.ui.common.toSafeDoubleOrNull
 
+/**
+ * Pantalla principal de la calculadora de hormigón.
+ * 
+ * @return Unit
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConcreteScreen() {
@@ -54,6 +62,8 @@ fun ConcreteScreen() {
 
     // Para controlar la visibilidad del Modal
     var showResultSheet by remember { mutableStateOf(false) }
+
+    val shareManager = remember { getShareManager() }
 
     // Definimos los FocusRequesters necesarios
     val focusAncho = remember { FocusRequester() }
@@ -144,9 +154,13 @@ fun ConcreteScreen() {
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(text = tipo.name, style = MaterialTheme.typography.titleMedium)
-                                    Text(text = " - ${tipo.uses}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(
+                                        text = " - ${tipo.usos}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 }
-                                Text(text = "(${tipo.endurance})", style = MaterialTheme.typography.labelSmall)
+                                Text(text = "(${tipo.resistencia})", style = MaterialTheme.typography.labelSmall)
                             }
                         },
                         onClick = {
@@ -205,28 +219,74 @@ fun ConcreteScreen() {
             AppResultBottomSheet(
                 onDismissRequest = { showResultSheet = false },
                 onSave = { /* ... */ },
-                onEdit = { showResultSheet = false }
+                onEdit = { showResultSheet = false },
+                onShare = {
+                    // 1. Convertimos los inputs de texto a números seguros
+                    // (Usamos 0.0 por defecto si falla, aunque la validación previa ya lo garantizó)
+                    val w = ancho.toSafeDoubleOrNull() ?: 0.0
+                    val l = largo.toSafeDoubleOrNull() ?: 0.0
+                    val e = espesor.toSafeDoubleOrNull() ?: 0.0
+
+                    // 2. Generamos el texto
+                    val texto = resultado!!.toShareText(
+                        ancho = w,
+                        largo = l,
+                        espesor = e,
+                        tipoHormigon = selectedTipo
+                    )
+
+                    // 3. Compartimos
+                    shareManager.shareText(texto)
+                }
             ) {
-                Text(
-                    "Volumen Total (${resultado!!.volumenTotalM3.roundToDecimals(2)} m³)",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                ResultRow(
-                    label = "Cemento",
-                    value = "${resultado!!.cementoBolsas} bolsa${if (resultado!!.cementoBolsas == 1) "" else "s"}"
-                )
-                Text("Total: ${resultado!!.cementoKg.roundToDecimals(1)} kg", style = MaterialTheme.typography.bodySmall)
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                ResultRow(label = "Arena", value = "${resultado!!.arenaM3.roundToDecimals(2)} m³")
-                ResultRow(label = "Piedra/Grava", value = "${resultado!!.piedraM3.roundToDecimals(2)} m³")
-                ResultRow(label = "Agua", value = "${resultado!!.aguaLitros.roundToDecimals(1)} L")
+                ConcreteResultContent(resultado!!)
             }
         }
     }
+}
+
+/**
+ * Composable que muestra el contenido del resultado.
+ * 
+ * @param res Resultado del cálculo.
+ */
+@Composable
+fun ConcreteResultContent(res: ResultadoHormigon) {
+    Text(
+        "Volumen Total: ${res.volumenTotalM3.roundToDecimals(2)} m³",
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp
+    )
+    Text(
+        "(Incluye ${(res.porcentajeDesperdicioHormigon * 100).toInt()}% desperdicio)",
+        style = MaterialTheme.typography.bodySmall
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    ResultRow(
+        label = "Cemento",
+        value = res.cementoKg.toPresentacion(res.bolsaCementoKg)
+    )
+    Text(
+        "(${res.cementoKg.roundToDecimals(1)} kg)",
+        style = MaterialTheme.typography.bodySmall
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    ResultRow(
+        label = "Arena",
+        value = "${res.arenaM3.roundToDecimals(2)} m³"
+    )
+
+    ResultRow(
+        label = "Piedra/Grava",
+        value = "${res.piedraM3.roundToDecimals(2)} m³"
+    )
+
+    ResultRow(
+        label = "Agua",
+        value = "${res.aguaLitros.roundToDecimals(1)} Lt"
+    )
 }

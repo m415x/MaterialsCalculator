@@ -13,7 +13,11 @@ import materialscalculator.composeapp.generated.resources.source_code_pro_bold
 import materialscalculator.composeapp.generated.resources.inter_regular
 import materialscalculator.composeapp.generated.resources.inter_bold
 
-// 1. Definimos las familias cargando los archivos
+/**
+ * Familia de fuentes para el cuerpo.
+ * 
+ * @return FontFamily
+ */
 val bodyFontFamily @Composable get() = FontFamily(
     Font(Res.font.source_code_pro_light, weight = FontWeight.Light),
     Font(Res.font.source_code_pro_regular, weight = FontWeight.Normal),
@@ -21,15 +25,21 @@ val bodyFontFamily @Composable get() = FontFamily(
     Font(Res.font.source_code_pro_bold, weight = FontWeight.Bold)
 )
 
+/**
+ * Familia de fuentes para el display.
+ * 
+ * @return FontFamily
+ */
 val displayFontFamily @Composable get() = FontFamily(
     Font(Res.font.inter_regular, weight = FontWeight.Normal),
     Font(Res.font.inter_bold, weight = FontWeight.Bold),
 )
 
-// 2. Aplicamos a la tipografía
-// Nota: Como cargar fuentes es una operación "Composable", AppTypography debe ser una función o un val dentro de un contexto composable.
-// Sin embargo, para simplificar en KMP, solemos definir la Typography dentro del Theme o usar una función.
-
+/**
+ * Aplicamos a la tipografía
+ * 
+ * @return Typography
+ */
 @Composable
 fun getAppTypography(): Typography {
     val body = bodyFontFamily

@@ -6,6 +6,45 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
+/**
+ * Color scheme para el tema claro.
+ * 
+ * @property primary Color principal.
+ * @property onPrimary Contraste con el color principal.
+ * @property primaryContainer Contenedor del color principal.
+ * @property onPrimaryContainer Contraste con el contenedor del color principal.
+ * @property secondary Color secundario.
+ * @property onSecondary Contraste con el color secundario.
+ * @property secondaryContainer Contenedor del color secundario.
+ * @property onSecondaryContainer Contraste con el contenedor del color secundario.
+ * @property tertiary Color terciario.
+ * @property onTertiary Contraste con el color terciario.
+ * @property tertiaryContainer Contenedor del color terciario.
+ * @property onTertiaryContainer Contraste con el contenedor del color terciario.
+ * @property error Color de error.
+ * @property onError Contraste con el color de error.
+ * @property errorContainer Contenedor del color de error.
+ * @property onErrorContainer Contraste con el contenedor del color de error.
+ * @property background Color de fondo.
+ * @property onBackground Contraste con el color de fondo.
+ * @property surface Color de superficie.
+ * @property onSurface Contraste con el color de superficie.
+ * @property surfaceVariant Color de superficie variante.
+ * @property onSurfaceVariant Contraste con el color de superficie variante.
+ * @property outline Color de contorno.
+ * @property outlineVariant Contenedor del color de contorno.
+ * @property scrim Color de escudo.
+ * @property inverseSurface Color de superficie invertida.
+ * @property inverseOnSurface Contraste con el color de superficie invertida.
+ * @property inversePrimary Color primario invertido.
+ * @property surfaceDim Color de superficie disminuido.
+ * @property surfaceBright Color de superficie brillante.
+ * @property surfaceContainerLowest Contenedor de superficie más bajo.
+ * @property surfaceContainerLow Contenedor de superficie bajo.
+ * @property surfaceContainer Contenedor de superficie.
+ * @property surfaceContainerHigh Contenedor de superficie alto.
+ * @property surfaceContainerHighest Contenedor de superficie más alto.
+ */
 private val lightScheme = lightColorScheme(
     primary = primaryLight,
     onPrimary = onPrimaryLight,
@@ -44,6 +83,45 @@ private val lightScheme = lightColorScheme(
     surfaceContainerHighest = surfaceContainerHighestLight,
 )
 
+/**
+ * Color scheme para el tema oscuro.
+ * 
+ * @property primary Color principal.
+ * @property onPrimary Contraste con el color principal.
+ * @property primaryContainer Contenedor del color principal.
+ * @property onPrimaryContainer Contraste con el contenedor del color principal.
+ * @property secondary Color secundario.
+ * @property onSecondary Contraste con el color secundario.
+ * @property secondaryContainer Contenedor del color secundario.
+ * @property onSecondaryContainer Contraste con el contenedor del color secundario.
+ * @property tertiary Color terciario.
+ * @property onTertiary Contraste con el color terciario.
+ * @property tertiaryContainer Contenedor del color terciario.
+ * @property onTertiaryContainer Contraste con el contenedor del color terciario.
+ * @property error Color de error.
+ * @property onError Contraste con el color de error.
+ * @property errorContainer Contenedor del color de error.
+ * @property onErrorContainer Contraste con el contenedor del color de error.
+ * @property background Color de fondo.
+ * @property onBackground Contraste con el color de fondo.
+ * @property surface Color de superficie.
+ * @property onSurface Contraste con el color de superficie.
+ * @property surfaceVariant Color de superficie variante.
+ * @property onSurfaceVariant Contraste con el color de superficie variante.
+ * @property outline Color de contorno.
+ * @property outlineVariant Contenedor del color de contorno.
+ * @property scrim Color de escudo.
+ * @property inverseSurface Color de superficie invertida.
+ * @property inverseOnSurface Contraste con el color de superficie invertida.
+ * @property inversePrimary Color primario invertido.
+ * @property surfaceDim Color de superficie disminuido.
+ * @property surfaceBright Color de superficie brillante.
+ * @property surfaceContainerLowest Contenedor de superficie más bajo.
+ * @property surfaceContainerLow Contenedor de superficie bajo.
+ * @property surfaceContainer Contenedor de superficie.
+ * @property surfaceContainerHigh Contenedor de superficie alto.
+ * @property surfaceContainerHighest Contenedor de superficie más alto.
+ */
 private val darkScheme = darkColorScheme(
     primary = primaryDark,
     onPrimary = onPrimaryDark,
@@ -82,6 +160,45 @@ private val darkScheme = darkColorScheme(
     surfaceContainerHighest = surfaceContainerHighestDark,
 )
 
+/**
+ * Color scheme para el tema claro con contraste medio.
+ * 
+ * @property primary Color principal.
+ * @property onPrimary Contraste con el color principal.
+ * @property primaryContainer Contenedor del color principal.
+ * @property onPrimaryContainer Contraste con el contenedor del color principal.
+ * @property secondary Color secundario.
+ * @property onSecondary Contraste con el color secundario.
+ * @property secondaryContainer Contenedor del color secundario.
+ * @property onSecondaryContainer Contraste con el contenedor del color secundario.
+ * @property tertiary Color terciario.
+ * @property onTertiary Contraste con el color terciario.
+ * @property tertiaryContainer Contenedor del color terciario.
+ * @property onTertiaryContainer Contraste con el contenedor del color terciario.
+ * @property error Color de error.
+ * @property onError Contraste con el color de error.
+ * @property errorContainer Contenedor del color de error.
+ * @property onErrorContainer Contraste con el contenedor del color de error.
+ * @property background Color de fondo.
+ * @property onBackground Contraste con el color de fondo.
+ * @property surface Color de superficie.
+ * @property onSurface Contraste con el color de superficie.
+ * @property surfaceVariant Color de superficie variante.
+ * @property onSurfaceVariant Contraste con el color de superficie variante.
+ * @property outline Color de contorno.
+ * @property outlineVariant Contenedor del color de contorno.
+ * @property scrim Color de escudo.
+ * @property inverseSurface Color de superficie invertida.
+ * @property inverseOnSurface Contraste con el color de superficie invertida.
+ * @property inversePrimary Color primario invertido.
+ * @property surfaceDim Color de superficie disminuido.
+ * @property surfaceBright Color de superficie brillante.
+ * @property surfaceContainerLowest Contenedor de superficie más bajo.
+ * @property surfaceContainerLow Contenedor de superficie bajo.
+ * @property surfaceContainer Contenedor de superficie.
+ * @property surfaceContainerHigh Contenedor de superficie alto.
+ * @property surfaceContainerHighest Contenedor de superficie más alto.
+ */
 private val mediumContrastLightColorScheme = lightColorScheme(
     primary = primaryLightMediumContrast,
     onPrimary = onPrimaryLightMediumContrast,
@@ -120,6 +237,45 @@ private val mediumContrastLightColorScheme = lightColorScheme(
     surfaceContainerHighest = surfaceContainerHighestLightMediumContrast,
 )
 
+/**
+ * Color scheme para el tema claro con contraste alto.
+ * 
+ * @property primary Color principal.
+ * @property onPrimary Contraste con el color principal.
+ * @property primaryContainer Contenedor del color principal.
+ * @property onPrimaryContainer Contraste con el contenedor del color principal.
+ * @property secondary Color secundario.
+ * @property onSecondary Contraste con el color secundario.
+ * @property secondaryContainer Contenedor del color secundario.
+ * @property onSecondaryContainer Contraste con el contenedor del color secundario.
+ * @property tertiary Color terciario.
+ * @property onTertiary Contraste con el color terciario.
+ * @property tertiaryContainer Contenedor del color terciario.
+ * @property onTertiaryContainer Contraste con el contenedor del color terciario.
+ * @property error Color de error.
+ * @property onError Contraste con el color de error.
+ * @property errorContainer Contenedor del color de error.
+ * @property onErrorContainer Contraste con el contenedor del color de error.
+ * @property background Color de fondo.
+ * @property onBackground Contraste con el color de fondo.
+ * @property surface Color de superficie.
+ * @property onSurface Contraste con el color de superficie.
+ * @property surfaceVariant Color de superficie variante.
+ * @property onSurfaceVariant Contraste con el color de superficie variante.
+ * @property outline Color de contorno.
+ * @property outlineVariant Contenedor del color de contorno.
+ * @property scrim Color de escudo.
+ * @property inverseSurface Color de superficie invertida.
+ * @property inverseOnSurface Contraste con el color de superficie invertida.
+ * @property inversePrimary Color primario invertido.
+ * @property surfaceDim Color de superficie disminuido.
+ * @property surfaceBright Color de superficie brillante.
+ * @property surfaceContainerLowest Contenedor de superficie más bajo.
+ * @property surfaceContainerLow Contenedor de superficie bajo.
+ * @property surfaceContainer Contenedor de superficie.
+ * @property surfaceContainerHigh Contenedor de superficie alto.
+ * @property surfaceContainerHighest Contenedor de superficie más alto.
+ */
 private val highContrastLightColorScheme = lightColorScheme(
     primary = primaryLightHighContrast,
     onPrimary = onPrimaryLightHighContrast,
@@ -158,6 +314,45 @@ private val highContrastLightColorScheme = lightColorScheme(
     surfaceContainerHighest = surfaceContainerHighestLightHighContrast,
 )
 
+/**
+ * Color scheme para el tema oscuro con contraste medio.
+ * 
+ * @property primary Color principal.
+ * @property onPrimary Contraste con el color principal.
+ * @property primaryContainer Contenedor del color principal.
+ * @property onPrimaryContainer Contraste con el contenedor del color principal.
+ * @property secondary Color secundario.
+ * @property onSecondary Contraste con el color secundario.
+ * @property secondaryContainer Contenedor del color secundario.
+ * @property onSecondaryContainer Contraste con el contenedor del color secundario.
+ * @property tertiary Color terciario.
+ * @property onTertiary Contraste con el color terciario.
+ * @property tertiaryContainer Contenedor del color terciario.
+ * @property onTertiaryContainer Contraste con el contenedor del color terciario.
+ * @property error Color de error.
+ * @property onError Contraste con el color de error.
+ * @property errorContainer Contenedor del color de error.
+ * @property onErrorContainer Contraste con el contenedor del color de error.
+ * @property background Color de fondo.
+ * @property onBackground Contraste con el color de fondo.
+ * @property surface Color de superficie.
+ * @property onSurface Contraste con el color de superficie.
+ * @property surfaceVariant Color de superficie variante.
+ * @property onSurfaceVariant Contraste con el color de superficie variante.
+ * @property outline Color de contorno.
+ * @property outlineVariant Contenedor del color de contorno.
+ * @property scrim Color de escudo.
+ * @property inverseSurface Color de superficie invertida.
+ * @property inverseOnSurface Contraste con el color de superficie invertida.
+ * @property inversePrimary Color primario invertido.
+ * @property surfaceDim Color de superficie disminuido.
+ * @property surfaceBright Color de superficie brillante.
+ * @property surfaceContainerLowest Contenedor de superficie más bajo.
+ * @property surfaceContainerLow Contenedor de superficie bajo.
+ * @property surfaceContainer Contenedor de superficie.
+ * @property surfaceContainerHigh Contenedor de superficie alto.
+ * @property surfaceContainerHighest Contenedor de superficie más alto.
+ */
 private val mediumContrastDarkColorScheme = darkColorScheme(
     primary = primaryDarkMediumContrast,
     onPrimary = onPrimaryDarkMediumContrast,
@@ -196,6 +391,45 @@ private val mediumContrastDarkColorScheme = darkColorScheme(
     surfaceContainerHighest = surfaceContainerHighestDarkMediumContrast,
 )
 
+/**
+ * Color scheme para el tema oscuro con contraste alto.
+ * 
+ * @property primary Color principal.
+ * @property onPrimary Contraste con el color principal.
+ * @property primaryContainer Contenedor del color principal.
+ * @property onPrimaryContainer Contraste con el contenedor del color principal.
+ * @property secondary Color secundario.
+ * @property onSecondary Contraste con el color secundario.
+ * @property secondaryContainer Contenedor del color secundario.
+ * @property onSecondaryContainer Contraste con el contenedor del color secundario.
+ * @property tertiary Color terciario.
+ * @property onTertiary Contraste con el color terciario.
+ * @property tertiaryContainer Contenedor del color terciario.
+ * @property onTertiaryContainer Contraste con el contenedor del color terciario.
+ * @property error Color de error.
+ * @property onError Contraste con el color de error.
+ * @property errorContainer Contenedor del color de error.
+ * @property onErrorContainer Contraste con el contenedor del color de error.
+ * @property background Color de fondo.
+ * @property onBackground Contraste con el color de fondo.
+ * @property surface Color de superficie.
+ * @property onSurface Contraste con el color de superficie.
+ * @property surfaceVariant Color de superficie variante.
+ * @property onSurfaceVariant Contraste con el color de superficie variante.
+ * @property outline Color de contorno.
+ * @property outlineVariant Contenedor del color de contorno.
+ * @property scrim Color de escudo.
+ * @property inverseSurface Color de superficie invertida.
+ * @property inverseOnSurface Contraste con el color de superficie invertida.
+ * @property inversePrimary Color primario invertido.
+ * @property surfaceDim Color de superficie disminuido.
+ * @property surfaceBright Color de superficie brillante.
+ * @property surfaceContainerLowest Contenedor de superficie más bajo.
+ * @property surfaceContainerLow Contenedor de superficie bajo.
+ * @property surfaceContainer Contenedor de superficie.
+ * @property surfaceContainerHigh Contenedor de superficie alto.
+ * @property surfaceContainerHighest Contenedor de superficie más alto.
+ */
 private val highContrastDarkColorScheme = darkColorScheme(
     primary = primaryDarkHighContrast,
     onPrimary = onPrimaryDarkHighContrast,
@@ -234,6 +468,13 @@ private val highContrastDarkColorScheme = darkColorScheme(
     surfaceContainerHighest = surfaceContainerHighestDarkHighContrast,
 )
 
+/**
+ * Composable que define el tema de la aplicación.
+ * 
+ * @param themeMode Cómo se debe comportar
+ * @param contrastMode Contraste
+ * @param content Contenido
+ */
 @Composable
 fun AppTheme(
     themeMode: ThemeMode = ThemeMode.System, // Cómo se debe comportar

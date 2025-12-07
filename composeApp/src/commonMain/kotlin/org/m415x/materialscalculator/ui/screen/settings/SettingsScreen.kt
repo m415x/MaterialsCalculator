@@ -18,6 +18,14 @@ import org.m415x.materialscalculator.ui.common.AppInput
 
 import org.m415x.materialscalculator.ui.theme.*
 
+/**
+ * Pantalla de configuración.
+ * 
+ * @param currentTheme Tema actual.
+ * @param currentContrast Contraste actual.
+ * @param onThemeChange Acción al cambiar el tema.
+ * @param onContrastChange Acción al cambiar el contraste.
+ */
 @Composable
 fun SettingsScreen(
     currentTheme: ThemeMode,
@@ -71,6 +79,12 @@ fun SettingsScreen(
     }
 }
 
+/**
+ * Selector de tema.
+ * 
+ * @param currentTheme Tema actual.
+ * @param onThemeChange Acción al cambiar el tema.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThemeModeSelector(currentTheme: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
@@ -115,6 +129,12 @@ fun ThemeModeSelector(currentTheme: ThemeMode, onThemeChange: (ThemeMode) -> Uni
     )
 }
 
+/**
+ * Switch de contraste.
+ * 
+ * @param currentContrast Contraste actual.
+ * @param onContrastChange Acción al cambiar el contraste.
+ */
 @Composable
 fun ContrastModeSwitch(currentContrast: ContrastMode, onContrastChange: (ContrastMode) -> Unit) {
     val isHighContrast = currentContrast == ContrastMode.HighContrast
@@ -133,6 +153,12 @@ fun ContrastModeSwitch(currentContrast: ContrastMode, onContrastChange: (Contras
     )
 }
 
+/**
+ * Item de configuración.
+ * 
+ * @param label Etiqueta del item.
+ * @param value Valor del item.
+ */
 @Composable
 fun SettingItem(label: String, value: String) {
     ListItem(

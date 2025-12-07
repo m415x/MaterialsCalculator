@@ -1,53 +1,58 @@
 package org.m415x.materialscalculator.data.repository
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
+import com.russhwolf.settings.ExperimentalSettingsApi
+import com.russhwolf.settings.ObservableSettings
+import com.russhwolf.settings.coroutines.getStringFlow
+import com.russhwolf.settings.set
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 import org.m415x.materialscalculator.ui.theme.ContrastMode
 import org.m415x.materialscalculator.ui.theme.ThemeMode
 
-class SettingsRepository(private val dataStore: DataStore<Preferences>) {
+/**
+ * Repositorio de configuración que maneja la persistencia de preferencias del usuario.
+ *
+ * @property settings Instancia de ObservableSettings para la persistencia de datos.
+ */
+@OptIn(ExperimentalSettingsApi::class)
+class SettingsRepository(private val settings: ObservableSettings) {
+    /**
+     * Claves para la persistencia de datos.
+     *
+     * @property THEME_KEY Clave para el modo de tema.
+     * @property CONTRAST_KEY Clave para el modo de contraste.
+     */
+    private val THEME_KEY = "theme_mode"
+    private val CONTRAST_KEY = "contrast_mode"
 
-    // Definimos las claves (Keys)
-    private val THEME_KEY = stringPreferencesKey("theme_mode")
-    private val CONTRAST_KEY = stringPreferencesKey("contrast_mode")
-
-    // --- LECTURA (Flows) ---
-
-    val themeMode: Flow<ThemeMode> = dataStore.data.map { preferences ->
-        val savedName = preferences[THEME_KEY]
-        // Convertimos String -> Enum de forma segura
-        try {
-            if (savedName != null) ThemeMode.valueOf(savedName) else ThemeMode.System
-        } catch (e: IllegalArgumentException) {
-            ThemeMode.System // Valor por defecto si falla
+    /**
+     * Flujos de configuración.
+     *
+     * @property themeMode Flujo de configuración del modo de tema.
+     * @property contrastMode Flujo de configuración del modo de contraste.
+     */
+    val themeMode: Flow<ThemeMode> = settings.getStringFlow(THEME_KEY, ThemeMode.System.name)
+        .map { name ->
+            try { ThemeMode.valueOf(name) } catch (e: Exception) { ThemeMode.System }
         }
+
+    val contrastMode: Flow<ContrastMode> = settings.getStringFlow(CONTRAST_KEY, ContrastMode.Standard.name)
+        .map { name ->
+            try { ContrastMode.valueOf(name) } catch (e: Exception) { ContrastMode.Standard }
+        }
+
+    /**
+     * Funciones de escritura.
+     *
+     * @property saveThemeMode Guarda el modo de tema.
+     * @property saveContrastMode Guarda el modo de contraste.
+     */
+    fun saveThemeMode(mode: ThemeMode) {
+        settings[THEME_KEY] = mode.name
     }
 
-    val contrastMode: Flow<ContrastMode> = dataStore.data.map { preferences ->
-        val savedName = preferences[CONTRAST_KEY]
-        try {
-            if (savedName != null) ContrastMode.valueOf(savedName) else ContrastMode.Standard
-        } catch (e: IllegalArgumentException) {
-            ContrastMode.Standard
-        }
-    }
-
-    // --- ESCRITURA (Suspend Functions) ---
-
-    suspend fun saveThemeMode(mode: ThemeMode) {
-        dataStore.edit { preferences ->
-            preferences[THEME_KEY] = mode.name // Guardamos el nombre "Light", "Dark", etc.
-        }
-    }
-
-    suspend fun saveContrastMode(mode: ContrastMode) {
-        dataStore.edit { preferences ->
-            preferences[CONTRAST_KEY] = mode.name
-        }
+    fun saveContrastMode(mode: ContrastMode) {
+        settings[CONTRAST_KEY] = mode.name
     }
 }
