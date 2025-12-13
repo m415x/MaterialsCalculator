@@ -11,29 +11,36 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
+import org.m415x.materialscalculator.data.repository.SettingsRepository
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
 import org.m415x.materialscalculator.domain.common.toPresentacion
 import org.m415x.materialscalculator.domain.common.toShareText
 import org.m415x.materialscalculator.domain.model.ResultadoRevoque
 import org.m415x.materialscalculator.domain.usecase.CalculatePlasterUseCase
 import org.m415x.materialscalculator.ui.common.*
-import kotlin.math.ceil
 
 /**
  * Pantalla principal de la calculadora de revoques.
  *
- * @return Unit
+ * @param settingsRepository El repositorio de configuración.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlasterScreen() {
+fun PlasterScreen(settingsRepository: SettingsRepository) {
     val keyboardController = LocalSoftwareKeyboardController.current
+
     val repository = remember { StaticMaterialRepository() }
     val calcularRevoque = remember { CalculatePlasterUseCase(repository) }
+
+    // 2. Observamos todo
+    val pesoBolsaCemento by settingsRepository.bagCementKg.collectAsState(initial = 25)
+    val pesoBolsaCal by settingsRepository.bagLimeKg.collectAsState(initial = 25)
+    val pesoBolsaPremezcla by settingsRepository.bagPremixKg.collectAsState(initial = 25)
+    val espesorFinoMm by settingsRepository.fineThicknessMm.collectAsState(3.0)
+    val desperdicioRevoquePct by settingsRepository.wastePlasterPct.collectAsState(10.0)
 
     // Estados Inputs
     var largo by remember { mutableStateOf("") }
@@ -65,7 +72,6 @@ fun PlasterScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .clearFocusOnTap()
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -78,6 +84,7 @@ fun PlasterScreen() {
                 value = largo,
                 onValueChange = { largo = it },
                 label = "Largo (m)",
+                suffix = { Text("m") },
                 modifier = Modifier.weight(1f),
                 focusRequester = focusLargo,
                 nextFocusRequester = focusAlto
@@ -86,6 +93,7 @@ fun PlasterScreen() {
                 value = alto,
                 onValueChange = { alto = it },
                 label = "Alto (m)",
+                suffix = { Text("m") },
                 modifier = Modifier.weight(1f),
                 focusRequester = focusAlto,
                 nextFocusRequester = focusEspesor
@@ -102,6 +110,7 @@ fun PlasterScreen() {
             onValueChange = { espesorGrueso = it },
             label = "Espesor Grueso (m)",
             placeholder = "0.02",
+            suffix = { Text("m") },
             focusRequester = focusEspesor,
             onDone = { keyboardController?.hide() }
         )
@@ -140,7 +149,14 @@ fun PlasterScreen() {
                             largoParedMetros = l!!,
                             altoParedMetros = a!!,
                             espesorGruesoMetros = e!!,
-                            isAmbasCaras = ambasCaras
+                            isAmbasCaras = ambasCaras,
+                            bolsaCementoKg = pesoBolsaCemento,
+                            bolsaCalKg = pesoBolsaCal,
+                            bolsaFinoPremezclaKg = pesoBolsaPremezcla,
+                            // CONVERTIMOS MM A METROS (/1000)
+                            espesorFinoMetros = espesorFinoMm / 1000.0,
+                            // CONVERTIMOS PORCENTAJE A DECIMAL (/100)
+                            porcentajeDesperdicio = desperdicioRevoquePct / 100.0
                         )
                         errorMsg = null
                         showResultSheet = true

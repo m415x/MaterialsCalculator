@@ -1,5 +1,7 @@
 package org.m415x.materialscalculator.ui.common
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
@@ -8,20 +10,24 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldColors
+import androidx.compose.runtime.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.runtime.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 
 /**
  * Componente genérico maestro para inputs
@@ -49,6 +55,7 @@ fun AppInput(
     label: String,
     modifier: Modifier = Modifier,
     placeholder: String? = null,
+    suffix: (@Composable () -> Unit)? = null,
 
     // Configuración de Comportamiento
     readOnly: Boolean = false,
@@ -67,26 +74,91 @@ fun AppInput(
     nextFocusRequester: FocusRequester? = null,
     onDone: (() -> Unit)? = null
 ) {
-    // 1. Obtenemos el controlador del teclado para solucionar el bug
+    // Obtenemos el controlador del teclado para solucionar el bug
     val keyboardController = LocalSoftwareKeyboardController.current
 
     val imeAction = if (nextFocusRequester != null) ImeAction.Next else ImeAction.Done
 
+    // Usamos TextFieldValue para controlar la selección
+    var textFieldValue by remember { mutableStateOf(TextFieldValue(text = value)) }
+
+    // FUENTE DE INTERACCIÓN (Para detectar el foco de forma robusta)
+    val interactionSource = remember { MutableInteractionSource() }
+
+    // Si el valor cambia desde FUERA (ej: resetear a default), actualizamos el interno.
+    // Usamos un bloque if simple en la recomposición para mantenerlos sincronizados.
+    if (value != textFieldValue.text) {
+        textFieldValue = textFieldValue.copy(
+            text = value,
+            // Si cambia desde fuera, movemos el cursor al final para evitar errores raros
+            selection = TextRange(value.length)
+        )
+    }
+
+    // LÓGICA DE SELECCIÓN AUTOMÁTICA (El Fix)
+    // Escuchamos las interacciones del componente
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            if (interaction is FocusInteraction.Focus) {
+                if (!readOnly && textFieldValue.text.isNotEmpty()) {
+                    // Esperamos 50ms para dejar que el evento de "Click" posicione el cursor,
+                    // y INMEDIATAMENTE DESPUÉS seleccionamos todo.
+                    delay(50)
+                    textFieldValue = textFieldValue.copy(
+                        selection = TextRange(0, textFieldValue.text.length)
+                    )
+                }
+            }
+        }
+    }
+
     OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
+        value = textFieldValue,
+
+        onValueChange = { newValue ->
+            textFieldValue = newValue
+            // Solo avisamos al padre si el TEXTO cambió (ignoramos cambios solo de cursor)
+            if (value != newValue.text) {
+                onValueChange(newValue.text)
+            }
+        },
+
         label = { Text(label) },
         placeholder = if (placeholder != null) { { Text(placeholder) } } else null,
+
+        suffix = if (suffix != null) {
+            {
+                // Forzamos el estilo para cualquier sufijo que se pase
+                ProvideTextStyle(
+                    value = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                ) {
+                    suffix()
+                }
+            }
+        } else null,
 
         // Lógica de líneas: Si maxLines es 1, es singleLine. Si no, no.
         singleLine = maxLines == 1,
         maxLines = maxLines,
-
         readOnly = readOnly, // Importante para Selects
         trailingIcon = trailingIcon, // Importante para íconos
         colors = colors,
         visualTransformation = visualTransformation,
+        interactionSource = interactionSource,
 
+//        modifier = modifier
+//            .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
+//            // Detectamos cuando gana el foco
+//            .onFocusChanged { focusState ->
+//                if (focusState.isFocused && !readOnly) {
+//                    // Seleccionamos todo el texto (Rango 0 hasta el final)
+//                    textFieldValue = textFieldValue.copy(
+//                        selection = TextRange(0, textFieldValue.text.length)
+//                    )
+//                }
+//            },
         modifier = modifier.then(
             if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier
         ),
@@ -99,9 +171,9 @@ fun AppInput(
                 nextFocusRequester?.requestFocus()
             },
             onDone = {
-                // 2. Ejecutamos la acción personalizada (si existe)
+                // Ejecutamos la acción personalizada (si existe)
                 onDone?.invoke()
-                // 3. Y FORZAMOS esconder el teclado (Solución al bug)
+                // FORZAMOS esconder el teclado (Solución al bug)
                 keyboardController?.hide()
             }
         )
@@ -127,6 +199,7 @@ fun NumericInput(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
+    suffix: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
     placeholder: String? = null,
     focusRequester: FocusRequester? = null,
@@ -137,6 +210,7 @@ fun NumericInput(
         value = value,
         onValueChange = onValueChange,
         label = label,
+        suffix = suffix,
         modifier = modifier,
         placeholder = placeholder,
         focusRequester = focusRequester,
@@ -168,67 +242,49 @@ fun CmInput(
     label: String,
     modifier: Modifier = Modifier,
     placeholder: String? = null,
+    suffix: (@Composable () -> Unit)? = null,
     focusRequester: FocusRequester? = null,
     nextFocusRequester: FocusRequester? = null,
     onDone: (() -> Unit)? = null
 ) {
-    // 1. Estado interno para controlar el cursor
-    // Inicializamos con el valor que viene de fuera y el cursor al final
-    var textFieldValue by remember(value) {
-        mutableStateOf(
-            TextFieldValue(
-                text = value,
-                selection = TextRange(value.length) // Cursor al final
-            )
-        )
-    }
+    AppInput(
+        value = value,
+        onValueChange = { rawInput ->
+            // 1. Limpiamos: Solo nos importan los dígitos que hay en el nuevo texto
+            // (Esto maneja tanto si el usuario escribe un número, borra, o pega texto)
+            val digits = rawInput.filter { it.isDigit() }
 
-    val imeAction = if (nextFocusRequester != null) ImeAction.Next else ImeAction.Done
-
-    OutlinedTextField(
-        value = textFieldValue,
-        onValueChange = { newValue ->
-            // 2. Lógica de Cajero Automático
-            val digits = newValue.text.filter { it.isDigit() }
-
-            // Si el usuario borra todo, volvemos a vacío
+            // 2. Aplicamos la Lógica de Cajero Automático
             val formattedText = if (digits.isEmpty()) {
                 ""
             } else {
                 // Rellenamos con ceros (ej: "5" -> "005")
+                // Esto asegura que siempre tengamos al menos 3 dígitos para hacer el split decimal
                 val padded = digits.padStart(3, '0')
-//                val partEntera = padded.substring(0, padded.length - 2).trimStart('0').ifEmpty { "0" }
-                val partEntera = padded.dropLast(2).trimStart('0').ifEmpty { "0" }
 
+                // Extraemos parte entera y decimal
+                val partEntera = padded.dropLast(2).trimStart('0').ifEmpty { "0" }
                 val partDecimal = padded.takeLast(2)
+
                 "$partEntera.$partDecimal"
             }
 
-            // 3. Actualizamos el estado forzando el cursor al final
-            textFieldValue = TextFieldValue(
-                text = formattedText,
-                selection = TextRange(formattedText.length) // ¡Aquí está la magia!
-            )
-
-            // 4. Avisamos al padre del cambio real
+            // 3. Solo notificamos hacia arriba si el resultado formateado es válido y diferente
             if (formattedText != value) {
                 onValueChange(formattedText)
             }
         },
-        label = { Text(label) },
-        placeholder = if (placeholder != null) { { Text(placeholder) } } else null,
-        modifier = modifier.then(
-            if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier
-        ),
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Number,
-            imeAction = imeAction
-        ),
-        keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-            onNext = { nextFocusRequester?.requestFocus() },
-            onDone = { onDone?.invoke() }
-        )
+        label = label,
+        modifier = modifier,
+        placeholder = placeholder,
+        suffix = suffix, // AppInput ya se encarga de estilizarlo pequeño
+        focusRequester = focusRequester,
+        nextFocusRequester = nextFocusRequester,
+        onDone = onDone,
+
+        // Configuraciones fijas para CmInput
+        keyboardType = KeyboardType.Number,
+        maxLines = 1
     )
 }
 

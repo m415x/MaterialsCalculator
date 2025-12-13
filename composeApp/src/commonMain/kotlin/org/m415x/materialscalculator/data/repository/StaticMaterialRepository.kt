@@ -264,4 +264,41 @@ class StaticMaterialRepository : MaterialRepository {
 
     fun getRecetaGrueso() = recetaGrueso
     fun getRecetaFino() = recetaFino
+
+    /**
+     * Función auxiliar para obtener TODOS los ladrillos (Sistema + Usuario)
+     * para mostrarlos en la lista de selección.
+     */
+    fun getAllBricks(customBricks: List<CustomBrick>): List<BrickOption> {
+        // 1. Convertimos los del sistema (Enum) a una estructura común
+        val systemOptions = TipoLadrillo.entries.map { type ->
+            val props = getPropiedadesLadrillo(type)!!
+            BrickOption(
+                id = type.name,
+                name = type.nombre,
+                props = props,
+                isCustom = false
+            )
+        }
+
+        // 2. Convertimos los del usuario
+        val customOptions = customBricks.map { custom ->
+            BrickOption(
+                id = custom.id,
+                name = custom.nombre,
+                props = custom.toProperties(),
+                isCustom = true
+            )
+        }
+
+        return systemOptions + customOptions
+    }
 }
+
+// Clase auxiliar para la UI (Representa una opción en el dropdown/lista)
+data class BrickOption(
+    val id: String,
+    val name: String,
+    val props: PropiedadesLadrillo,
+    val isCustom: Boolean // Para saber si mostrar el botón de "Borrar"
+)

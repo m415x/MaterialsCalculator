@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
+import org.m415x.materialscalculator.data.repository.SettingsRepository
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
 import org.m415x.materialscalculator.domain.common.toPresentacion
 import org.m415x.materialscalculator.domain.common.toShareText
@@ -30,23 +31,30 @@ import org.m415x.materialscalculator.ui.common.CmInput
 import org.m415x.materialscalculator.ui.common.NumericInput
 import org.m415x.materialscalculator.ui.common.ResultRow
 import org.m415x.materialscalculator.ui.common.areValidDimensions
-import org.m415x.materialscalculator.ui.common.clearFocusOnTap
 import org.m415x.materialscalculator.ui.common.getShareManager
 import org.m415x.materialscalculator.ui.common.roundToDecimals
 import org.m415x.materialscalculator.ui.common.toSafeDoubleOrNull
 
 /**
  * Pantalla principal de la calculadora de estructuras.
+ *
+ * @param settingsRepository El repositorio de configuración.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StructureScreen() {
+fun StructureScreen(settingsRepository: SettingsRepository) {
     // Obtenemos el controlador del teclado
     val keyboardController = LocalSoftwareKeyboardController.current
 
     // Dependencias
     val repository = remember { StaticMaterialRepository() }
     val calcularEstructura = remember { CalculateStructureUseCase(repository) }
+
+    // Observamos
+    val pesoBolsaCemento by settingsRepository.bagCementKg.collectAsState(initial = 25)
+    val wConcrete by settingsRepository.wasteConcretePct.collectAsState(5.0)
+    val wIronMain by settingsRepository.wasteIronMainPct.collectAsState(10.0)
+    val wStirrup by settingsRepository.wasteIronStirrupPct.collectAsState(5.0)
 
     // Filtramos la lista para obtener solo los estructurales (H17+)
     val tiposDisponibles = remember { TipoHormigon.entries.filter { it.isAptoEstructura } }
@@ -99,7 +107,6 @@ fun StructureScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .clearFocusOnTap()
             .verticalScroll(rememberScrollState()) // Permite scrollear si el teclado tapa
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -119,6 +126,7 @@ fun StructureScreen() {
                 value = ladoA,
                 onValueChange = { ladoA = it },
                 label = if (isCircular) "Diámetro (m)" else "Lado A (m)", // Aunque la etiqueta diga (m), el input visual ayuda a entender
+                suffix = { Text("m") },
                 modifier = Modifier.weight(1f),
                 focusRequester = focusLadoA,      // "Yo soy focusLadoA"
                 nextFocusRequester = if (!isCircular) focusLadoB else focusLargo // Lógica de foco inteligente
@@ -130,6 +138,7 @@ fun StructureScreen() {
                     value = ladoB,
                     onValueChange = { ladoB = it },
                     label = "Lado B (m)",
+                    suffix = { Text("m") },
                     modifier = Modifier.weight(1f),
                     focusRequester = focusLadoB,      // "Yo soy focusLadoB"
                     nextFocusRequester = focusLargo
@@ -141,6 +150,7 @@ fun StructureScreen() {
             value = largo,
             onValueChange = { largo = it },
             label = "Largo Total (m)",
+            suffix = { Text("m") },
             placeholder = "Largo viga o alto columna",
             modifier = Modifier.fillMaxWidth(),
             focusRequester = focusLargo,      // "Yo soy focusLargo"
@@ -206,6 +216,7 @@ fun StructureScreen() {
                 value = cantidadVarillas,
                 onValueChange = { cantidadVarillas = it },
                 label = "Cant. varillas",
+                suffix = { Text("U") },
                 modifier = Modifier.weight(0.5f),
                 focusRequester = focusCantidadVarillas,      // "Yo soy focusCantidadVarillas"
                 nextFocusRequester = focusHierroPrincipal
@@ -254,6 +265,7 @@ fun StructureScreen() {
                 value = separacionEstriboCm,
                 onValueChange = { separacionEstriboCm = it },
                 label = "Estribo cada (m)",
+                suffix = { Text("m") },
                 modifier = Modifier.weight(0.5f),
                 focusRequester = focusSeparacionEstribos,      // "Yo soy focusSeparacionEstribos"
                 nextFocusRequester = focusEstribos
@@ -320,7 +332,11 @@ fun StructureScreen() {
                             diametroPrincipal = selectedHierroMain,
                             cantidadVarillas = cantVarillas!!,
                             diametroEstribo = selectedEstribo,
-                            separacionEstriboMetros = sepCm!!
+                            separacionEstriboMetros = sepCm!!,
+                            pesoBolsaCementoKg = pesoBolsaCemento,
+                            desperdicioHormigon = wConcrete / 100.0,
+                            desperdicioHierroPrincipal = wIronMain / 100.0,
+                            desperdicioEstribos = wStirrup / 100.0
                         )
                         errorMsg = null
 

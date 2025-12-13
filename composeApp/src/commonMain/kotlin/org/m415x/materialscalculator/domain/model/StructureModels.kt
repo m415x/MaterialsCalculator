@@ -5,12 +5,12 @@ package org.m415x.materialscalculator.domain.model
  *
  * @property mm Valor en milímetros del diámetro
  */
-enum class DiametroHierro(val mm: Int) {
-    HIERRO_6(6),
-    HIERRO_8(8),
-    HIERRO_10(10),
-    HIERRO_12(12),
-    HIERRO_16(16)
+enum class DiametroHierro(val nombre: String, val mm: Int) {
+    HIERRO_6("Hierro Ø 6 mm", 6),
+    HIERRO_8("Hierro Ø 8 mm", 8),
+    HIERRO_10("Hierro Ø 10 mm", 10),
+    HIERRO_12("Hierro Ø 12 mm", 12),
+    HIERRO_16("Hierro Ø 16 mm", 16)
 }
 
 /**

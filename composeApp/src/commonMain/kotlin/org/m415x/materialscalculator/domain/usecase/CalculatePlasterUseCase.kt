@@ -30,11 +30,12 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
         largoParedMetros: Double,
         altoParedMetros: Double,
         espesorGruesoMetros: Double,
-        espesorFinoMetros: Double = 0.003,
+        espesorFinoMetros: Double,
         isAmbasCaras: Boolean,
         bolsaCementoKg: Int = 25,
         bolsaCalKg: Int = 25,
-        bolsaFinoPremezclaKg: Int = 25
+        bolsaFinoPremezclaKg: Int = 25,
+        porcentajeDesperdicio: Double,
     ): ResultadoRevoque {
 
         // 1. Geometría Base
@@ -49,13 +50,12 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
 
         // B. Datos del Repo y Registro
         val recetaGrueso = repository.getRecetaGrueso()
-        val desperdicioGrueso = WasteRegistry.getForRevoqueGrueso() // Centralizado (0.10)
 
         // C. El motor calcula todo (cemento, cal, arena)
         val matsGrueso = calculateWetMaterials(
             volumenM3 = volumenGruesoGeo,
             receta = recetaGrueso,
-            desperdicio = desperdicioGrueso,
+            desperdicio = porcentajeDesperdicio,
             pesoBolsaCemento = bolsaCementoKg,
             pesoBolsaCal = bolsaCalKg
         )
@@ -96,11 +96,11 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
             bolsaFinoPremezclaKg = bolsaFinoPremezclaKg,
 
             // Resultados Grueso (Vienen del objeto matsGrueso)
-            volumenGruesoM3 = volumenGruesoGeo * (1 + desperdicioGrueso),
+            volumenGruesoM3 = volumenGruesoGeo * (1 + porcentajeDesperdicio),
             gruesoCementoKg = matsGrueso.cementoKg,
             gruesoCalKg = matsGrueso.calKg,
             gruesoArenaM3 = matsGrueso.arenaM3,
-            porcentajeDesperdicioGrueso = desperdicioGrueso,
+            porcentajeDesperdicioGrueso = porcentajeDesperdicio,
             dosificacionGrueso = recetaGrueso.dosificacionMezcla, // Usamos la propiedad de la interfaz
 
             // Resultados Fino

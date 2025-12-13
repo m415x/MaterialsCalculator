@@ -27,7 +27,7 @@ import org.m415x.materialscalculator.ui.common.toSafeDoubleOrNull
 
 /**
  * Dialogo para editar una abertura.
- * 
+ *
  * @param abertura Abertura a editar.
  * @param onDismiss Acción al cerrar el dialogo.
  * @param onConfirm Acción al confirmar el dialogo.
@@ -119,6 +119,7 @@ fun EditAberturaDialog(
                     value = cantidad,
                     onValueChange = { cantidad = it },
                     label = "Cantidad",
+                    suffix = { Text("U") },
                     focusRequester = focusCantidad,
                     nextFocusRequester = focusAncho
                 )
@@ -129,6 +130,7 @@ fun EditAberturaDialog(
                         value = ancho,
                         onValueChange = { ancho = it },
                         label = "Ancho (m)",
+                        suffix = { Text("m") },
                         modifier = Modifier.weight(1f),
                         focusRequester = focusAncho,
                         nextFocusRequester = focusAlto
@@ -137,6 +139,7 @@ fun EditAberturaDialog(
                         value = alto,
                         onValueChange = { alto = it },
                         label = "Alto (m)",
+                        suffix = { Text("m") },
                         modifier = Modifier.weight(1f),
                         focusRequester = focusAlto,
                         onDone = { onSaveAttempt() }

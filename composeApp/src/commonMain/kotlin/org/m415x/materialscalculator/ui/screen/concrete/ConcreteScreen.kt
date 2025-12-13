@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import kotlinx.coroutines.delay
 
+import org.m415x.materialscalculator.data.repository.SettingsRepository
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
 import org.m415x.materialscalculator.domain.common.toPresentacion
 import org.m415x.materialscalculator.domain.common.toShareText
@@ -26,19 +27,18 @@ import org.m415x.materialscalculator.ui.common.CmInput
 import org.m415x.materialscalculator.ui.common.NumericInput
 import org.m415x.materialscalculator.ui.common.ResultRow
 import org.m415x.materialscalculator.ui.common.areValidDimensions
-import org.m415x.materialscalculator.ui.common.clearFocusOnTap
 import org.m415x.materialscalculator.ui.common.getShareManager
 import org.m415x.materialscalculator.ui.common.roundToDecimals
 import org.m415x.materialscalculator.ui.common.toSafeDoubleOrNull
 
 /**
  * Pantalla principal de la calculadora de hormigón.
- * 
- * @return Unit
+ *
+ * @param settingsRepository El repositorio de configuración.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ConcreteScreen() {
+fun ConcreteScreen(settingsRepository: SettingsRepository) {
     // Obtenemos el controlador del teclado
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -46,6 +46,10 @@ fun ConcreteScreen() {
     // En una app grande usaríamos Koin, pero aquí lo instanciamos directo
     val repository = remember { StaticMaterialRepository() }
     val calcularHormigon = remember { CalculateConcreteUseCase(repository) }
+
+    // Observamos la configuración global
+    val pesoBolsaCemento by settingsRepository.bagCementKg.collectAsState(initial = 25)
+    val desperdicioHormigonPct by settingsRepository.wasteConcretePct.collectAsState(5.0)
 
     // --- 2. Estado de la UI (Lo que el usuario escribe) ---
     var ancho by remember { mutableStateOf("") }
@@ -81,7 +85,6 @@ fun ConcreteScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .clearFocusOnTap()
             .verticalScroll(rememberScrollState()) // Permite scrollear si el teclado tapa
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -94,6 +97,7 @@ fun ConcreteScreen() {
             value = ancho,
             onValueChange = { ancho = it },
             label = "Ancho (m)",
+            suffix = { Text("m") },
             modifier = Modifier.fillMaxWidth(),
             focusRequester = focusAncho,      // "Yo soy focusLargo"
             nextFocusRequester = focusLargo
@@ -103,6 +107,7 @@ fun ConcreteScreen() {
             value = largo,
             onValueChange = { largo = it },
             label = "Largo (m)",
+            suffix = { Text("m") },
             modifier = Modifier.fillMaxWidth(),
             focusRequester = focusLargo,      // "Yo soy focusLargo"
             nextFocusRequester = focusEspesor
@@ -112,6 +117,7 @@ fun ConcreteScreen() {
             value = espesor,
             onValueChange = { espesor = it },
             label = "Espesor (m)",
+            suffix = { Text("m") },
             modifier = Modifier.fillMaxWidth(),
             focusRequester = focusEspesor, // "Yo soy focusEspesor"
             nextFocusRequester = focusResistencia
@@ -189,7 +195,9 @@ fun ConcreteScreen() {
                             anchoMetros = a!!, // El !! es seguro aquí porque areValidDimensions ya chequeó que no sea null
                             largoMetros = l!!,
                             espesorMetros = e!!,
-                            tipo = selectedTipo
+                            tipo = selectedTipo,
+                            pesoBolsaCementoKg = pesoBolsaCemento,
+                            porcentajeDesperdicio = desperdicioHormigonPct / 100.0
                         )
                         errorMsg = null
 

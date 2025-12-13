@@ -1,161 +1,125 @@
 package org.m415x.materialscalculator.ui.screen.settings
 
+import androidx.compose.animation.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.unit.dp
-import org.m415x.materialscalculator.ui.common.AppInput
+import androidx.compose.ui.graphics.vector.ImageVector
 
-import org.m415x.materialscalculator.ui.theme.*
+import org.m415x.materialscalculator.data.repository.SettingsRepository
+import org.m415x.materialscalculator.ui.screen.settings.appearance.AppearanceSubScreen
+import org.m415x.materialscalculator.ui.screen.settings.db.MaterialsDbScreen
+import org.m415x.materialscalculator.ui.screen.settings.global.GlobalParamsSubScreen
+import org.m415x.materialscalculator.ui.theme.ContrastMode
+import org.m415x.materialscalculator.ui.theme.ThemeMode
 
 /**
- * Pantalla de configuración.
- * 
- * @param currentTheme Tema actual.
- * @param currentContrast Contraste actual.
- * @param onThemeChange Acción al cambiar el tema.
- * @param onContrastChange Acción al cambiar el contraste.
+ * Pantalla principal de configuración.
+ *
+ * @param repository El repositorio de configuración.
+ * @param currentTheme El tema actual.
+ * @param currentContrast El contraste actual.
+ * @param onThemeChange La función de cambio de tema.
+ * @param onContrastChange La función de cambio de contraste.
+ * @param currentSection La sección actual.
+ * @param onSectionChange La función de cambio de sección.
  */
 @Composable
 fun SettingsScreen(
+    repository: SettingsRepository, // Inyectamos el repo directo para leer/guardar
+    // Estos params siguen viniendo de App.kt para el tema en tiempo real
     currentTheme: ThemeMode,
     currentContrast: ContrastMode,
+    currentOutdoorMode: Boolean,
+    currentSection: SettingsSection,
     onThemeChange: (ThemeMode) -> Unit,
-    onContrastChange: (ContrastMode) -> Unit
+    onContrastChange: (ContrastMode) -> Unit,
+    onOutdoorModeChange: (Boolean) -> Unit,
+    // Callback para informar a la App el cambio de título/estado
+    onSectionChange: (SettingsSection) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        Text("Apariencia", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(16.dp))
+    // Cada vez que cambia la sección, avisamos a App.kt
+    LaunchedEffect(currentSection) {
+        onSectionChange(currentSection)
+    }
 
-        // 1. SWITCH DE MODO CLARO/OSCURO (Dropdown para System/Light/Dark)
-        ThemeModeSelector(currentTheme, onThemeChange)
-
-        // 2. SWITCH DE CONTRASTE (Switch para Standard/HighContrast)
-        ContrastModeSwitch(currentContrast, onContrastChange)
-
-/*
-        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-        Text("Configuración General", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Ejemplo de lo que pediste
-        SettingItem("Peso Bolsa Cemento", "25 kg")
-        SettingItem("Peso Bolsa Cal", "25 kg")
-        SettingItem("Volumen Balde", "10 Litros")
-        SettingItem("Volumen Carretilla", "70 Litros")
-
-        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-
-        Text("Editor de Materiales", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { /* TODO */ }, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Default.Edit, null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Editar Tipos de Ladrillos")
+    AnimatedContent(
+        targetState = currentSection,
+        label = "SettingsAnimation",
+        transitionSpec = {
+            if (targetState == SettingsSection.MENU) {
+                slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
+            } else {
+                slideInHorizontally { it } togetherWith slideOutHorizontally { -it }
+            }
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { /* TODO */ }, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Default.Edit, null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Editar Dosificaciones Hormigón")
-        }
+    ) { targetSection ->
+        when (targetSection) {
+            SettingsSection.MENU -> {
+                SettingsMainMenu(onNavigate = onSectionChange)
+            }
 
- */
+            SettingsSection.APPEARANCE -> {
+                AppearanceSubScreen(
+                    currentTheme,
+                    currentContrast,
+                    currentOutdoorMode,
+                    onThemeChange,
+                    onContrastChange,
+                    onOutdoorModeChange
+                )
+            }
+
+            SettingsSection.GLOBAL_PARAMS -> {
+                GlobalParamsSubScreen(repository)
+            }
+
+            SettingsSection.MATERIALS_DB -> {
+                MaterialsDbScreen(repository)
+            }
+
+            SettingsSection.PRICES -> {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Próximamente: Precios")
+                }
+            }
+        }
     }
 }
 
 /**
- * Selector de tema.
- * 
- * @param currentTheme Tema actual.
- * @param onThemeChange Acción al cambiar el tema.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ThemeModeSelector(currentTheme: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-
-    ListItem(
-        headlineContent = { Text("Tema de la aplicación") },
-        supportingContent = { Text("Define si usar modo claro, oscuro o del sistema.") },
-        trailingContent = {
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded },
-                modifier = Modifier.width(120.dp)
-            ) {
-                AppInput(
-                    value = currentTheme.name,
-                    onValueChange = { },
-                    label = "Theme",
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-
-                    // Colores del menu
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-
-                    modifier = Modifier
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
-                        .fillMaxWidth()
-                )
-                ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    ThemeMode.entries.forEach { mode ->
-                        DropdownMenuItem(
-                            text = { Text(mode.name) },
-                            onClick = {
-                                onThemeChange(mode) // Llama al callback de App.kt
-                                expanded = false
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    )
-}
-
-/**
- * Switch de contraste.
- * 
- * @param currentContrast Contraste actual.
- * @param onContrastChange Acción al cambiar el contraste.
+ * Item de menú de configuración.
+ *
+ * @param title El título del item.
+ * @param subtitle El subtítulo del item.
+ * @param icon El icono del item.
+ * @param onClick La función de click.
  */
 @Composable
-fun ContrastModeSwitch(currentContrast: ContrastMode, onContrastChange: (ContrastMode) -> Unit) {
-    val isHighContrast = currentContrast == ContrastMode.HighContrast
-
+fun SettingsMenuItem(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
     ListItem(
-        headlineContent = { Text("Modo Alto Contraste") },
-        supportingContent = { Text("Mejora la legibilidad en condiciones de mucha luz exterior.") },
-        trailingContent = {
-            Switch(
-                checked = isHighContrast,
-                onCheckedChange = { isChecked ->
-                    onContrastChange(if (isChecked) ContrastMode.HighContrast else ContrastMode.Standard)
-                }
-            )
-        }
+        headlineContent = { Text(title) },
+        supportingContent = { Text(subtitle) },
+        leadingContent = { Icon(icon, null) },
+        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) },
+        modifier = Modifier.clickable { onClick() }
     )
+    HorizontalDivider()
 }
 
 /**
  * Item de configuración.
- * 
+ *
  * @param label Etiqueta del item.
  * @param value Valor del item.
  */

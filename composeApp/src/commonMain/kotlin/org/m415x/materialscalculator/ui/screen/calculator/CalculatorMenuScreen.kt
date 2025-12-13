@@ -1,4 +1,4 @@
-package org.m415x.materialscalculator.ui.screen.home
+package org.m415x.materialscalculator.ui.screen.calculator
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState

@@ -27,7 +27,8 @@ class CalculateConcreteUseCase(private val repository: MaterialRepository) {
         largoMetros: Double,
         espesorMetros: Double,
         tipo: TipoHormigon,
-        pesoBolsaCementoKg: Int = 25
+        pesoBolsaCementoKg: Int = 25,
+        porcentajeDesperdicio: Double
     ): ResultadoHormigon {
 
         // 1. Geometría (Esta es la única responsabilidad única de este UseCase)
@@ -37,26 +38,23 @@ class CalculateConcreteUseCase(private val repository: MaterialRepository) {
         val receta = repository.getDosificacionHormigon(tipo)
             ?: throw IllegalArgumentException("Tipo no soportado")
 
-        // 3. Obtenemos desperdicio centralizado
-        val desperdicio = WasteRegistry.getForConcrete(tipo)
-
-        // 4. El motor hace el cálculo
+        // 3. El motor hace el cálculo
         val mats = calculateWetMaterials(
             volumenM3 = volumenGeometrico,
             receta = receta,
-            desperdicio = desperdicio,
+            desperdicio = porcentajeDesperdicio,
             pesoBolsaCemento = pesoBolsaCementoKg
         )
 
-        // 5. Mapeo al resultado final
+        // 4. Mapeo al resultado final
         return ResultadoHormigon(
-            volumenTotalM3 = volumenGeometrico * (1 + desperdicio),
+            volumenTotalM3 = volumenGeometrico * (1 + porcentajeDesperdicio),
             cementoKg = mats.cementoKg,
             arenaM3 = mats.arenaM3,
             piedraM3 = mats.piedraM3,
             aguaLitros = mats.aguaLitros,
             bolsaCementoKg = pesoBolsaCementoKg,
-            porcentajeDesperdicioHormigon = desperdicio,
+            porcentajeDesperdicioHormigon = porcentajeDesperdicio,
             dosificacionMezcla = receta.dosificacionMezcla
         )
     }

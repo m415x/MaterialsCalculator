@@ -5,9 +5,14 @@ package org.m415x.materialscalculator.domain.model
  *
  * @property nombre Nombre del ladrillo
  * @property isPortante Indica si el ladrillo es portante
- * @property usos Usos del ladrillo
+ * @property descripcion Descripción y usos del ladrillo
  */
-enum class TipoLadrillo(val nombre: String, val isPortante: Boolean, val usos: String) {
+enum class TipoLadrillo(
+    val nombre: String,
+    val isPortante: Boolean,
+    val descripcion: String
+) {
+
     // Ladrillos macizos de arcilla
     COMUN("Común", true, "Muros, parrillas"),
     LADRILLON("Ladrillón", true, "Muros de carga"),
@@ -76,18 +81,18 @@ data class Abertura(
  */
 data class ResultadoMuro(
     val areaNetaM2: Double,
+    // Ladrillos
     val cantidadLadrillos: Int,
+    val porcentajeDesperdicioLadrillos: Double,
+    // Mortero
     val morteroM3: Double,
-    // Materia prima
     val cementoKg: Double,
     val calKg: Double,
     val arenaTotalM3: Double,
     val aguaLitros: Double,
-    val bolsaCementoKg: Int,
-    val bolsaCalKg: Int,
-    // Proporción
+    val porcentajeDesperdicioMortero: Double,
+    // Configuración
     val proporcionMezcla: String,
-    // Desperdicio
-    val porcentajeDesperdicioLadrillos: Double,
-    val porcentajeDesperdicioMortero: Double
+    val bolsaCementoKg: Int,
+    val bolsaCalKg: Int
 )

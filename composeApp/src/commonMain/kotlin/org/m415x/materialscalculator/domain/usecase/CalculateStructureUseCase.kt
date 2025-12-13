@@ -51,7 +51,10 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
 
         // Configuraciones opcionales (con defaults)
         longitudComercialHierroMetros: Int = 12,
-        pesoBolsaCementoKg: Int = 25
+        pesoBolsaCementoKg: Int = 25,
+        desperdicioHormigon: Double,
+        desperdicioHierroPrincipal: Double,
+        desperdicioEstribos: Double
     ): ResultadoEstructura {
 
         // ============================================================
@@ -69,8 +72,6 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
         // B. Datos y Desperdicios
         val receta = repository.getDosificacionHormigon(tipoHormigon)
             ?: throw IllegalArgumentException("Hormigón no encontrado")
-
-        val desperdicioHormigon = WasteRegistry.getForConcrete(tipoHormigon)
 
         // C. Cálculo automático de materiales húmedos
         val matsConcreto = calculateWetMaterials(
@@ -91,7 +92,7 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
         // --- A. Hierro Principal ---
         val pesoMetroPrincipal = repository.getPesoHierroPorMetro(diametroPrincipal)
 
-        val longitudTotalPrincipal = (cantidadVarillas * largoMetros) * (1 + desperdicioPrincipal)
+        val longitudTotalPrincipal = (cantidadVarillas * largoMetros) * (1 + desperdicioHierroPrincipal)
         val pesoTotalPrincipal = longitudTotalPrincipal * pesoMetroPrincipal
 
         val barrasPrincipalComprar = ceil(longitudTotalPrincipal / longitudComercialHierroMetros).toInt()
@@ -139,7 +140,7 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
             cantidadHierroPrincipal = barrasPrincipalComprar,
             cantidadHierroEstribos = barrasEstribosComprar,
             longitudComercialHierroMetros = longitudComercialHierroMetros,
-            porcentajeDesperdicioHierroPrincipal = desperdicioPrincipal,
+            porcentajeDesperdicioHierroPrincipal = desperdicioHierroPrincipal,
             porcentajeDesperdicioHierroEstribos = desperdicioEstribos
         )
     }

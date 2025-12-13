@@ -2,9 +2,12 @@ package org.m415x.materialscalculator.ui.common
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.WbSunny     // Sol Relleno
+import androidx.compose.material.icons.outlined.WbSunny   // Sol Contorno
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import org.m415x.materialscalculator.ui.navigation.BottomTab
 
 /**
@@ -19,9 +22,11 @@ import org.m415x.materialscalculator.ui.navigation.BottomTab
 fun AppTopBar(
     title: String,
     showBackButton: Boolean,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    isOutdoorMode: Boolean,
+    onToggleOutdoorMode: () -> Unit
 ) {
-    TopAppBar(
+    CenterAlignedTopAppBar(
         title = { Text(title) },
         navigationIcon = {
             if (showBackButton) {
@@ -30,6 +35,26 @@ fun AppTopBar(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",
                         tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+        },
+        actions = {
+            IconButton(onClick = onToggleOutdoorMode) {
+                // Alternamos ícono y color según el estado
+                if (isOutdoorMode) {
+                    Icon(
+                        imageVector = Icons.Filled.WbSunny,
+                        contentDescription = "Desactivar Modo Exterior",
+                        tint = Color(0xFFFFB300) // Amarillo Sol (Amber 600)
+//                      tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Outlined.WbSunny,
+                        contentDescription = "Activar Modo Exterior",
+                        // Usamos el color por defecto del tema (blanco/negro)
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }

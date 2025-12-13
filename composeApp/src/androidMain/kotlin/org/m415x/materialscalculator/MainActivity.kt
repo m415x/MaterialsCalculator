@@ -9,6 +9,7 @@ import androidx.core.view.WindowCompat
 import com.russhwolf.settings.SharedPreferencesSettings
 
 import org.m415x.materialscalculator.data.repository.SettingsRepository
+import org.m415x.materialscalculator.ui.common.ActivityProvider
 import org.m415x.materialscalculator.ui.common.AndroidContext
 
 class MainActivity : ComponentActivity() {
@@ -17,6 +18,9 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        // REGISTRAR ACTIVIDAD
+        ActivityProvider.currentActivity = java.lang.ref.WeakReference(this)
 
         // 1. Creamos las preferencias clásicas de Android
         val sharedPrefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
