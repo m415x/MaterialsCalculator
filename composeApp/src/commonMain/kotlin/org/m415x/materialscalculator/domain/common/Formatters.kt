@@ -41,36 +41,31 @@ fun ResultadoHormigon.toShareText(
     ancho: Double,
     largo: Double,
     espesor: Double,
-    tipoHormigon: TipoHormigon
+    nombreHormigon: String
 ): String {
-    return """
-        *CÁLCULO DE HORMIGÓN*
-        =========================
-        
-        *DETALLE DE OBRA*
-        -------------------------
-        *Dimensiones:* $ancho x $largo m
-        *Espesor:* ${espesor.metersToCm} cm
-        *Volumen Total:* ${volumenTotalM3.roundToDecimals(2)} m³
-        
-        *Hormigón:* ${tipoHormigon.name} (${tipoHormigon.resistencia})
-            └ ${tipoHormigon.usos}
-        
-        
-        *MATERIALES ESTIMADOS*
-        -------------------------
-        • Cemento: ${cementoKg.roundToDecimals(1)} kg
-            └ aprox. ${cementoKg.toPresentacion(bolsaCementoKg)} (${bolsaCementoKg} kg)
-        • Arena: ${arenaM3.roundToDecimals(2)} m³
-        • Piedra/Grava: ${piedraM3.roundToDecimals(2)} m³
-        • Agua: ${aguaLitros.roundToDecimals(1)} Lt
-        
-        *Proporción estimada:* 
-        $dosificacionMezcla
-        
-        _________________________
-        _Generado con ${APP_NAME}_
-    """.trimIndent()
+    val sb = StringBuilder()
+
+    sb.append("*CÁLCULO DE HORMIGÓN*\n")
+    sb.append("=========================\n\n")
+    sb.append("*DETALLE DE OBRA*\n")
+    sb.append("-------------------------\n")
+    sb.append("*Dimensiones:* $ancho x $largo m\n")
+    sb.append("*Espesor:* ${espesor.metersToCm} cm\n\n")
+    sb.append("*Volumen Total:* ${volumenTotalM3.roundToDecimals(2)} m³\n\n")
+    sb.append("*Hormigón:* $nombreHormigon\n\n")
+    sb.append("*MATERIALES ESTIMADOS*\n")
+    sb.append("-------------------------\n")
+    sb.append("● *Cemento:* ${cementoKg.roundToDecimals(1)} kg\n")
+    sb.append("    └ aprox. ${cementoKg.toPresentacion(bolsaCementoKg)}\n")
+    sb.append("● *Arena:* ${arenaM3.roundToDecimals(2)} m³\n")
+    sb.append("● *Piedra/Grava:* ${piedraM3.roundToDecimals(2)} m³\n")
+    sb.append("● *Agua:* ${aguaLitros.roundToDecimals(1)} Lt\n\n")
+    sb.append("*Proporción estimada:* \n")
+    sb.append("$dosificacionMezcla\n\n")
+    sb.append("_________________________\n")
+    sb.append("_Generado con ${APP_NAME}_")
+
+    return sb.toString()
 }
 
 /**
@@ -85,7 +80,7 @@ fun ResultadoHormigon.toShareText(
 fun ResultadoMuro.toShareText(
     largo: Double,
     alto: Double,
-    tipoLadrillo: TipoLadrillo,
+    tipoLadrillo: String,
     detalleLadrillo: String,
     aberturas: List<Abertura>
 ): String {
@@ -93,54 +88,48 @@ fun ResultadoMuro.toShareText(
     val superficieBruta = largo * alto
     val superficieAberturas = aberturas.sumOf { it.anchoMetros * it.altoMetros * it.cantidad }
 
-    // 2. Construcción del texto de Aberturas
+    val sb = StringBuilder()
+
     val detalleAberturas =
         if (aberturas.isEmpty()) {
-            "   (Sin aberturas)"
+            "    (Sin aberturas)"
         } else {
             aberturas.joinToString("\n") { ab ->
-                "   • ${ab.cantidad} x ${ab.nombre}: ${ab.anchoMetros} x ${ab.altoMetros} m"
+                "    ‣ ${ab.cantidad} x ${ab.nombre}: ${ab.anchoMetros} x ${ab.altoMetros} m"
             }
         }
 
-    return """
-        *CÁLCULO DE MURO*
-        =========================
-        
-        *DETALLE DE OBRA*
-        -------------------------
-        *Dimensiones:* $largo x $alto m
-        *Ladrillo:* ${tipoLadrillo.nombre} 
-            └ Dimensiones $detalleLadrillo
-        
-        *Superficies:*
-            • Total Muro: ${superficieBruta.roundToDecimals(2)} m²
-            • Aberturas:  ${superficieAberturas.roundToDecimals(2)} m²
-            • Real a cubrir: ${areaNetaM2.roundToDecimals(2)} m²
-        
-        *Aberturas:*
-        $detalleAberturas
-        
-        
-        *MATERIALES ESTIMADOS*
-        -------------------------
-        *Ladrillos:* $cantidadLadrillos U
-        
-        *Mortero (${morteroM3.roundToDecimals(2)} m³):*
-        
-        • Cemento: ${cementoKg.roundToDecimals(1)} kg
-            └ aprox. ${cementoKg.toPresentacion(bolsaCementoKg)} (${bolsaCementoKg} kg)
-        ${if (calKg > 0) "• Cal: ${calKg.roundToDecimals(1)} kg" else ""}
-        ${if (calKg > 0) "  └ aprox. ${calKg.toPresentacion(bolsaCalKg)} (${bolsaCalKg} kg)" else ""}
-        • Arena: ${arenaTotalM3.roundToDecimals(2)} m³
-        • Agua: ${aguaLitros.roundToDecimals(1)} Lt
-        
-        *Proporción estimada:* 
-        $proporcionMezcla
-        
-        _________________________
-        _Generado con ${APP_NAME}_
-    """.trimIndent()
+    sb.append("*CÁLCULO DE MURO*\n")
+    sb.append("=========================\n\n")
+    sb.append("*DETALLE DE OBRA*\n")
+    sb.append("-------------------------\n")
+    sb.append("*Dimensiones:* $largo x $alto m\n")
+    sb.append("*Ladrillo:* $tipoLadrillo \n")
+    sb.append("    └ Dimensiones $detalleLadrillo\n\n")
+    sb.append("*Superficies:*\n")
+    sb.append("● Total Muro: ${superficieBruta.roundToDecimals(2)} m²\n")
+    sb.append("● Aberturas:  ${superficieAberturas.roundToDecimals(2)} m²\n")
+    sb.append("● Real a cubrir: ${areaNetaM2.roundToDecimals(2)} m²\n\n")
+    sb.append("*Aberturas:*\n")
+    sb.append("$detalleAberturas\n\n")
+    sb.append("*MATERIALES ESTIMADOS*\n")
+    sb.append("-------------------------\n")
+    sb.append("● *Ladrillos:* $cantidadLadrillos U\n")
+    sb.append("● *Mortero* (${morteroM3.roundToDecimals(2)} m³):\n")
+    sb.append("    ‣ Cemento: ${cementoKg.roundToDecimals(1)} kg\n")
+    sb.append("        └ aprox. ${cementoKg.toPresentacion(bolsaCementoKg)}\n")
+    if (calKg > 0) {
+        sb.append("    ‣ Cal: ${calKg.roundToDecimals(1)} kg\n")
+        sb.append("        └ aprox. ${calKg.toPresentacion(bolsaCalKg)}\n")
+    }
+    sb.append("    ‣ Arena: ${arenaTotalM3.roundToDecimals(2)} m³\n")
+    sb.append("    ‣ Agua: ${aguaLitros.roundToDecimals(1)} Lt\n\n")
+    sb.append("*Proporción estimada:* \n")
+    sb.append("$proporcionMezcla\n\n")
+    sb.append("_________________________\n")
+    sb.append("_Generado con ${APP_NAME}_")
+
+    return sb.toString()
 }
 
 /**

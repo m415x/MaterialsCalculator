@@ -339,7 +339,7 @@ fun BrickEditorDialog(
                     onValueChange = { name = it },
                     label = "Nombre del ladrillo",
                     focusRequester = focusNombreLadrillo,
-                    nextFocusRequester = focusIsPortante
+                    nextFocusRequester = focusAnchoLadrillo
                 )
 
                 Row(
@@ -351,7 +351,8 @@ fun BrickEditorDialog(
                         onCheckedChange = { isPortante = it },
                         Modifier.focusRequester(focusIsPortante)
                     )
-                    Text("Es Portante (Estructural)", style = MaterialTheme.typography.bodyLarge)
+                    Text("Es Portante", style = MaterialTheme.typography.labelMedium)
+                    Text(" (Estructural)", style = MaterialTheme.typography.labelSmall)
                 }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -420,9 +421,15 @@ fun BrickEditorDialog(
                             val l = (largoCm.toSafeDoubleOrNull() ?: 0.0) / 100.0
                             val j = (juntaCm.toSafeDoubleOrNull() ?: 0.0) / 100.0
 
+                            // Verificamos si es nulo O ESTÁ VACÍO.
+                            val finalId = if (brickToEdit?.id.isNullOrBlank()) {
+                                Uuid.random().toString() // Generar ID nuevo si es copia o nuevo
+                            } else {
+                                brickToEdit.id // Mantener ID si es edición de uno existente
+                            }
+
                             val newBrick = CustomBrick(
-                                // Si brickToEdit es null (nuevo), generamos un UUID nativo y lo pasamos a String
-                                id = brickToEdit?.id ?: Uuid.random().toString(),
+                                id = finalId,
                                 nombre = name,
                                 ancho = w,
                                 alto = h,

@@ -1,16 +1,13 @@
 package org.m415x.materialscalculator.domain.usecase
 
-import org.m415x.materialscalculator.domain.common.WasteRegistry
 import org.m415x.materialscalculator.domain.common.calculateWetMaterials
-import org.m415x.materialscalculator.domain.repository.MaterialRepository
-import org.m415x.materialscalculator.domain.model.*
+import org.m415x.materialscalculator.domain.model.DosificacionHormigon
+import org.m415x.materialscalculator.domain.model.ResultadoHormigon
 
 /**
  * Calcula los materiales para un volumen de hormigón.
- *
- * @param repository Repositorio de materiales.
  */
-class CalculateConcreteUseCase(private val repository: MaterialRepository) {
+class CalculateConcreteUseCase {
 
     /**
      * Calcula los materiales para un volumen de hormigón.
@@ -26,36 +23,34 @@ class CalculateConcreteUseCase(private val repository: MaterialRepository) {
         anchoMetros: Double,
         largoMetros: Double,
         espesorMetros: Double,
-        tipo: TipoHormigon,
-        pesoBolsaCementoKg: Int = 25,
+        receta: DosificacionHormigon,
+        pesoBolsaCementoKg: Int,
+        pesoBolsaCalKg: Int,
         porcentajeDesperdicio: Double
     ): ResultadoHormigon {
 
         // 1. Geometría (Esta es la única responsabilidad única de este UseCase)
         val volumenGeometrico = anchoMetros * largoMetros * espesorMetros
 
-        // 2. Datos
-        val receta = repository.getDosificacionHormigon(tipo)
-            ?: throw IllegalArgumentException("Tipo no soportado")
-
-        // 3. El motor hace el cálculo
+        // 2. El motor hace el cálculo
         val mats = calculateWetMaterials(
             volumenM3 = volumenGeometrico,
             receta = receta,
             desperdicio = porcentajeDesperdicio,
-            pesoBolsaCemento = pesoBolsaCementoKg
+            pesoBolsaCemento = pesoBolsaCementoKg,
+            pesoBolsaCal = pesoBolsaCalKg
         )
 
         // 4. Mapeo al resultado final
         return ResultadoHormigon(
-            volumenTotalM3 = volumenGeometrico * (1 + porcentajeDesperdicio),
+            volumenTotalM3 = volumenGeometrico,
             cementoKg = mats.cementoKg,
             arenaM3 = mats.arenaM3,
             piedraM3 = mats.piedraM3,
             aguaLitros = mats.aguaLitros,
             bolsaCementoKg = pesoBolsaCementoKg,
             porcentajeDesperdicioHormigon = porcentajeDesperdicio,
-            dosificacionMezcla = receta.dosificacionMezcla
+            dosificacionMezcla = receta.proporcionMezcla
         )
     }
 }

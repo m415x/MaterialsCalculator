@@ -79,9 +79,8 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
             volumenM3 = volumenFinoGeo,
             receta = recetaFino,
             desperdicio = desperdicioFino,
-            pesoBolsaCal = bolsaCalKg
-            // El cemento es despreciable en fino tradicional o usa bolsa chica,
-            // pero el motor lo calculará igual si la receta lo tiene.
+            pesoBolsaCal = bolsaCalKg,
+            pesoBolsaCemento = 25
         )
 
         // ----------------------------------------------------

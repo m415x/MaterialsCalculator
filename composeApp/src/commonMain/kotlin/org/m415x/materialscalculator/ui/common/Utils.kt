@@ -5,6 +5,7 @@ import org.m415x.materialscalculator.domain.model.PropiedadesLadrillo
 
 // Modelo auxiliar para el Dropdown (Mantenlo privado o dentro del archivo)
 data class LadrilloOption(
+    val id: String,
     val label: String,
     val isPortante: Boolean,
     val descripcion: String,

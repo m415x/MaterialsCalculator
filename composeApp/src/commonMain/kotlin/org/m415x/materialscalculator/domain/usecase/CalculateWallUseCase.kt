@@ -48,7 +48,7 @@ class CalculateWallUseCase {
             )
         } else if (areaAberturas == areaMuro) {
             throw IllegalArgumentException(
-                "El área de aberturas (${areaAberturas.roundToDecimals(2)} m²) es igual a área del muro."
+                "El área de aberturas (${areaAberturas.roundToDecimals(2)} m²) es igual al área del muro."
             )
         }
 

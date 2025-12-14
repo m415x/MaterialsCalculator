@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,12 +30,12 @@ import org.m415x.materialscalculator.domain.common.toPresentacion
 import org.m415x.materialscalculator.domain.common.toShareText
 import org.m415x.materialscalculator.domain.model.Abertura
 import org.m415x.materialscalculator.domain.model.DosificacionMortero
-import org.m415x.materialscalculator.domain.model.PropiedadesLadrillo
 import org.m415x.materialscalculator.domain.model.ResultadoMuro
 import org.m415x.materialscalculator.domain.model.TipoLadrillo
 import org.m415x.materialscalculator.domain.model.toProperties
 import org.m415x.materialscalculator.domain.usecase.CalculateWallUseCase
 import org.m415x.materialscalculator.ui.common.AppConfirmDialog
+import org.m415x.materialscalculator.ui.common.AppDropdown
 import org.m415x.materialscalculator.ui.common.AppInput
 import org.m415x.materialscalculator.ui.common.AppResultBottomSheet
 import org.m415x.materialscalculator.ui.common.LadrilloOption
@@ -66,6 +67,7 @@ fun WallScreen(settingsRepository: SettingsRepository) {
     val customBricks by settingsRepository.customBricks.collectAsState(initial = emptyList())
     val customRecipes by settingsRepository.customRecipes.collectAsState(initial = emptyList())
     val hiddenIds by settingsRepository.hiddenBrickIds.collectAsState(initial = emptySet())
+    val defaultBrickId by settingsRepository.defaultBrickId.collectAsState(initial = "")
 
     val bolsaCemento by settingsRepository.bagCementKg.collectAsState(initial = 25)
     val bolsaCal by settingsRepository.bagLimeKg.collectAsState(initial = 25)
@@ -81,6 +83,7 @@ fun WallScreen(settingsRepository: SettingsRepository) {
             if (type.name !in hiddenIds) {
                 list.add(
                     LadrilloOption(
+                        id = type.name,
                         label = type.nombre,
                         isPortante = type.isPortante,
                         descripcion = type.descripcion,
@@ -93,12 +96,12 @@ fun WallScreen(settingsRepository: SettingsRepository) {
 
         // B. Custom
         customBricks.forEach { custom ->
-            // Buscamos una receta por defecto (ej: Común) ya que el custom no tiene una asignada
-            // TODO: A futuro podrías dejar elegir la mezcla
+            // Asignamos mezcla por defecto (Común) para custom
             val recetaDefault = staticRepo.getDosificacionMortero(TipoLadrillo.COMUN)
 
             list.add(
                 LadrilloOption(
+                    id = custom.id,
                     label = "${custom.nombre} (C)",
                     isPortante = custom.isPortante,
                     descripcion = custom.descripcion,
@@ -115,82 +118,75 @@ fun WallScreen(settingsRepository: SettingsRepository) {
     val opcionesMezcla = remember(customRecipes) {
         val list = mutableListOf<MezclaOption>()
 
-        // 1. Estáticas (Morteros del sistema)
-        // Como StaticRepo no tiene un "getAllMorteros", podemos agregar los conocidos manualmente
-        // o crear un método en StaticRepo. Por ahora, agregamos los comunes:
-        val comunes = listOf(TipoLadrillo.COMUN, TipoLadrillo.HUECO_18) // Usamos tipos para sacar recetas
-        // (Esto es un atajo, idealmente StaticRepo debería exponer 'getMezclasDisponibles')
-
-        // Vamos a sacar la lista de mezclas "Standard" que tienes hardcodeadas en StaticRepo
-        // Asumiendo que tienes acceso a ellas o las recreas aquí:
+        // 1. Estáticas Comunes (Manuales)
         val mezclaCal = staticRepo.getDosificacionMortero(TipoLadrillo.COMUN)
         list.add(MezclaOption("STD_CAL", "Cal Reforzada", mezclaCal.dosificacionMezcla, mezclaCal))
 
         val mezclaCementicia = staticRepo.getDosificacionMortero(TipoLadrillo.BLOQUE_20)
         list.add(MezclaOption("STD_CEM", "Mortero Cementicio", mezclaCementicia.dosificacionMezcla, mezclaCementicia))
 
-        // 2. Custom (Tus recetas creadas en Settings)
+        // 2. Custom (Solo Morteros, aunque dejamos pasar hormigones si el usuario quiere)
         customRecipes.forEach { cr ->
-            // Filtramos un poco: Si tiene mucha piedra, es hormigón, quizás no lo mostramos para pegar ladrillos
-            // Pero si el usuario lo creó, dejémoslo elegir.
             val dosis = DosificacionMortero(
                 dosificacionMezcla = cr.nombre,
                 cementoKg = cr.cementoKg,
                 calKg = cr.calKg,
                 arenaM3 = cr.arenaM3,
-                relacionAgua = cr.relacionAgua,
-                // Si tu modelo DosificacionMortero no tiene piedra, ignora la piedra del custom
+                relacionAgua = cr.relacionAgua
             )
             list.add(MezclaOption(cr.id, cr.nombre, "Personalizado", dosis))
         }
         list
     }
 
-    // Estado de selección (Por defecto el primero o null)
-    var selectedOption by remember(opcionesLadrillo) {
-        mutableStateOf(opcionesLadrillo.firstOrNull())
+    /// Selección de Ladrillo (Intenta usar el default, sino el primero)
+    var selectedOption by remember(opcionesLadrillo, defaultBrickId) {
+        mutableStateOf(
+            if (defaultBrickId.isNotBlank()) opcionesLadrillo.find { it.id == defaultBrickId }
+                ?: opcionesLadrillo.firstOrNull()
+            else opcionesLadrillo.firstOrNull()
+        )
     }
-    var expandedLadrillo by remember { mutableStateOf(false) }
-
-    // Estado Pared
-    var largoPared by remember { mutableStateOf("") }
-    var altoPared by remember { mutableStateOf("") }
-
-    // Estado Ladrillo
-    var expanded by remember { mutableStateOf(false) }
-    var selectedLadrillo by remember { mutableStateOf(TipoLadrillo.COMUN) }
 
     // Estado de la mezcla seleccionada.
     // Inicialmente es la sugerida del ladrillo.
     var selectedMezcla by remember { mutableStateOf(selectedOption?.receta) }
 
-    // Modal de cambio de mezcla
-    var showMezclaDialog by remember { mutableStateOf(false) }
+    // --- EFECTO REACTIVO INTELIGENTE ---
+    // Cuando cambia el ladrillo, cambiamos la mezcla a la sugerida por defecto.
+    // (El usuario siente que la app es inteligente).
+    LaunchedEffect(selectedOption) {
+        if (selectedOption != null) {
+            selectedMezcla = selectedOption!!.receta
+        }
+    }
 
-    // Estado Aberturas (Lista Dinámica)
-    // Usamos mutableStateList para que Compose reaccione cuando agregamos/borramos
+    // Inputs Dimensiones
+    var largoPared by remember { mutableStateOf("") }
+    var altoPared by remember { mutableStateOf("") }
+    var expandedLadrillo by remember { mutableStateOf(false) }
+
+    // Aberturas
     val aberturas = remember { mutableStateListOf<Abertura>() }
 
-    // Guarda el índice del ítem que se quiere borrar. Si es null, no hay diálogo.
-    var indexToDelete by remember { mutableStateOf<Int?>(null) }
-
-    // Variable para saber qué abertura estamos editando (null = ninguna)
-    var editingIndex by remember { mutableStateOf<Int?>(null) }
-
-    // Estado Inputs Temporales para nueva abertura
+    // Inputs temporales para nueva abertura
     var anchoAberturaInput by remember { mutableStateOf("") }
     var altoAberturaInput by remember { mutableStateOf("") }
 
-    // Estado Resultados
+    // Control de Diálogos
+    var showMezclaDialog by remember { mutableStateOf(false) }
+    var indexToDelete by remember { mutableStateOf<Int?>(null) }
+    var editingIndex by remember { mutableStateOf<Int?>(null) }
+
+    // Resultados
     var resultado by remember { mutableStateOf<ResultadoMuro?>(null) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
-
-    // Para controlar la visibilidad del Modal
     var showResultSheet by remember { mutableStateOf(false) }
 
+    // Utils
     val shareManager = remember { getShareManager() }
 
-    // Definimos los FocusRequesters necesarios
+    // Focus
     val focusLargo = remember { FocusRequester() }
     val focusAlto = remember { FocusRequester() }
     val focusTipoLadrillo = remember { FocusRequester() }
@@ -204,15 +200,6 @@ fun WallScreen(settingsRepository: SettingsRepository) {
         focusLargo.requestFocus()
     }
 
-    // --- EFECTO REACTIVO INTELIGENTE ---
-    // Cuando cambia el ladrillo, cambiamos la mezcla a la sugerida por defecto.
-    // (El usuario siente que la app es inteligente).
-    LaunchedEffect(selectedOption) {
-        if (selectedOption != null) {
-            selectedMezcla = selectedOption!!.receta
-        }
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -221,7 +208,7 @@ fun WallScreen(settingsRepository: SettingsRepository) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
-        // --- SECCIÓN 1: Datos Generales ---
+        // --- SECCIÓN 1: Dimensiones ---
         Text("Dimensiones del Muro", style = MaterialTheme.typography.titleMedium)
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -231,7 +218,7 @@ fun WallScreen(settingsRepository: SettingsRepository) {
                 label = "Largo (m)",
                 suffix = { Text("m") },
                 modifier = Modifier.weight(1f),
-                focusRequester = focusLargo,      // "Yo soy focusLargo"
+                focusRequester = focusLargo,
                 nextFocusRequester = focusAlto
             )
             NumericInput(
@@ -240,86 +227,62 @@ fun WallScreen(settingsRepository: SettingsRepository) {
                 label = "Alto (m)",
                 suffix = { Text("m") },
                 modifier = Modifier.weight(1f),
-                focusRequester = focusAlto,      // "Yo soy focusAlto"
+                focusRequester = focusAlto,
                 nextFocusRequester = focusTipoLadrillo
             )
         }
 
-        // --- SECCIÓN Tipo de Ladrillo ---
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
-        ) {
-            AppInput(
-                value = selectedOption?.label ?: "Seleccione...",
-                onValueChange = {},
-                label = "Tipo de Ladrillo",
-                readOnly = true,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier.menuAnchor().fillMaxWidth(),
-                focusRequester = focusTipoLadrillo,
-                nextFocusRequester = focusAnchoAbertura
-            )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                modifier = Modifier.heightIn(max = 300.dp)
-            ) {
-                opcionesLadrillo.forEach { opcion ->
-                    DropdownMenuItem(
-                        text = {
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        opcion.label,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    if (opcion.isPortante) {
-                                        Spacer(Modifier.width(8.dp))
-                                        // Badge de "Portante"
-                                        Surface(
-                                            color = MaterialTheme.colorScheme.tertiaryContainer,
-                                            shape = MaterialTheme.shapes.extraSmall
-                                        ) {
-                                            Text(
-                                                "PORTANTE",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                                                color = MaterialTheme.colorScheme.onTertiaryContainer
-                                            )
-                                        }
-                                    }
-                                }
-                                if (opcion.descripcion.isNotBlank()) {
-                                    Text(
-                                        opcion.descripcion,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                // Medidas
-                                val p = opcion.props
-                                Text(
-                                    "Medidas: ${(p.anchoMuro * 100).toInt()}x${(p.altoUnidad * 100).toInt()}x${(p.largoUnidad * 100).toInt()} cm",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.secondary
-                                )
-                            }
-                        },
-                        onClick = {
-                            selectedOption = opcion
-                            expanded = false
-                        }
+        // --- SECCIÓN 2: Ladrillo ---
+        AppDropdown(
+            label = "Tipo de Ladrillo",
+            selectedText = selectedOption?.label ?: "Seleccione...",
+            options = opcionesLadrillo, // Lista de LadrilloOption
+            onSelect = { opcion -> selectedOption = opcion },
+            modifier = Modifier.focusRequester(focusTipoLadrillo) // Podemos pasar modificadores
+        ) { opcion ->
+            // --- AQUÍ VA TU DISEÑO COMPLEJO ---
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        opcion.label,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
                     )
-                    HorizontalDivider()
+                    if (opcion.isPortante) {
+                        Spacer(Modifier.width(8.dp))
+                        Surface(
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                            shape = MaterialTheme.shapes.extraSmall
+                        ) {
+                            Text(
+                                "PORTANTE",
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                    }
                 }
+
+                if (opcion.descripcion.isNotBlank()) {
+                    Text(
+                        opcion.descripcion,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Medidas
+                val p = opcion.props
+                Text(
+                    "Medidas: ${(p.anchoMuro * 100).toInt()}x${(p.altoUnidad * 100).toInt()}x${(p.largoUnidad * 100).toInt()} cm",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.secondary
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // RESUMEN DE MEZCLA (Diseño Sutil)
+        // --- SECCIÓN 3: Mezcla (Resumen) ---
         if (selectedMezcla != null) {
             Card(
                 colors = CardDefaults.cardColors(
@@ -360,51 +323,11 @@ fun WallScreen(settingsRepository: SettingsRepository) {
             }
         }
 
-        // --- DIALOGO MODAL PARA ELEGIR MEZCLA ---
-        if (showMezclaDialog) {
-            AlertDialog(
-                onDismissRequest = { showMezclaDialog = false },
-                icon = { Icon(Icons.Default.Science, null) },
-                title = { Text("Elegir Mezcla") },
-                text = {
-                    // Lista scrolleable dentro del alerta
-                    LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
-                        items(opcionesMezcla) { opcion ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        selectedMezcla = opcion.data // Actualizamos la selección manual
-                                        showMezclaDialog = false
-                                    }
-                                    .padding(vertical = 12.dp, horizontal = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                RadioButton(
-                                    selected = (opcion.data == selectedMezcla),
-                                    onClick = null // El click lo maneja la Row
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Column {
-                                    Text(opcion.nombre, style = MaterialTheme.typography.bodyLarge)
-                                    Text(opcion.descripcion, style = MaterialTheme.typography.bodySmall)
-                                }
-                            }
-                            HorizontalDivider()
-                        }
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { showMezclaDialog = false }) { Text("Cancelar") }
-                }
-            )
-        }
-
         HorizontalDivider()
 
         // --- SECCIÓN 3: Gestión de Aberturas ---
         Text("Aberturas (Puertas / Ventanas)", style = MaterialTheme.typography.titleMedium)
-        Text("Agrega las aberturas para restarlas del cálculo.", style = MaterialTheme.typography.bodySmall)
+        Text("Agrega las aberturas para restarlas del cálculo.", style = MaterialTheme.typography.labelSmall)
 
         // Inputs para agregar nueva abertura
         Row(
@@ -418,7 +341,7 @@ fun WallScreen(settingsRepository: SettingsRepository) {
                 label = "Ancho (m)",
                 suffix = { Text("m") },
                 modifier = Modifier.weight(1f),
-                focusRequester = focusAnchoAbertura,      // "Yo soy focusAnchoAbertura"
+                focusRequester = focusAnchoAbertura,
                 nextFocusRequester = focusAltoAbertura
             )
             NumericInput(
@@ -427,7 +350,7 @@ fun WallScreen(settingsRepository: SettingsRepository) {
                 label = "Alto (m)",
                 suffix = { Text("m") },
                 modifier = Modifier.weight(1f),
-                focusRequester = focusAltoAbertura,      // "Yo soy focusAltoAbertura"
+                focusRequester = focusAltoAbertura,
                 onDone = {}
             )
             // Botón Agregar (+)
@@ -437,12 +360,11 @@ fun WallScreen(settingsRepository: SettingsRepository) {
                     val h = altoAberturaInput.toSafeDoubleOrNull()
                     if (areValidDimensions(w, h)) {
                         // LÓGICA DE CREACIÓN POR DEFECTO
-                        val nuevoNombre = "Abertura ${aberturas.size + 1}"
                         aberturas.add(Abertura(
                             anchoMetros = w!!,
                             altoMetros = h!!,
                             cantidad = 1,
-                            nombre = nuevoNombre
+                            nombre = "Abertura ${aberturas.size + 1}"
                         ))
                         // Limpiar inputs
                         anchoAberturaInput = ""
@@ -492,7 +414,7 @@ fun WallScreen(settingsRepository: SettingsRepository) {
                                         overflow = Ellipsis // "Nombre larg..."
                                     )
                                     Text(
-                                        text = "${abertura.anchoMetros}m x ${abertura.altoMetros}m",
+                                        text = "${abertura.anchoMetros}x${abertura.altoMetros} m",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -514,40 +436,9 @@ fun WallScreen(settingsRepository: SettingsRepository) {
             }
         }
 
-        // 3. LOGICA DEL DIÁLOGO MODAL
-        if (editingIndex != null) {
-            val index = editingIndex!!
-            // Aseguramos que el índice sigue siendo válido
-            if (index in aberturas.indices) {
-                EditAberturaDialog(
-                    abertura = aberturas[index],
-                    onDismiss = { editingIndex = null },
-                    onConfirm = { nuevaAbertura ->
-                        aberturas[index] = nuevaAbertura // Actualizamos la lista
-                        editingIndex = null
-                    }
-                )
-            }
-        }
-
-        // LÓGICA DEL DIÁLOGO (Al final del Composable, fuera de los loops)
-        if (indexToDelete != null) {
-            AppConfirmDialog(
-                title = "Borrar Abertura",
-                text = "¿Seguro que quieres quitar '${aberturas[indexToDelete!!].nombre}' de la lista?",
-                onConfirm = {
-                    // AQUÍ SÍ BORRAMOS
-                    aberturas.removeAt(indexToDelete!!)
-                    indexToDelete = null // Cerramos el diálogo
-                },
-                onDismiss = {
-                    indexToDelete = null // Solo cerramos, no pasó nada
-                }
-            )
-        }
-
-        // --- SECCIÓN 4: Botón Calcular ---
         Spacer(modifier = Modifier.height(8.dp))
+
+        // --- BOTÓN CALCULAR ---
         Button(
             onClick = {
                 // Escondemos el teclado
@@ -556,7 +447,7 @@ fun WallScreen(settingsRepository: SettingsRepository) {
                 val l = largoPared.toSafeDoubleOrNull()
                 val h = altoPared.toSafeDoubleOrNull()
 
-                if (areValidDimensions(l, h)) {
+                if (areValidDimensions(l, h) && selectedOption != null && selectedMezcla != null) {
                     try {
                         resultado = calcularMuro(
                             largoMuroMetros = l!!,
@@ -580,7 +471,7 @@ fun WallScreen(settingsRepository: SettingsRepository) {
                         errorMsg = "Error en el cálculo: ${e.message}"
                     }
                 } else {
-                    errorMsg = "Por favor, ingresa las dimensiones del muro mayores a 0."
+                    errorMsg = "Verifica dimensiones y selección de materiales."
                     resultado = null
                 }
             },
@@ -593,38 +484,97 @@ fun WallScreen(settingsRepository: SettingsRepository) {
             Text(text = errorMsg!!, color = MaterialTheme.colorScheme.error)
         }
 
-        // --- SECCIÓN 5: Resultados ---
+        // --- DIÁLOGOS Y MODALES ---
+
+        // 1. Selector de Mezcla
+        if (showMezclaDialog) {
+            AlertDialog(
+                onDismissRequest = { showMezclaDialog = false },
+                icon = { Icon(Icons.Default.Science, null) },
+                title = { Text("Elegir Mezcla") },
+                text = {
+                    // Lista scrolleable dentro del alerta
+                    LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
+                        items(opcionesMezcla) { opcion ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        selectedMezcla = opcion.data // Actualizamos la selección manual
+                                        showMezclaDialog = false
+                                    }
+                                    .padding(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = (opcion.data == selectedMezcla),
+                                    onClick = null // El click lo maneja la Row
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Column {
+                                    Text(opcion.nombre, style = MaterialTheme.typography.bodyLarge)
+                                    Text(opcion.descripcion, style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                            HorizontalDivider()
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showMezclaDialog = false }) { Text("Cancelar") }
+                }
+            )
+        }
+
+        // 2. Editar Abertura (Externo)
+        if (editingIndex != null && editingIndex!! in aberturas.indices) {
+            EditAberturaDialog(
+                abertura = aberturas[editingIndex!!],
+                onDismiss = { editingIndex = null },
+                onConfirm = { nuevaAbertura ->
+                    aberturas[editingIndex!!] = nuevaAbertura
+                    editingIndex = null
+                }
+            )
+        }
+
+        // 3. Borrar Abertura
+        if (indexToDelete != null) {
+            AppConfirmDialog(
+                title = "Borrar Abertura",
+                text = "¿Quitar '${aberturas[indexToDelete!!].nombre}'?",
+                onConfirm = {
+                    // AQUÍ SÍ BORRAMOS
+                    aberturas.removeAt(indexToDelete!!)
+                    indexToDelete = null // Cerramos el diálogo
+                },
+                onDismiss = {
+                    indexToDelete = null // Solo cerramos, no pasó nada
+                }
+            )
+        }
+
+        // 4. Resultados
         if (showResultSheet && resultado != null) {
             AppResultBottomSheet(
                 onDismissRequest = { showResultSheet = false },
-                onSave = { /* ... */ },
+                onSave = { /* TODO */ },
                 onEdit = { showResultSheet = false },
                 onShare = {
-                    // 1. Recuperamos el string de medidas del repo (igual que en el dropdown)
-                    val props = staticRepo.getPropiedadesLadrillo(selectedLadrillo)
-                    val medidasTexto = if (props != null) {
-                        val ancho = (props.anchoMuro * 100).toInt()
-                        val largo = (props.largoUnidad * 100).toInt()
-                        val alto = (props.altoUnidad * 100).toInt()
-                        "($ancho x $largo x $alto cm)"
-                    } else ""
+                    val p = selectedOption!!.props
+                    val ancho = (p.anchoMuro * 100).toInt()
+                    val largo = (p.largoUnidad * 100).toInt()
+                    val alto = (p.altoUnidad * 100).toInt()
+                    val medidasTxt = "($ancho x $largo x $alto cm)"
 
-                    // 2. Generamos el texto formateado
-                    val textoCompartir = resultado!!.toShareText(
+                    val txt = resultado!!.toShareText(
                         largo = largoPared.toSafeDoubleOrNull() ?: 0.0,
                         alto = altoPared.toSafeDoubleOrNull() ?: 0.0,
-                        tipoLadrillo = selectedLadrillo,
-                        detalleLadrillo = medidasTexto,
+                        tipoLadrillo = selectedOption!!.label, // String
+                        detalleLadrillo = medidasTxt,
                         aberturas = aberturas.toList()
                     )
-
-                    // 2. Elegimos qué hacer (Texto o PDF)
-                    // Por ahora lanzamos directo texto para probar,
-                    // luego podrías poner un dialoguito "¿PDF o Texto?"
-                    shareManager.shareText(textoCompartir)
-
-                    // O probar PDF:
-                    // shareManager.generateAndSharePdf("Resultado Muro", textoCompartir)
+                    shareManager.shareText(txt)
                 }
             ) {
                 WallResultContent(resultado!!)

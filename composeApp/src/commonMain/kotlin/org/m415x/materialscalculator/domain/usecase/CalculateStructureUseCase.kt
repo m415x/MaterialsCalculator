@@ -78,7 +78,8 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
             volumenM3 = volumenGeometrico,
             receta = receta,
             desperdicio = desperdicioHormigon,
-            pesoBolsaCemento = pesoBolsaCementoKg
+            pesoBolsaCemento = pesoBolsaCementoKg,
+            pesoBolsaCal = 25
         )
 
         // ============================================================
@@ -127,7 +128,7 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
             piedraM3 = matsConcreto.piedraM3,
             aguaLitros = matsConcreto.aguaLitros,
             bolsaCementoKg = pesoBolsaCementoKg,
-            dosificacionHormigon = receta.dosificacionMezcla,
+            dosificacionHormigon = receta.proporcionMezcla,
             porcentajeDesperdicioHormigon = desperdicioHormigon,
 
             // Armadura (Calculada aquí)

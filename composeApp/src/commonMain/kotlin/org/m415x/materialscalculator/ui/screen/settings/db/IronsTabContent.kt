@@ -294,9 +294,15 @@ fun IronEditorDialog(
                             val diam = diamMm.toIntOrNull() ?: 0
                             val peso = pesoMetro.toSafeDoubleOrNull() ?: 0.0
 
+                            // Verificamos si es nulo O ESTÁ VACÍO.
+                            val finalId = if (ironToEdit?.id.isNullOrBlank()) {
+                                Uuid.random().toString() // Generar ID nuevo si es copia o nuevo
+                            } else {
+                                ironToEdit.id // Mantener ID si es edición de uno existente
+                            }
+
                             val newIron = CustomIron(
-                                // Si ironToEdit es null (nuevo), generamos un UUID nativo y lo pasamos a String
-                                id = ironToEdit?.id ?: Uuid.random().toString(),
+                                id = finalId,
                                 nombre = name,
                                 diametroMm = diam,
                                 pesoPorMetro = peso

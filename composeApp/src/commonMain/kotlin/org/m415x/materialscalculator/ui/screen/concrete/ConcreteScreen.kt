@@ -3,6 +3,8 @@ package org.m415x.materialscalculator.ui.screen.concrete
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,9 +20,11 @@ import org.m415x.materialscalculator.data.repository.SettingsRepository
 import org.m415x.materialscalculator.data.repository.StaticMaterialRepository
 import org.m415x.materialscalculator.domain.common.toPresentacion
 import org.m415x.materialscalculator.domain.common.toShareText
+import org.m415x.materialscalculator.domain.model.DosificacionHormigon
 import org.m415x.materialscalculator.domain.model.TipoHormigon
 import org.m415x.materialscalculator.domain.model.ResultadoHormigon
 import org.m415x.materialscalculator.domain.usecase.CalculateConcreteUseCase
+import org.m415x.materialscalculator.ui.common.AppDropdown
 import org.m415x.materialscalculator.ui.common.AppInput
 import org.m415x.materialscalculator.ui.common.AppResultBottomSheet
 import org.m415x.materialscalculator.ui.common.CmInput
@@ -30,6 +34,19 @@ import org.m415x.materialscalculator.ui.common.areValidDimensions
 import org.m415x.materialscalculator.ui.common.getShareManager
 import org.m415x.materialscalculator.ui.common.roundToDecimals
 import org.m415x.materialscalculator.ui.common.toSafeDoubleOrNull
+
+// Modelo visual interno para la lista
+private data class ConcreteOption(
+    val id: String,
+    val label: String,          // Ej: H21
+    val description: String,    // Ej: 1:3:3
+    val resistencia: String,    // Ej: "210 kg/cm²"
+    val usos: String,           // Ej: "Vigas y Losas"
+    val isEstructural: Boolean, // True/False
+    val receta: DosificacionHormigon
+) {
+    override fun toString(): String = label
+}
 
 /**
  * Pantalla principal de la calculadora de hormigón.
@@ -42,14 +59,80 @@ fun ConcreteScreen(settingsRepository: SettingsRepository) {
     // Obtenemos el controlador del teclado
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    // --- 1. Inyección de Dependencias (Manual por ahora) ---
+    // --- Inyección de Dependencias (Manual por ahora) ---
     // En una app grande usaríamos Koin, pero aquí lo instanciamos directo
-    val repository = remember { StaticMaterialRepository() }
-    val calcularHormigon = remember { CalculateConcreteUseCase(repository) }
+    val staticRepo = remember { StaticMaterialRepository() }
+    val calcularHormigon = remember { CalculateConcreteUseCase() }
 
-    // Observamos la configuración global
+    // 1. OBSERVAMOS DATOS
+    val customRecipes by settingsRepository.customRecipes.collectAsState(initial = emptyList())
+    val hiddenIds by settingsRepository.hiddenRecipeIds.collectAsState(initial = emptySet())
+
+    // Usamos el default "General" para esta calculadora
+    val defaultConcreteId by settingsRepository.defaultConcreteGenId.collectAsState(initial = "")
     val pesoBolsaCemento by settingsRepository.bagCementKg.collectAsState(initial = 25)
+    val pesoBolsaCal by settingsRepository.bagLimeKg.collectAsState(initial = 25)
     val desperdicioHormigonPct by settingsRepository.wasteConcretePct.collectAsState(5.0)
+
+    // 2. CONSTRUCCIÓN DE LISTA (Fusión)
+    val opcionesHormigon = remember(customRecipes, hiddenIds) {
+        val list = mutableListOf<ConcreteOption>()
+
+        // A. Fábrica
+        TipoHormigon.entries.forEach { type ->
+            if (type.name !in hiddenIds) {
+                val receta = staticRepo.getDosificacionHormigon(type)!!
+                list.add(
+                    ConcreteOption(
+                        id = type.name,
+                        label = type.name, // Ej: H21
+                        description = receta.proporcionMezcla, // Ej: 1:3:3 (Cem:Are:Pie)
+                        resistencia = type.resistencia,
+                        usos = type.usos,
+                        isEstructural = type.isAptoEstructura,
+                        receta = receta
+                    )
+                )
+            }
+        }
+
+        // B. Custom (Solo tipo "CONCRETE")
+        customRecipes.filter { it.tipo == "CONCRETE" }.forEach { custom ->
+            val receta = DosificacionHormigon(
+                proporcionMezcla = "${custom.nombre} (Pers.)",
+                cementoKg = custom.cementoKg,
+                arenaM3 = custom.arenaM3,
+                piedraM3 = custom.piedraM3,
+                relacionAgua = custom.relacionAgua
+            )
+            // Descripción rica para el custom
+            val desc = "${custom.cementoKg.toInt()}kg Cem | A/C:${custom.relacionAgua}"
+
+            list.add(
+                ConcreteOption(
+                    id = custom.id,
+                    label = "${custom.nombre} (C)",
+                    description = desc,
+                    resistencia = "Resistencia Personalizada",
+                    usos = custom.usos.ifBlank { "Mezcla personalizada de usuario" },
+                    isEstructural = custom.isEstructural, // O un campo en CustomRecipe
+                    receta = receta
+                )
+            )
+        }
+        list.sortedBy { it.label }
+    }
+
+    // 3. ESTADOS UI
+
+    // Selección por defecto inteligente
+    var selectedOption by remember(opcionesHormigon, defaultConcreteId) {
+        mutableStateOf(
+            if (defaultConcreteId.isNotBlank()) opcionesHormigon.find { it.id == defaultConcreteId }
+                ?: opcionesHormigon.firstOrNull()
+            else opcionesHormigon.firstOrNull()
+        )
+    }
 
     // --- 2. Estado de la UI (Lo que el usuario escribe) ---
     var ancho by remember { mutableStateOf("") }
@@ -73,7 +156,7 @@ fun ConcreteScreen(settingsRepository: SettingsRepository) {
     val focusAncho = remember { FocusRequester() }
     val focusLargo = remember { FocusRequester() }
     val focusEspesor = remember { FocusRequester() }
-    val focusResistencia = remember { FocusRequester() }
+    val focusHormigon = remember { FocusRequester() }
 
     // Auto-Foco al abrir
     // LaunchedEffect(Unit) se ejecuta una sola vez cuando el componente entra en pantalla.
@@ -116,67 +199,92 @@ fun ConcreteScreen(settingsRepository: SettingsRepository) {
         CmInput(
             value = espesor,
             onValueChange = { espesor = it },
-            label = "Espesor (m)",
+            label = "Espesor / Altura (m)",
             suffix = { Text("m") },
             modifier = Modifier.fillMaxWidth(),
             focusRequester = focusEspesor, // "Yo soy focusEspesor"
-            nextFocusRequester = focusResistencia
+            nextFocusRequester = focusHormigon
         )
 
         // --- Selector de Tipo de Hormigón (Dropdown) ---
         Text("Resistencia", style = MaterialTheme.typography.titleMedium)
 
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
-        ) {
-            AppInput(
-                value = selectedTipo.name,
-                onValueChange = { },
-                label = "Tipo de Hormigón",
-                readOnly = true,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+        AppDropdown(
+            label = "Tipo de Hormigón",
+            selectedText = selectedOption?.label ?: "Seleccionar...",
+            options = opcionesHormigon,
+            onSelect = { selectedOption = it }
+        ) { option ->
+            // UI Personalizada del Item
+            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                // FILA 1: Nombre + Badges
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(option.label, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
 
-                // Colores del menu
-                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                    Spacer(Modifier.width(8.dp))
 
-                modifier = Modifier
-                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
-                    .fillMaxWidth(),
-
-                focusRequester = focusResistencia,      // "Yo soy focusResistencia"
-                onDone = {}
-            )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                TipoHormigon.entries.forEach { tipo ->
-                    DropdownMenuItem(
-                        text = {
-                            // Mismo diseño mejorado
-                            Column {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(text = tipo.name, style = MaterialTheme.typography.titleMedium)
-                                    Text(
-                                        text = " - ${tipo.usos}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Text(text = "(${tipo.resistencia})", style = MaterialTheme.typography.labelSmall)
-                            }
-                        },
-                        onClick = {
-                            selectedTipo = tipo
-                            expanded = false
+                    // Badge Estructural
+                    if (option.isEstructural) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = MaterialTheme.shapes.extraSmall
+                        ) {
+                            Text(
+                                "ESTRUCTURAL",
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.padding(horizontal = 4.dp),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
                         }
+                    } else {
+                        // Badge Pobre/No Estructural
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = MaterialTheme.shapes.extraSmall
+                        ) {
+                            Text(
+                                "NO ESTRUCTURAL",
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        }
+                    }
+                }
+
+                // FILA 2: Resistencia (Negrita sutil)
+                Text(
+                    option.resistencia,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                // FILA 3: Usos
+                Text(
+                    "Usos: ${option.usos}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                // FILA 4: Proporción (Gris claro)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Science,
+                        null,
+                        modifier = Modifier.size(12.dp),
+                        tint = MaterialTheme.colorScheme.secondary
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        option.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.secondary
                     )
                 }
             }
         }
+
+        Spacer(Modifier.height(8.dp))
 
         // --- Botón Calcular ---
         Button(
@@ -185,18 +293,19 @@ fun ConcreteScreen(settingsRepository: SettingsRepository) {
                 keyboardController?.hide()
 
                 // 1. Convertimos los Strings a Double? (usando tu extensión segura)
-                val a = ancho.toSafeDoubleOrNull()
+                val w = ancho.toSafeDoubleOrNull()
                 val l = largo.toSafeDoubleOrNull()
-                val e = espesor.toSafeDoubleOrNull()
+                val h = espesor.toSafeDoubleOrNull()
 
                 // 2. Usamos la función de validación
-                    if (areValidDimensions(a, l, e)) {
+                if (areValidDimensions(w, l, h) && selectedOption != null) {
                         resultado = calcularHormigon(
-                            anchoMetros = a!!, // El !! es seguro aquí porque areValidDimensions ya chequeó que no sea null
+                            anchoMetros = w!!, // El !! es seguro aquí porque areValidDimensions ya chequeó que no sea null
                             largoMetros = l!!,
-                            espesorMetros = e!!,
-                            tipo = selectedTipo,
+                            espesorMetros = h!!,
+                            receta = selectedOption!!.receta,
                             pesoBolsaCementoKg = pesoBolsaCemento,
+                            pesoBolsaCalKg = pesoBolsaCal,
                             porcentajeDesperdicio = desperdicioHormigonPct / 100.0
                         )
                         errorMsg = null
@@ -205,13 +314,13 @@ fun ConcreteScreen(settingsRepository: SettingsRepository) {
                         showResultSheet = true
                     } else {
                         // Mensaje más preciso
-                        errorMsg = "Por favor, ingresa dimensiones válidas mayores a 0."
+                    errorMsg = "Verifique las dimensiones y seleccione una mezcla."
                         resultado = null
                     }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
-            Text("Calcular Materiales")
+            Text("Calcular Hormigón")
         }
 
         // --- Mensaje de Error ---
@@ -226,25 +335,16 @@ fun ConcreteScreen(settingsRepository: SettingsRepository) {
         if (showResultSheet && resultado != null) {
             AppResultBottomSheet(
                 onDismissRequest = { showResultSheet = false },
-                onSave = { /* ... */ },
+                onSave = { /* TODO */ },
                 onEdit = { showResultSheet = false },
                 onShare = {
-                    // 1. Convertimos los inputs de texto a números seguros
-                    // (Usamos 0.0 por defecto si falla, aunque la validación previa ya lo garantizó)
-                    val w = ancho.toSafeDoubleOrNull() ?: 0.0
-                    val l = largo.toSafeDoubleOrNull() ?: 0.0
-                    val e = espesor.toSafeDoubleOrNull() ?: 0.0
-
-                    // 2. Generamos el texto
-                    val texto = resultado!!.toShareText(
-                        ancho = w,
-                        largo = l,
-                        espesor = e,
-                        tipoHormigon = selectedTipo
+                    val txt = resultado!!.toShareText(
+                        ancho = ancho.toSafeDoubleOrNull() ?: 0.0,
+                        largo = largo.toSafeDoubleOrNull() ?: 0.0,
+                        espesor = espesor.toSafeDoubleOrNull() ?: 0.0,
+                        nombreHormigon = selectedOption!!.label // Pasamos String
                     )
-
-                    // 3. Compartimos
-                    shareManager.shareText(texto)
+                    shareManager.shareText(txt)
                 }
             ) {
                 ConcreteResultContent(resultado!!)

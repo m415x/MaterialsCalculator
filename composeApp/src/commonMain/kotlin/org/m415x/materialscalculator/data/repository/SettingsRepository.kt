@@ -10,7 +10,6 @@ import com.russhwolf.settings.set
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
 import org.m415x.materialscalculator.domain.model.CustomBrick
@@ -60,25 +59,12 @@ class SettingsRepository(private val settings: ObservableSettings) {
 
     private val KEY_CUSTOM_RECIPES = "custom_recipes_json"
     private val KEY_HIDDEN_RECIPES = "hidden_static_recipes_json"
+    private val KEY_DEF_BRICK = "default_brick_id"
+    private val KEY_DEF_CONCRETE_GEN = "default_concrete_general_id" // Pisos, contrapisos
+    private val KEY_DEF_CONCRETE_STR = "default_concrete_struct_id"  // Vigas, columnas
 
     // Configuración de JSON (Lenient ayuda a ser flexible)
     private val json = Json { ignoreUnknownKeys = true }
-
-    // COMPANION OBJECT: Constantes públicas accesibles desde la UI
-    companion object Defaults {
-        const val DEFAULT_BAG_CEMENT = 25
-        const val DEFAULT_BAG_LIME = 25
-        const val DEFAULT_BAG_PREMIX = 25
-        const val DEFAULT_BUCKET_VOL = 10.0
-        const val DEFAULT_BARROW_VOL = 90.0
-        const val DEFAULT_WASTE_CONCRETE = 5.0
-        const val DEFAULT_WASTE_MORTAR = 15.0
-        const val DEFAULT_WASTE_BRICK = 5.0
-        const val DEFAULT_WASTE_IRON_MAIN = 10.0
-        const val DEFAULT_WASTE_IRON_STIRRUP = 5.0
-        const val DEFAULT_WASTE_PLASTER = 10.0
-        const val DEFAULT_THICKNESS_FINE = 3.0
-    }
 
     /**
      * Flujos de configuración.
@@ -155,6 +141,9 @@ class SettingsRepository(private val settings: ObservableSettings) {
     val hiddenIronIds: Flow<Set<String>> = getSetFlow(KEY_HIDDEN_IRONS)
     val customRecipes: Flow<List<CustomRecipe>> = getListFlow(KEY_CUSTOM_RECIPES)
     val hiddenRecipeIds: Flow<Set<String>> = getSetFlow(KEY_HIDDEN_RECIPES)
+    val defaultBrickId = settings.getStringFlow(KEY_DEF_BRICK, "")
+    val defaultConcreteGenId = settings.getStringFlow(KEY_DEF_CONCRETE_GEN, "")
+    val defaultConcreteStrId = settings.getStringFlow(KEY_DEF_CONCRETE_STR, "")
 
     /**
      * Funciones de escritura.
@@ -323,4 +312,23 @@ class SettingsRepository(private val settings: ObservableSettings) {
     fun deleteCustomRecipe(id: String) = deleteItemFromList<CustomRecipe>(KEY_CUSTOM_RECIPES) { it.id == id }
     fun hideStaticRecipe(id: String) = addToSet(KEY_HIDDEN_RECIPES, id)
     fun restoreStaticRecipe(id: String) = removeFromSet(KEY_HIDDEN_RECIPES, id)
+    fun saveDefaultBrick(id: String) = settings.putString(KEY_DEF_BRICK, id)
+    fun saveDefaultConcreteGen(id: String) = settings.putString(KEY_DEF_CONCRETE_GEN, id)
+    fun saveDefaultConcreteStr(id: String) = settings.putString(KEY_DEF_CONCRETE_STR, id)
+
+    // COMPANION OBJECT: Constantes públicas accesibles desde la UI
+    companion object Defaults {
+        const val DEFAULT_BAG_CEMENT = 25
+        const val DEFAULT_BAG_LIME = 25
+        const val DEFAULT_BAG_PREMIX = 25
+        const val DEFAULT_BUCKET_VOL = 10.0
+        const val DEFAULT_BARROW_VOL = 90.0
+        const val DEFAULT_WASTE_CONCRETE = 5.0
+        const val DEFAULT_WASTE_MORTAR = 15.0
+        const val DEFAULT_WASTE_BRICK = 5.0
+        const val DEFAULT_WASTE_IRON_MAIN = 10.0
+        const val DEFAULT_WASTE_IRON_STIRRUP = 5.0
+        const val DEFAULT_WASTE_PLASTER = 10.0
+        const val DEFAULT_THICKNESS_FINE = 3.0
+    }
 }

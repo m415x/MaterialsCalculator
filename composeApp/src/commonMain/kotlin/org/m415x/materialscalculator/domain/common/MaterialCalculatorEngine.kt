@@ -39,8 +39,8 @@ fun calculateWetMaterials(
     volumenM3: Double,
     receta: MaterialRecipe,
     desperdicio: Double,
-    pesoBolsaCemento: Int = 25,
-    pesoBolsaCal: Int = 25
+    pesoBolsaCemento: Int,
+    pesoBolsaCal: Int
 ): MaterialQuantities {
 
     // 1. Aplicamos desperdicio al volumen

@@ -16,7 +16,7 @@ class StaticMaterialRepository : MaterialRepository {
         // H8: Hormigón de limpieza (pobre). Poco cemento.
         // Usos: Contrapisos, carpetas, nivelación.
         TipoHormigon.H8 to DosificacionHormigon(
-            dosificacionMezcla = "1:3:5 (Cem:Arena:Piedra)",
+            proporcionMezcla = "1:3:5 (Cem:Arena:Piedra)",
             cementoKg = 180.0,
             arenaM3 = 0.55,
             piedraM3 = 0.9,
@@ -25,7 +25,7 @@ class StaticMaterialRepository : MaterialRepository {
 
         // H13: Hormigón simple (no estructural o estructuras muy livianas).
         TipoHormigon.H13 to DosificacionHormigon(
-            dosificacionMezcla = "1:3:4 (Cem:Arena:Piedra)",
+            proporcionMezcla = "1:3:4 (Cem:Arena:Piedra)",
             cementoKg = 260.0,
             arenaM3 = 0.63,
             piedraM3 = 0.84,
@@ -34,7 +34,7 @@ class StaticMaterialRepository : MaterialRepository {
 
         // H17: Hormigón estándar para viviendas pequeñas (bases, encadenados).
         TipoHormigon.H17 to DosificacionHormigon(
-            dosificacionMezcla = "1:3:3 (Cem:Arena:Piedra)",
+            proporcionMezcla = "1:3:3 (Cem:Arena:Piedra)",
             cementoKg = 300.0,
             arenaM3 = 0.67,
             piedraM3 = 0.67,
@@ -44,7 +44,7 @@ class StaticMaterialRepository : MaterialRepository {
         // H21: Hormigón ESTRUCTURAL estándar (Losas, vigas, columnas).
         // Es el más utilizado en construcción tradicional.
         TipoHormigon.H21 to DosificacionHormigon(
-            dosificacionMezcla = "1:2:3 (Cem:Arena:Piedra)",
+            proporcionMezcla = "1:2:3 (Cem:Arena:Piedra)",
             cementoKg = 350.0,
             arenaM3 = 0.55,
             piedraM3 = 0.75,
@@ -54,7 +54,7 @@ class StaticMaterialRepository : MaterialRepository {
         // H25: Hormigón de alta resistencia.
         // Usos: Columnas muy cargadas, estructuras importantes.
         TipoHormigon.H25 to DosificacionHormigon(
-            dosificacionMezcla = "1:2:2 (Cem:Arena:Piedra)",
+            proporcionMezcla = "1:2:2 (Cem:Arena:Piedra)",
             cementoKg = 380.0,
             arenaM3 = 0.5,
             piedraM3 = 0.75,
@@ -64,7 +64,7 @@ class StaticMaterialRepository : MaterialRepository {
         // H30: Hormigón de muy alta resistencia.
         // NOTA: Difícil de lograr a mano sin aditivos fluidificantes por la poca agua.
         TipoHormigon.H30 to DosificacionHormigon(
-            dosificacionMezcla = "1:1:2 (Cem:Arena:Piedra)",
+            proporcionMezcla = "1:1:2 (Cem:Arena:Piedra)",
             cementoKg = 430.0,
             arenaM3 = 0.45,
             piedraM3 = 0.70,

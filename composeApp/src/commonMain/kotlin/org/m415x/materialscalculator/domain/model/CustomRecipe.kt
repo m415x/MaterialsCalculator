@@ -11,7 +11,9 @@ data class CustomRecipe(
     override val piedraM3: Double = 0.0,  // por m3 (0 si es mortero)
     override val calKg: Double = 0.0,     // por m3 (0 si es hormigón)
     override val relacionAgua: Double,    // Relación A/C
-    val tipo: String             // "CONCRETE" o "MORTAR" (Para filtrar)
+    val tipo: String,             // "CONCRETE", "MORTAR", "PLASTER"
+    val usos: String = "",           // Ej: "Vigas y Losas"
+    val isEstructural: Boolean = false // Solo relevante para Hormigón
 ) : MaterialRecipe {
     // Propiedad 'proporcionMezcla' requerida por la interfaz
     // La generamos dinámicamente o la guardamos como campo
