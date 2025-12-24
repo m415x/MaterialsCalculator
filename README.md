@@ -1,68 +1,72 @@
-This is a Kotlin Multiplatform project targeting Android, Web, Desktop (JVM).
+# Material Calc
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./composeApp/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./composeApp/src/jvmMain/kotlin)
-    folder is the appropriate location.
-
-### Build and Run Android Application
-
-To build and run the development version of the Android app, use the run configuration from the run widget
-in your IDE’s toolbar or build it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :composeApp:assembleDebug
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :composeApp:assembleDebug
-  ```
-
-### Build and Run Desktop (JVM) Application
-
-To build and run the development version of the desktop app, use the run configuration from the run widget
-in your IDE’s toolbar or run it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :composeApp:run
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :composeApp:run
-  ```
-
-### Build and Run Web Application
-
-To build and run the development version of the web app, use the run configuration from the run widget
-in your IDE's toolbar or run it directly from the terminal:
-- for the Wasm target (faster, modern browsers):
-  - on macOS/Linux
-    ```shell
-    ./gradlew :composeApp:wasmJsBrowserDevelopmentRun
-    ```
-  - on Windows
-    ```shell
-    .\gradlew.bat :composeApp:wasmJsBrowserDevelopmentRun
-    ```
-- for the JS target (slower, supports older browsers):
-  - on macOS/Linux
-    ```shell
-    ./gradlew :composeApp:jsBrowserDevelopmentRun
-    ```
-  - on Windows
-    ```shell
-    .\gradlew.bat :composeApp:jsBrowserDevelopmentRun
-    ```
+**Material Calc** es una herramienta profesional de cálculo de materiales de construcción desarrollada con **Kotlin Multiplatform** y **Compose Multiplatform**. Permite a profesionales y aficionados de la construcción estimar con precisión insumos para hormigón, mampostería y estructuras de hierro.
 
 ---
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html),
-[Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform/#compose-multiplatform),
-[Kotlin/Wasm](https://kotl.in/wasm/)…
+## Plataformas Soportadas
 
-We would appreciate your feedback on Compose/Web and Kotlin/Wasm in the public Slack channel [#compose-web](https://slack-chats.kotlinlang.org/c/compose-web).
-If you face any issues, please report them on [YouTrack](https://youtrack.jetbrains.com/newIssue?project=CMP).
+Gracias al poder de KMP, esta aplicación se ejecuta de forma nativa en:
+
+- **Android:** Aplicación móvil nativa.
+- **Desktop (JVM):** Versión de escritorio para Windows, macOS y Linux.
+- **Web (Wasm & JS):** Ejecución directa en navegadores modernos mediante WebAssembly.
+
+---
+
+## Características Principales
+
+- **Calculadora de Hormigón:** Dosificación de mezclas (H13, H17, H21) y recetas personalizadas.
+- **Mampostería:** Cálculo de ladrillos, mortero y revoques.
+- **Armaduras Estructurales:** Cálculo de desarrollo de barras (hierro longitudinal y estribos) con soporte para formas complejas (ganchos, patas y remates).
+- **Gestión de Materiales:** Posibilidad de añadir hierros y mezclas personalizadas que se guardan localmente.
+- **Modo Oscuro/Claro:** Interfaz adaptativa basada en Material Design 3.
+
+---
+
+## Tecnologías
+
+- **Lenguaje:** Kotlin 2.x
+- **UI Framework:** Compose Multiplatform
+- **Almacenamiento:** Multiplatform Settings (Observable)
+- **Calidad de Código:** Spotless para formateo y licencias.
+
+---
+
+## Cómo Ejecutar el Proyecto
+
+Asegúrate de tener instalado el JDK 17 o superior.
+
+### Escritorio (Desktop)
+
+```bash
+./gradlew :composeApp:run
+```
+
+### Web (WebAssembly)
+
+```bash
+./gradlew :composeApp:wasmJsBrowserDevelopmentRun
+```
+
+### Android
+
+Conecta un dispositivo o emulador y ejecuta:
+
+```bash
+./gradlew :composeApp:installDebug
+```
+
+---
+
+## Licencia
+
+Este proyecto es software libre: puedes redistribuirlo y/o modificarlo bajo los términos de la **GNU General Public License v3.0 (GPLv3)**. Consulta el archivo [LICENSE](./LICENSE) para más detalles.
+
+_**Copyright (C) 2025 M415X**_
+
+---
+
+## Estado del Proyecto
+
+Actualmente en fase **Beta** (`1.1.0-beta.2`). El motor de cálculo de armaduras está siendo integrado para soportar normativas de doblado de hierro internacionales.
