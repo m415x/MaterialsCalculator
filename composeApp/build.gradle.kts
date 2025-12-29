@@ -1,3 +1,21 @@
+/*
+ * materialCalc
+ * Copyright (C) 2025 M415X
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -9,6 +27,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
     kotlin("plugin.serialization") version "2.2.21"
+    id("com.diffplug.spotless") version "8.1.0"
 }
 
 kotlin {
@@ -58,39 +77,19 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
         }
-        // Si usas un sourceSet compartido 'webMain' para JS y Wasm:
-        val webMain by creating {
-            dependsOn(commonMain.get())
-            dependencies {
-                implementation(compose.ui)
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material3)
-                implementation("com.russhwolf:multiplatform-settings:1.3.0")
-                implementation("com.russhwolf:multiplatform-settings-coroutines:1.3.0")
-            }
-        }
-
-        val wasmJsMain by getting {
-            dependsOn(webMain)
-        }
-
-        val jsMain by getting {
-            dependsOn(webMain)
-        }
     }
 }
 
 android {
-    namespace = "org.m415x.materialscalculator"
+    namespace = "org.m415x.materialcalc"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "org.m415x.materialscalculator"
+        applicationId = "org.m415x.materialcalc"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 2
-        versionName = "1.0.0-beta.1"
+        versionCode = 3
+        versionName = "1.1.0-beta.2"
     }
     packaging {
         resources {
@@ -106,6 +105,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    buildFeatures {
+        buildConfig = true
+    }
 }
 
 dependencies {
@@ -114,12 +116,70 @@ dependencies {
 
 compose.desktop {
     application {
-        mainClass = "org.m415x.materialscalculator.MainKt"
+        mainClass = "org.m415x.materialcalc.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "org.m415x.materialscalculator"
-            packageVersion = "1.0.0"
+            packageName = "org.m415x.materialcalc"
+            packageVersion = "1.1.0"
         }
+    }
+}
+
+spotless {
+    kotlin {
+        target("**/*.kt") // Aplica a todos los archivos Kotlin
+
+        // Aquí definimos el encabezado.
+        // He limpiado los asteriscos manuales para que Spotless los gestione bien.
+        licenseHeader(
+            """
+/*
+ * materialCalc
+ * Copyright (C) 2025 M415X
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+        """.trimIndent(), "(package|import|@file)"
+        )
+
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    kotlinGradle {
+        target("**/*.gradle.kts") // También para tus archivos de configuración
+        licenseHeader(
+            """
+/*
+ * materialCalc
+ * Copyright (C) 2025 M415X
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+        """.trimIndent(), "(import|plugins|rootProject)"
+        )
     }
 }

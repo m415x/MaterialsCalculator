@@ -1,0 +1,28 @@
+/*
+ * materialCalc
+ * Copyright (C) 2025 M415X
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package org.m415x.materialcalc.ui.common
+
+import androidx.compose.runtime.Composable
+import androidx.activity.compose.BackHandler // Esto viene de la librería de Android
+
+@Composable
+actual fun KmpBackHandler(enabled: Boolean, onBack: () -> Unit) {
+    // Aquí conectamos nuestro puente con la función real de Android
+    BackHandler(enabled = enabled, onBack = onBack)
+}

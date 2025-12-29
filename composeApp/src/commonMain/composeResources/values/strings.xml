@@ -1,0 +1,40 @@
+<!--
+  ~ materialCalc
+  ~ Copyright (C) 2025 M415X
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
+<resources>
+    <string name="app_name">materialCalc</string>
+    <!-- Title -->
+    <string name="title_home">materialCalc</string>
+    <string name="title_concrete">Hormigón</string>
+    <string name="title_wall">Muros</string>
+    <string name="title_structure">Armaduras</string>
+    <string name="title_plaster">Revoque</string>
+    <string name="title_saved">Cálculos Guardados</string>
+    <string name="title_settings">Configuración</string>
+    <!-- Subtitle -->
+    <string name="subtitle_appearance">Apariencia</string>
+    <string name="subtitle_global_params">Parámetros Globales</string>
+    <string name="subtitle_materials">Materiales</string>
+    <string name="subtitle_prices">Precios</string>
+    <!-- About -->
+    <string name="about_version">%1$s</string>
+    <string name="about_copyright">© %1$s m415x.</string>
+    <string name="about_description">Herramienta para cálculo de materiales de construcción civil.</string>
+    <string name="about_developer">Cristian Lahoz</string>
+    <string name="about_email">m415xs@gmail.com</string>
+</resources>
