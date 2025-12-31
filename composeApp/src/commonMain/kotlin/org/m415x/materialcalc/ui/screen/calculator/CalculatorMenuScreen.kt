@@ -23,13 +23,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.vectorResource
 
 import materialscalculator.composeapp.generated.resources.Res
 import materialscalculator.composeapp.generated.resources.* // importar iconos
+import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.ui.common.MenuCard
 
 /**
@@ -48,48 +51,59 @@ fun HomeScreen(
     onStructureClick: () -> Unit,
     onPlasterClick: () -> Unit
 ) {
+    val subtitle = stringResource(Res.string.home_subtitle)
+    val concrete = stringResource(Res.string.home_category_concrete)
+    val concreteDesc = stringResource(Res.string.home_category_concrete_desc)
+    val wall = stringResource(Res.string.home_category_wall)
+    val wallDesc = stringResource(Res.string.home_category_wall_desc)
+    val structure = stringResource(Res.string.home_category_structure)
+    val structureDesc = stringResource(Res.string.home_category_structure_desc)
+    val plaster = stringResource(Res.string.home_category_plaster)
+    val plasterDesc = stringResource(Res.string.home_category_plaster_desc)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-            .verticalScroll(rememberScrollState()) // Scroll por si la pantalla es chica
+            .verticalScroll(rememberScrollState()), // Scroll por si la pantalla es chica
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "¿Qué vas a construir hoy?",
+            text = subtitle,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 24.dp)
+            modifier = Modifier.padding(bottom = 24.dp),
+            textAlign = TextAlign.Center
         )
 
         // 1. Botón Hormigón
         MenuCard(
-            title = "Hormigón / Concreto",
-            description = "Losas, contrapisos y carpetas.",
+            title = concrete,
+            description = concreteDesc,
             icon = vectorResource(Res.drawable.ic_concrete),
             onClick = onConcreteClick
         )
 
         // 2. Botón Muros
         MenuCard(
-            title = "Muros y Paredes",
-            description = "Ladrillos y mortero.",
+            title = wall,
+            description = wallDesc,
             icon = vectorResource(Res.drawable.ic_wall),
             onClick = onWallClick
         )
 
         // 3. Botón Estructuras
         MenuCard(
-            title = "Armaduras",
-            description = "Vigas y columnas.\nCálculo de hormigón.",
+            title = structure,
+            description = structureDesc,
             icon = vectorResource(Res.drawable.ic_structure),
             onClick = onStructureClick
         )
 
         // 4. Botón Revoques (enlucidos)
         MenuCard(
-            title = "Revoques / Enlucidos",
-            description = "Calcula grueso y fino para tus paredes.",
+            title = plaster,
+            description = plasterDesc,
             icon = vectorResource(Res.drawable.ic_plaster),
             onClick = onPlasterClick
         )

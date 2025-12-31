@@ -1,0 +1,50 @@
+<!--
+  ~ materialCalc
+  ~ Copyright (C) 2025 M415X
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
+<resources>
+    <!-- CATEGORY: CONCRETE -->
+    <string name="concrete_title">Hormigón</string>
+
+    <!-- SECTIONS -->
+    <string name="concrete_section_dimensions">Dimensiones</string>
+    <string name="concrete_section_resistance">Resistencia</string>
+
+    <!-- LABELS -->
+    <string name="concrete_label_width">Ancho (%1$s)</string>
+    <string name="concrete_label_length">Largo (%1$s)</string>
+    <string name="concrete_label_thickness">Espesor (%1$s)</string>
+    <string name="concrete_label_quantity">Cantidad</string>
+    <string name="concrete_label_type">Tipo de Hormigón</string>
+    <string name="concrete_label_type_structural">ESTRUCTURAL</string>
+    <string name="concrete_label_type_non_structural">NO ESTRUCTURAL</string>
+    <string name="concrete_label_uses">Usos:</string><!-- Ver usos -->
+
+    <!-- ERRORS -->
+    <string name="concrete_error_validation">Verifique las dimensiones y seleccione una mezcla.</string>
+
+    <!-- RESULTS -->
+    <string name="concrete_result_total_volume">Volumen Total: %1$s %2$s</string>
+    <string name="concrete_result_waste_included">(Incluye %1$s% desperdicio)</string>
+    <string name="concrete_result_cement">Cemento</string>
+    <string name="concrete_result_sand">Arena</string>
+    <string name="concrete_result_gravel">Piedra/Grava</string>
+    <string name="concrete_result_water">Agua</string>
+    <string name="concrete_result_weight_kg">(%1$s %2$s)</string>
+    <string name="concrete_result_volume_m3">%1$s %2$s</string>
+    <string name="concrete_result_volume_liters">%1$s %2$s</string>
+</resources>

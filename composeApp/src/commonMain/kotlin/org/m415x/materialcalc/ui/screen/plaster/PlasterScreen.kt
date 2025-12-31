@@ -25,20 +25,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import materialscalculator.composeapp.generated.resources.Res
-import materialscalculator.composeapp.generated.resources.app_name
+import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
-
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
-import org.m415x.materialcalc.domain.common.toPresentacion
+import org.m415x.materialcalc.domain.common.toPresentationUnit
 import org.m415x.materialcalc.domain.common.toShareText
 import org.m415x.materialcalc.domain.model.Abertura
 import org.m415x.materialcalc.domain.model.DosificacionMortero
@@ -86,11 +83,12 @@ fun PlasterScreen(settingsRepository: SettingsRepository) {
         if (customFound != null) {
             // Convertimos CustomRecipe -> DosificacionMortero
             DosificacionMortero(
-                dosificacionMezcla = customFound.nombre,
+                proporcionMezcla = customFound.nombre,
                 cementoKg = customFound.cementoKg,
                 calKg = customFound.calKg,
                 arenaM3 = customFound.arenaM3,
-                relacionAgua = customFound.relacionAgua
+                relacionAgua = customFound.relacionAgua,
+                aguaLitros = customFound.cementoKg * customFound.relacionAgua
             )
         } else {
             // B. Si no es custom, asumimos Estándar (Jaharro)
@@ -157,7 +155,7 @@ fun PlasterScreen(settingsRepository: SettingsRepository) {
                     }
                 },
                 icon = { Icon(Icons.Default.Calculate, null) },
-                text = { Text("Calcular") }
+                text = { Text(stringResource(Res.string.button_calculate)) }
             )
         }
     ) { paddingLocal ->
@@ -170,76 +168,81 @@ fun PlasterScreen(settingsRepository: SettingsRepository) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            Text("Dimensiones Pared", style = MaterialTheme.typography.titleMedium)
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                NumericInput(
-                    value = largo,
-                    onValueChange = { largo = it },
-                    label = "Largo (m)",
-                    suffix = { Text("m") },
-                    modifier = Modifier.weight(1f),
-                    focusRequester = focusLargo,
-                    nextFocusRequester = focusAlto
-                )
-                NumericInput(
-                    value = alto,
-                    onValueChange = { alto = it },
-                    label = "Alto (m)",
-                    suffix = { Text("m") },
-                    modifier = Modifier.weight(1f),
-                    focusRequester = focusAlto,
-                    nextFocusRequester = focusAberturaAncho
-                )
-            }
-
-            HorizontalDivider()
-
-            OpeningsSection(
-                aberturas = aberturas,
-                focusRequesterAncho = focusAberturaAncho,
-                nextFocusRequesterAlto = focusEspesor
-            )
-
-            HorizontalDivider()
-
-            Text("Configuración Revoque", style = MaterialTheme.typography.titleMedium)
-
-            Text(
-                text = "Mezcla: ${mezclaActiva.dosificacionMezcla}\n    (Configurable en Globales)",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            CmInput(
-                value = espesorGrueso,
-                onValueChange = { espesorGrueso = it },
-                label = "Espesor Grueso (m)",
-                placeholder = "0.02",
-                suffix = { Text("m") },
-                focusRequester = focusEspesor,
-                onDone = { keyboardController?.hide() }
-            )
-
-            // Switch Ambas Caras
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text("Ambas caras", style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        "Multiplica la superficie x2",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+            InputSection(title = "Dimensiones del Muro") {
+                InputRow {
+                    NumericInput(
+                        value = largo,
+                        onValueChange = { largo = it },
+                        label = "Largo (m)",
+                        suffix = { Text("m") },
+                        modifier = Modifier.weight(1f),
+                        focusRequester = focusLargo,
+                        nextFocusRequester = focusAlto
+                    )
+                    NumericInput(
+                        value = alto,
+                        onValueChange = { alto = it },
+                        label = "Alto (m)",
+                        suffix = { Text("m") },
+                        modifier = Modifier.weight(1f),
+                        focusRequester = focusAlto,
+                        nextFocusRequester = focusAberturaAncho
                     )
                 }
-                Switch(
-                    checked = ambasCaras,
-                    onCheckedChange = { ambasCaras = it }
+            }
+
+            InputSection(title = "Aberturas", attenuatedTitle = "(Puertas y Ventanas)") {
+                OpeningsSection(
+                    aberturas = aberturas,
+                    focusRequesterAncho = focusAberturaAncho,
+                    nextFocusRequesterAlto = focusEspesor
                 )
             }
+
+            InputSection(title = "Revoque Grueso", showDivider = false) {
+                InputRow(horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column(modifier = Modifier.weight(1.25f)) {
+                        Text("Mezcla", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            text = mezclaActiva.proporcionMezcla,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "[Cambiar en Globales]",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                    CmInput(
+                        value = espesorGrueso,
+                        onValueChange = { espesorGrueso = it },
+                        label = "Espesor (m)",
+                        placeholder = "0.02",
+                        suffix = { Text("m") },
+                        modifier = Modifier.weight(0.75f),
+                        focusRequester = focusEspesor,
+                        onDone = { keyboardController?.hide() }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                InputRow(horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column {
+                        Text("Ambas caras", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            "Multiplica la superficie x2",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = ambasCaras,
+                        onCheckedChange = { ambasCaras = it }
+                    )
+                }
+            }
+
 
             if (errorMsg != null) {
                 Text(
@@ -310,12 +313,20 @@ fun PlasterResultContent(res: ResultadoRevoque) {
 
     ResultRow(
         "Cemento",
-        res.gruesoCementoKg.toPresentacion(res.bolsaCementoKg),
+        res.gruesoCementoKg.toPresentationUnit(
+            res.bolsaCementoKg,
+            Res.string.unit_bag,
+            Res.string.unit_bags
+        ),
     )
 
     ResultRow(
         "Cal Hidratada",
-        res.gruesoCalKg.toPresentacion(res.bolsaCalKg),
+        res.gruesoCalKg.toPresentationUnit(
+            res.bolsaCalKg,
+            Res.string.unit_bag,
+            Res.string.unit_bags
+        ),
     )
 
     ResultRow(
@@ -345,7 +356,11 @@ fun PlasterResultContent(res: ResultadoRevoque) {
     // Opción A
     ResultRow(
         "A) Premezcla",
-        res.finoPremezclaKg.toPresentacion(res.bolsaFinoPremezclaKg)
+        res.finoPremezclaKg.toPresentationUnit(
+            res.bolsaFinoPremezclaKg,
+            Res.string.unit_bag,
+            Res.string.unit_bags
+        )
     )
 
     Spacer(modifier = Modifier.height(8.dp))
@@ -353,7 +368,11 @@ fun PlasterResultContent(res: ResultadoRevoque) {
     // Opción B
     ResultRow(
         "B) Cal Aérea",
-        res.finoCalKg.toPresentacion(res.bolsaCalKg)
+        res.finoCalKg.toPresentationUnit(
+            res.bolsaCalKg,
+            Res.string.unit_bag,
+            Res.string.unit_bags
+        )
     )
 
     ResultRow(

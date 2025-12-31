@@ -1,0 +1,33 @@
+<!--
+  ~ materialCalc
+  ~ Copyright (C) 2025 M415X
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
+<resources>
+    <!-- MENU: HOME -->
+    <string name="home_title_main">materialCalc</string>
+    <string name="home_subtitle">¿Qué vas a calcular?</string>
+
+    <!-- HOME: Categories -->
+    <string name="home_category_concrete">Hormigón/Concreto</string>
+    <string name="home_category_concrete_desc">Losas, contrapisos y carpetas</string>
+    <string name="home_category_wall">Muros</string>
+    <string name="home_category_wall_desc">Ladrillos y morteros</string>
+    <string name="home_category_structure">Armaduras</string>
+    <string name="home_category_structure_desc">Mallas, vigas y columnas</string>
+    <string name="home_category_plaster">Revoques/Enlucidos</string>
+    <string name="home_category_plaster_desc">Grueso y fino</string>
+</resources>

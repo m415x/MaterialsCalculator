@@ -28,9 +28,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.button_save
+import org.jetbrains.compose.resources.stringResource
+import org.m415x.materialcalc.domain.common.PresentationUnit
+import org.m415x.materialcalc.domain.common.DisplayUnit
 
 /**
  * Tarjeta contenedora genérica para resultados.
@@ -51,7 +56,7 @@ fun AppResultBottomSheet(
     onDismissRequest: () -> Unit, // Acción al tocar fuera o arrastrar abajo
     onSave: () -> Unit,           // Acción botón Guardar
     onEdit: () -> Unit,           // Acción botón Modificar (cerrar)
-    onShare: (() -> Unit)? = null, // Acción de compartir
+    onShare: () -> Unit, // Ahora solo ejecuta la acción
     modifier: Modifier = Modifier,
     title: String = "Resultados Estimados",
     containerColor: Color = MaterialTheme.colorScheme.secondaryContainer, // Color por defecto
@@ -80,14 +85,12 @@ fun AppResultBottomSheet(
                 )
 
                 // Botón Compartir
-                if (onShare != null) {
-                    IconButton(onClick = onShare) {
-                        Icon(
-                            Icons.Default.Share,
-                            contentDescription = "Compartir",
+                IconButton(onClick = onShare) {
+                    Icon(
+                        Icons.Default.Share,
+                        contentDescription = "Compartir",
 //                            tint = MaterialTheme.colorScheme.tertiary
-                        )
-                    }
+                    )
                 }
             }
 
@@ -136,7 +139,7 @@ fun AppResultBottomSheet(
                 ) {
                     Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Guardar")
+                    Text(stringResource(Res.string.button_save))
                 }
             }
         }
@@ -148,8 +151,29 @@ fun AppResultBottomSheet(
  * Ahorra escribir Rows repetitivos.
  *
  * @param label Texto a la izquierda.
- * @param value Valor en negrita a la derecha.
+ * @param value Valor en negrita a la derecha (PresentationUnit).
  * @param labelStyle Estilo del texto a la izquierda.
+ */
+@Composable
+fun ResultRow(
+    label: String,
+    value: PresentationUnit,
+    labelStyle: TextStyle = MaterialTheme.typography.bodyLarge
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = label, style = labelStyle)
+        Text(
+            text = DisplayUnit(value),
+            style = labelStyle.copy(fontWeight = FontWeight.Bold)
+        )
+    }
+}
+
+/**
+ * Sobrecarga para cuando el valor ya es un String.
  */
 @Composable
 fun ResultRow(

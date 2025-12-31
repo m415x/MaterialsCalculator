@@ -1,0 +1,37 @@
+<!--
+  ~ materialCalc
+  ~ Copyright (C) 2025 M415X
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
+<resources>
+    <!-- SHARE: COMMON -->
+    <string name="share_generated_by">Generado con %1$s</string>
+    <string name="share_section_details">*DETALLE DE OBRA*</string>
+    <string name="share_section_materials">*MATERIALES ESTIMADOS*</string>
+
+    <!-- SHARE: CONCRETE -->
+    <string name="share_concrete_title">*CÁLCULO DE HORMIGÓN*</string>
+    <string name="share_concrete_dimensions">Dimensiones:</string>
+    <string name="share_concrete_high">Espesor:</string>
+    <string name="share_concrete_quantity">Cantidad:</string>
+    <string name="share_concrete_total_volume">Volumen Total:</string>
+    <string name="share_concrete_cement">Cemento:</string>
+    <string name="share_concrete_around">aprox.</string>
+    <string name="share_concrete_sand">Arena:</string>
+    <string name="share_concrete_gravel">Piedra/Grava:</string>
+    <string name="share_concrete_water">Agua:</string>
+    <string name="share_concrete_proportion">Proporción estimada:</string>
+</resources>

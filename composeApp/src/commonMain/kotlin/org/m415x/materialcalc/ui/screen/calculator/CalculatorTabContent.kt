@@ -72,15 +72,16 @@ fun CalculatorTabContent(
         // Renderizamos la pantalla correspondiente
         when (targetScreen) {
             is Screen.Home -> HomeScreen(
-                onConcreteClick = { onNavigate(Screen.Hormigon) },
-                onWallClick = { onNavigate(Screen.Muro) },
-                onStructureClick = { onNavigate(Screen.Estructura) },
-                onPlasterClick = { onNavigate(Screen.Revoque) }
+                onConcreteClick = { onNavigate(Screen.Concrete) },
+                onWallClick = { onNavigate(Screen.Wall) },
+                onStructureClick = { onNavigate(Screen.Structure) },
+                onPlasterClick = { onNavigate(Screen.Plaster) }
             )
-            is Screen.Hormigon -> ConcreteScreen(settingsRepository)
-            is Screen.Muro -> WallScreen(settingsRepository)
-            is Screen.Estructura -> StructureScreen(settingsRepository)
-            is Screen.Revoque -> PlasterScreen(settingsRepository)
+
+            is Screen.Concrete -> ConcreteScreen(settingsRepository)
+            is Screen.Wall -> WallScreen(settingsRepository)
+            is Screen.Structure -> StructureScreen(settingsRepository)
+            is Screen.Plaster -> PlasterScreen(settingsRepository)
             else -> {}
         }
     }

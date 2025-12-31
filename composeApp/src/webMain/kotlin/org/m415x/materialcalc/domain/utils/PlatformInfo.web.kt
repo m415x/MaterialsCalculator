@@ -16,11 +16,3 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.m415x.materialcalc.domain.utils
-
-actual object PlatformInfo {
-    actual val appVersion: String
-        get() = TODO("Not yet implemented")
-    actual val buildYear: String
-        get() = TODO("Not yet implemented")
-}

@@ -18,81 +18,52 @@
 
 package org.m415x.materialcalc.domain.common
 
-import kotlin.math.ceil
+import androidx.compose.runtime.Composable
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.unit_bag
+import materialscalculator.composeapp.generated.resources.unit_bags
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.ui.common.roundToDecimals
+import kotlin.math.ceil
 
 /**
- * Convierte una cantidad total (kg/litros) en unidades contenedoras (bolsas, bidones, etc.)
- * formateadas como texto pluralizado.
- *
- * @param capacidadContenedor Tamaño de la unidad (ej: 50 para bolsa de cemento).
- * @param nombreUnidad Nombre del contenedor (ej: "bolsa", "balde").
- * @param sufijoPlural Terminación para plural (default "s", puedes usar "es").
+ * Data class para transportar la cantidad y el recurso de string (singular/plural).
  */
-fun Double.toPresentacion(
-    capacidadContenedor: Number = 1,
-    nombreUnidad: String = "bolsa",
-    sufijoPlural: String = "s"
-): String {
-    // 1. Calculamos la cantidad redondeando hacia arriba
-    val cantidad = ceil(this / capacidadContenedor.toDouble()).toInt()
+data class PresentationUnit(
+    val quantity: Int,
+    val unitRes: StringResource
+)
 
-    // 2. Determinamos si lleva plural
-    val sufijo = if (cantidad != 1) sufijoPlural else ""
-
-    // 3. Devolvemos el string limpio
-    return "$cantidad $nombreUnidad$sufijo"
+/**
+ * Convierte una cantidad total en un objeto PresentationUnit que contiene la cantidad
+ * de contenedores y el recurso de string correcto (singular o plural).
+ *
+ * @param quantityContainer Tamaño de la unidad (ej: 50 para bolsa de cemento).
+ * @param singularRes Recurso para el nombre en singular.
+ * @param pluralRes Recurso para el nombre en plural.
+ */
+fun Double.toPresentationUnit(
+    quantityContainer: Number = 1,
+    singularRes: StringResource,
+    pluralRes: StringResource
+): PresentationUnit {
+    val quantity = ceil(this / quantityContainer.toDouble()).toInt()
+    val unitRes = if (quantity == 1) singularRes else pluralRes
+    return PresentationUnit(quantity, unitRes)
 }
 
 /**
- * Genera un texto para compartir el resultado de un cálculo de hormigón.
- *
- * @param ancho Ancho de la obra en metros.
- * @param largo Largo de la obra en metros.
- * @param espesor Espesor de la obra en metros.
- * @param tipoHormigon Tipo de hormigón utilizado.
+ * Composable que toma un PresentationUnit y lo muestra como un string formateado.
  */
-fun ResultadoHormigon.toShareText(
-    ancho: Double,
-    largo: Double,
-    espesor: Double,
-    nombreHormigon: String,
-    appName: String
-): String {
-    val sb = StringBuilder()
-
-    sb.append("*CÁLCULO DE HORMIGÓN*\n")
-    sb.append("=========================\n\n")
-    sb.append("*DETALLE DE OBRA*\n")
-    sb.append("-------------------------\n")
-    sb.append("*Dimensiones:* $ancho x $largo m\n")
-    sb.append("*Espesor:* ${espesor.metersToCm} cm\n\n")
-    sb.append("*Volumen Total:* ${volumenTotalM3.roundToDecimals(2)} m³\n\n")
-    sb.append("*Hormigón:* $nombreHormigon\n\n")
-    sb.append("*MATERIALES ESTIMADOS*\n")
-    sb.append("-------------------------\n")
-    sb.append("● *Cemento:* ${cementoKg.roundToDecimals(1)} kg\n")
-    sb.append("    └ aprox. ${cementoKg.toPresentacion(bolsaCementoKg)}\n")
-    sb.append("● *Arena:* ${arenaM3.roundToDecimals(2)} m³\n")
-    sb.append("● *Piedra/Grava:* ${piedraM3.roundToDecimals(2)} m³\n")
-    sb.append("● *Agua:* ${aguaLitros.roundToDecimals(1)} Lt\n\n")
-    sb.append("*Proporción estimada:* \n")
-    sb.append("$dosificacionMezcla\n\n")
-    sb.append("_________________________\n")
-    sb.append("_Generado con ${appName}_")
-
-    return sb.toString()
+@Composable
+fun DisplayUnit(unit: PresentationUnit): String {
+    return "${unit.quantity} ${stringResource(unit.unitRes)}"
 }
 
 /**
  * Genera un texto para compartir el resultado de un cálculo de muro.
- *
- * @param largo Largo de la obra en metros.
- * @param alto Alto de la obra en metros.
- * @param tipoLadrillo Tipo de ladrillo utilizado.
- * @param detalleLadrillo Detalle del ladrillo.
- * @param aberturas Lista de aberturas en la obra.
  */
 fun ResultadoMuro.toShareText(
     largo: Double,
@@ -103,7 +74,6 @@ fun ResultadoMuro.toShareText(
     detalleMezcla: String,
     appName: String
 ): String {
-    // 1. Cálculos auxiliares para el reporte
     val superficieBruta = largo * alto
     val superficieAberturas = aberturas.sumOf { it.anchoMetros * it.altoMetros * it.cantidad }
 
@@ -112,10 +82,8 @@ fun ResultadoMuro.toShareText(
     val detalleAberturas =
         if (aberturas.isEmpty()) {
             "    (Sin aberturas)"
-        } else {
-            aberturas.joinToString("\n") { ab ->
-                "    ‣ ${ab.cantidad} x ${ab.nombre}: ${ab.anchoMetros} x ${ab.altoMetros} m"
-            }
+        } else aberturas.joinToString("\n") {
+            "    ‣ ${it.cantidad} x ${it.nombre}: ${it.anchoMetros} x ${it.altoMetros} m"
         }
 
     sb.append("*CÁLCULO DE MURO*\n")
@@ -136,10 +104,26 @@ fun ResultadoMuro.toShareText(
     sb.append("● *Ladrillos:* $cantidadLadrillos U\n")
     sb.append("● *Mortero* (${morteroM3.roundToDecimals(2)} m³):\n")
     sb.append("    ‣ Cemento: ${cementoKg.roundToDecimals(1)} kg\n")
-    sb.append("        └ aprox. ${cementoKg.toPresentacion(bolsaCementoKg)}\n")
+    sb.append(
+        "    └ aprox. ${
+            cementoKg.toPresentationUnit(
+                bolsaCementoKg,
+                Res.string.unit_bag,
+                Res.string.unit_bags
+            )
+        }\n"
+    )
     if (calKg > 0) {
         sb.append("    ‣ Cal: ${calKg.roundToDecimals(1)} kg\n")
-        sb.append("        └ aprox. ${calKg.toPresentacion(bolsaCalKg)}\n")
+        sb.append(
+            "        └ aprox. ${
+                calKg.toPresentationUnit(
+                    bolsaCalKg,
+                    Res.string.unit_bag,
+                    Res.string.unit_bags
+                )
+            }\n"
+        )
     }
     sb.append("    ‣ Arena: ${arenaTotalM3.roundToDecimals(2)} m³\n")
     sb.append("    ‣ Agua: ${aguaLitros.roundToDecimals(1)} Lt\n\n")
@@ -153,79 +137,60 @@ fun ResultadoMuro.toShareText(
 
 /**
  * Genera un texto para compartir el resultado de un cálculo de estructura.
- *
- * @param largo Largo de la obra en metros.
- * @param ladoA Lado A de la obra en metros.
- * @param ladoB Lado B de la obra en metros.
- * @param isCircular Indica si la estructura es circular.
- * @param tipoHormigon Tipo de hormigón utilizado.
- * @param separacionEstribosCm Separación entre estribos en centímetros.
  */
 fun ResultadoEstructura.toShareText(
     largo: Double,
-    ladoA: Double, // Input en Metros (Ancho o Diámetro)
-    ladoB: Double, // Input en Metros (Alto, o 0 si es circular)
+    ladoA: Double,
+    ladoB: Double,
     isCircular: Boolean,
     tipoHormigon: TipoHormigon,
-    separacionEstribosCm: Double, // Para mostrar cada cuánto van
+    separacionEstribosCm: Double,
     appName: String
 ): String {
-    // 1. Definimos la geometría para el texto
-    val detalleGeometria =
-        if (isCircular) {
-            "Columna Circular: Ø $ladoA m"
-        } else {
-            "Rectangular: $ladoA x $ladoB m"
-        }
-    return """
-        *CÁLCULO DE ARMADURA*
-        =========================
-        
-        *DETALLE DE OBRA*
-        -------------------------
-        *Largo Total:* $largo m
-        $detalleGeometria
-        
-        
-        *1. HORMIGÓN (${volumenHormigonM3.roundToDecimals(2)} m³)*
-        -------------------------
-        Tipo: ${tipoHormigon.name} (${tipoHormigon.resistencia})
-            
-        • Cemento: ${cementoKg.roundToDecimals(1)} kg
-            └ aprox. ${cementoKg.toPresentacion(bolsaCementoKg)} (${bolsaCementoKg} kg)
-        • Arena: ${arenaM3.roundToDecimals(2)} m³
-        • Piedra: ${piedraM3.roundToDecimals(2)} m³
-        • Agua: ${aguaLitros.roundToDecimals(0)} Lt
-        
-        *Proporción estimada:* 
-        $dosificacionHormigon
-        
-        
-        *2. ARMADURA (HIERROS)*
-        -------------------------
-        *Principal (Longitudinal):*
-            Varillas: Ø ${diametroPrincipal.mm} mm
-            Total Peso: ${hierroPrincipalKg.roundToDecimals(1)} kg
-                *Comprar:* $cantidadHierroPrincipal barras de 12 m
-        
-        *Estribos (Transversal):*
-            Hierro: Ø ${diametroEstribo.mm} mm
-            Separación: cada ${separacionEstribosCm.roundToDecimals(0)} cm
-            Total Peso: ${hierroEstribosKg.roundToDecimals(1)} kg
-                *Comprar:* $cantidadHierroEstribos barras de 12 m
-        
-        _________________________
-        _Generado con ${appName}_
-    """.trimIndent()
+    val sb = StringBuilder()
+    val detalleGeometria = if (isCircular) "*Columna Circular:* Ø $ladoA m" else "*Rectangular:* $ladoA x $ladoB m"
+
+    sb.append("*CÁLCULO DE ARMADURA*\n")
+    sb.append("=========================\n\n")
+    sb.append("*DETALLE DE OBRA*\n")
+    sb.append("-------------------------\n")
+    sb.append("*Largo Total:* $largo m\n")
+    sb.append("$detalleGeometria\n\n")
+    sb.append("*1. HORMIGÓN (${volumenHormigonM3.roundToDecimals(2)} m³)*\n")
+    sb.append("-------------------------\n")
+    sb.append("Tipo: ${tipoHormigon.name} (${tipoHormigon.resistanceKgCm2})\n\n")
+    sb.append("• Cemento: ${cementoKg.roundToDecimals(1)} kg\n")
+    sb.append(
+        "    └ aprox. ${
+            cementoKg.toPresentationUnit(
+                bolsaCementoKg,
+                Res.string.unit_bag,
+                Res.string.unit_bags
+            )
+        }\n"
+    )
+    sb.append("• Arena: ${arenaM3.roundToDecimals(2)} m³\n")
+    sb.append("• Piedra: ${piedraM3.roundToDecimals(2)} m³\n")
+    sb.append("• Agua: ${aguaLitros.roundToDecimals(0)} Lt\n\n")
+    sb.append("*2. ARMADURA (HIERROS)*\n")
+    sb.append("-------------------------\n")
+    sb.append("*Principal (Longitudinal):*\n")
+    sb.append("    Varillas: Ø ${diametroPrincipal.mm} mm\n")
+    sb.append("    Total Peso: ${hierroPrincipalKg.roundToDecimals(1)} kg\n")
+    sb.append("        *Comprar:* $cantidadHierroPrincipal barras de 12 m\n\n")
+    sb.append("*Estribos (Transversal):*\n")
+    sb.append("    Hierro: Ø ${diametroEstribo.mm} mm\n")
+    sb.append("    Separación: cada ${separacionEstribosCm.roundToDecimals(0)} cm\n")
+    sb.append("    Total Peso: ${hierroEstribosKg.roundToDecimals(1)} kg\n")
+    sb.append("        *Comprar:* $cantidadHierroEstribos barras de 12 m\n\n")
+    sb.append("_________________________\n")
+    sb.append("_Generado con ${appName}_")
+
+    return sb.toString()
 }
 
 /**
  * Genera un texto para compartir el resultado de un cálculo de revoque.
- *
- * @param largo Largo de la obra en metros.
- * @param alto Alto de la obra en metros.
- * @param espesorGruesoMetros Espesor grueso de la obra en metros.
- * @param ambasCaras Indica si la revoque tiene ambas caras.
  */
 fun ResultadoRevoque.toShareText(
     largo: Double,
@@ -234,51 +199,74 @@ fun ResultadoRevoque.toShareText(
     ambasCaras: Boolean,
     appName: String
 ): String {
-
     val detalleCaras = if (ambasCaras) "(Ambas caras)" else "(Una sola cara)"
 
-    return """
-        *CÁLCULO DE REVOQUE*
-        =========================
-        
-        *DETALLE DE OBRA*
-        -------------------------
-        *Pared:* $largo x $alto m
-        *Superficie Total:* ${areaTotalM2.roundToDecimals(2)} m²
-        $detalleCaras
-        
-        
-        *1. REVOQUE GRUESO (Jaharro)*
-        -------------------------
-        *Espesor:* ${espesorGruesoMetros.metersToCm} cm
-        *Volumen:* ${volumenGruesoM3.roundToDecimals(2)} m³
-        
-        • Cemento: ${gruesoCementoKg.roundToDecimals(1)} kg
-            └ aprox. ${gruesoCementoKg.toPresentacion(bolsaCementoKg)} (${bolsaCementoKg} kg)
-        • Cal Hidratada: ${gruesoCalKg.roundToDecimals(1)} kg
-            └ aprox. ${gruesoCalKg.toPresentacion(bolsaCalKg)} (${bolsaCalKg} kg)
-        • Arena Común: ${gruesoArenaM3.roundToDecimals(2)} m³
-        
-        *Proporción estimada:* 
-        $dosificacionGrueso
-        
-        
-        *2. REVOQUE FINO (Enlucido)*
-        -------------------------
-        *Opción A*
-        • Premezcla: ${finoPremezclaKg.roundToDecimals(1)} kg
-            └ aprox. ${finoPremezclaKg.toPresentacion(bolsaFinoPremezclaKg)} (${bolsaFinoPremezclaKg} kg)
-        
-        *Opción B (Tradicional: A la cal)*
-        • Cal Aérea: ${finoCalKg.roundToDecimals(1)} kg
-            └ aprox. ${finoCalKg.toPresentacion(bolsaCalKg)} (${bolsaCalKg} kg)
-        • Arena Fina: ${finoArenaM3.roundToDecimals(2)} m³
-        • Cemento: (Mínimo para ligar)
-        
-        Proporción estimada: 
-        $dosificacionFino
-        
-        _________________________
-        _Generado con ${appName}_
-    """.trimIndent()
+    val sb = StringBuilder()
+
+    sb.append("*CÁLCULO DE REVOQUE*\n")
+    sb.append("=========================\n\n")
+    sb.append("*DETALLE DE OBRA*\n")
+    sb.append("-------------------------\n")
+    sb.append("*Pared:* $largo x $alto m\n")
+    sb.append("*Superficie Total:* ${areaTotalM2.roundToDecimals(2)} m²\n")
+    sb.append("$detalleCaras\n\n")
+    sb.append("*1. REVOQUE GRUESO (Jaharro)*\n")
+    sb.append("-------------------------\n")
+    sb.append("*Espesor:* ${espesorGruesoMetros.metersToCm} cm\n")
+    sb.append("*Volumen:* ${volumenGruesoM3.roundToDecimals(2)} m³\n\n")
+    sb.append("• Cemento: ${gruesoCementoKg.roundToDecimals(1)} kg\n")
+    sb.append(
+        "    └ aprox. ${
+            gruesoCementoKg.toPresentationUnit(
+                bolsaCementoKg,
+                Res.string.unit_bag,
+                Res.string.unit_bags
+            )
+        }\n"
+    )
+    sb.append("• Cal Hidratada: ${gruesoCalKg.roundToDecimals(1)} kg\n")
+    sb.append(
+        "    └ aprox. ${
+            gruesoCalKg.toPresentationUnit(
+                bolsaCalKg,
+                Res.string.unit_bag,
+                Res.string.unit_bags
+            )
+        }\n"
+    )
+    sb.append("• Arena Común: ${gruesoArenaM3.roundToDecimals(2)} m³\n\n")
+    sb.append("*Proporción estimada:*\n")
+    sb.append("$dosificacionGrueso\n\n")
+    sb.append("*2. REVOQUE FINO (Enlucido)*\n")
+    sb.append("-------------------------\n")
+    sb.append("*Opción A*\n")
+    sb.append("• Premezcla: ${finoPremezclaKg.roundToDecimals(1)} kg\n")
+    sb.append(
+        "    └ aprox. ${
+            finoPremezclaKg.toPresentationUnit(
+                bolsaFinoPremezclaKg,
+                Res.string.unit_bag,
+                Res.string.unit_bags
+            )
+        }\n\n"
+    )
+    sb.append("*Opción B (Tradicional: A la cal)*\n")
+    sb.append("• Cal Aérea: ${finoCalKg.roundToDecimals(1)} kg\n")
+    sb.append(
+        "    └ aprox. ${
+            finoCalKg.toPresentationUnit(
+                bolsaCalKg,
+                Res.string.unit_bag,
+                Res.string.unit_bags
+            )
+        }\n\n"
+    )
+    sb.append("• Arena Fina: ${finoArenaM3.roundToDecimals(2)} m³\n")
+    sb.append("• Cemento: (Mínimo para ligar)\n")
+    sb.append("Proporción estimada: \n")
+    sb.append("$dosificacionFino\n\n")
+    sb.append("_________________________\n")
+    sb.append("_Generado con ${appName}_")
+
+    return sb.toString()
 }

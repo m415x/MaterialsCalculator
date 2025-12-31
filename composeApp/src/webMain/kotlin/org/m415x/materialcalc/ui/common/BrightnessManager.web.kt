@@ -18,6 +18,8 @@
 
 package org.m415x.materialcalc.ui.common
 
-actual fun getBrightnessManager(): BrightnessManager {
-    TODO("Not yet implemented")
+actual fun getBrightnessManager(): BrightnessManager = object : BrightnessManager {
+    override fun setBrightness(value: Float?) {
+        // No hace nada en Web
+    }
 }

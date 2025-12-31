@@ -1,0 +1,58 @@
+<!--
+  ~ materialCalc
+  ~ Copyright (C) 2025 M415X
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
+<resources>
+    <!-- MENU: SETTINGS -->
+    <string name="settings_title_main">Configuración</string>
+
+    <!-- SETTINGS: General -->
+    <string name="settings_section_general">General</string>
+    <string name="settings_item_appearance_title">Apariencia</string>
+    <string name="settings_item_appearance_desc">Tema oscuro, claro y alto contraste</string>
+    <string name="settings_item_params_title">Parámetros Globales</string>
+    <string name="settings_item_params_desc">Pesos de bolsas, capacidad de baldes y carretillas</string>
+
+    <!-- SETTINGS: Database -->
+    <string name="settings_section_database">Base de Datos</string>
+    <string name="settings_item_materials_title">Materiales y Medidas</string>
+    <string name="settings_item_materials_desc">Editar ladrillos, hierros y proporciones</string>
+    <string name="settings_item_prices_title">Precios</string>
+    <string name="settings_item_prices_desc">Configurar costos unitarios</string>
+    <string name="settings_item_sync_title">Sincronización Nube</string>
+    <string name="settings_item_sync_desc">Guardar mis datos</string>
+
+    <!-- SETTINGS: Information -->
+    <string name="settings_section_info">Información</string>
+    <string name="settings_item_about_title">Contacto</string>
+    <string name="settings_item_about_desc">Versión, desarrollador y contacto</string>
+
+    <!-- SETTINGS: Information: Developer -->
+    <string name="dev_handle">m415x</string>
+    <string name="dev_name">Cristian Lahoz</string>
+    <string name="dev_email">m415xs@gmail.com</string>
+
+    <!-- SETTINGS: Information: About -->
+    <string name="about_title">Acerca de</string>
+    <string name="about_description">Herramienta para cálculo de materiales de construcción civil</string>
+    <string name="about_label_version">Versión</string>
+    <string name="about_version">%1$s</string>
+    <string name="about_year">%1$s</string>
+    <string name="about_label_developer">Desarrollado por</string>
+    <string name="about_copyright_format">© %1$s %2$s</string>
+    <string name="about_all_rights_reserved">Todos los derechos reservados</string>
+</resources>

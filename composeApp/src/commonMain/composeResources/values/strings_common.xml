@@ -1,0 +1,49 @@
+<!--
+  ~ materialCalc
+  ~ Copyright (C) 2025 M415X
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
+<resources>
+    <!-- Application Information -->
+    <string name="app_name">materialCalc</string>
+
+    <!-- BOTTOM NAVIGATION -->
+    <string name="nav_home">Calcular</string>
+    <string name="nav_saved">Guardados</string>
+    <string name="nav_settings">Ajustes</string>
+
+    <!-- BUTTONS -->
+    <string name="button_calculate">Calcular</string>
+    <string name="button_save">Guardar</string>
+    <string name="button_cancel">Cancelar</string>
+    <string name="button_close">Cerrar</string>
+    <string name="button_remove">Eliminar</string>
+    <string name="button_change">Cambiar</string>
+
+    <!-- UNITS -->
+    <string name="unit_units">u</string>
+    <string name="unit_bag">bolsa</string>
+    <string name="unit_bags">bolsas</string>
+    <string name="unit_kilograms">kg</string>
+    <string name="unit_liters">Lt</string>
+    <string name="unit_meters">m</string>
+    <string name="unit_square_meters">m²</string>
+    <string name="unit_cubic_meters">m³</string>
+    <string name="unit_centimeters">cm</string>
+    <string name="unit_square_centimeters">cm²</string>
+    <string name="unit_cubic_centimeters">cm³</string>
+    <string name="unit_millimeters">mm</string>
+</resources>

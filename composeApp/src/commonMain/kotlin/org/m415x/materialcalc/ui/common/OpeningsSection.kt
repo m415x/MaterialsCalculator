@@ -61,27 +61,11 @@ fun OpeningsSection(
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
 
-        // 1. HEADER Y FORMULARIO DE AGREGAR (Inline)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text("Aberturas", style = MaterialTheme.typography.titleMedium)
-                Text("Puertas y ventanas a descontar", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        InputRow {
             NumericInput(
                 value = anchoInput,
                 onValueChange = { anchoInput = it },
-                label = "Ancho",
+                label = "Ancho (m)",
                 suffix = { Text("m") },
                 modifier = Modifier.weight(1f),
                 focusRequester = focusAncho,
@@ -90,14 +74,13 @@ fun OpeningsSection(
             NumericInput(
                 value = altoInput,
                 onValueChange = { altoInput = it },
-                label = "Alto",
+                label = "Alto (m)",
                 suffix = { Text("m") },
                 modifier = Modifier.weight(1f),
                 focusRequester = focusAlto,
                 nextFocusRequester = nextFocusRequesterAlto,
                 onDone = {} // Opcional: Podrías llamar a agregar aquí
             )
-            // Botón Agregar (+)
             FilledIconButton(
                 onClick = {
                     val w = anchoInput.toSafeDoubleOrNull()
@@ -114,7 +97,8 @@ fun OpeningsSection(
                         altoInput = ""
                         focusAncho.requestFocus()
                     }
-                }
+                },
+                modifier = Modifier.padding(top = 8.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Agregar")
             }

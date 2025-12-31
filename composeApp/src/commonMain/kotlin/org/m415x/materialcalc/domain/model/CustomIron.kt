@@ -23,7 +23,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CustomIron(
     val id: String,
-    val nombre: String,      // Ej: "Hierro del 8 (Especial)"
-    val diametroMm: Int,     // 8, 10, 12...
-    val pesoPorMetro: Double // Kg/m
+    val nombre: String,
+    val diametro: Double,
+    val pesoLineal: Double
 )

@@ -18,31 +18,33 @@
 
 package org.m415x.materialcalc
 
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
+import com.russhwolf.settings.StorageSettings
 import kotlinx.browser.document
-import com.russhwolf.settings.ObservableSettings
-import com.russhwolf.settings.Settings
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.app_name
+import org.jetbrains.compose.resources.stringResource
+import org.m415x.materialcalc.data.ObservableStorageSettings
 import org.m415x.materialcalc.data.repository.SettingsRepository
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
-    // 1. Creamos el objeto Settings estándar para Web
-    // En JS, Settings() utiliza por defecto el localStorage del navegador
-    val settings: Settings = Settings()
+    // 1. Configuramos Settings
+    val settings = ObservableStorageSettings(StorageSettings())
+    val repo = SettingsRepository(settings)
 
-    // 2. IMPORTANTE: Tu repositorio espera un ObservableSettings.
-    // Debemos asegurarnos de que lo sea. Si no lo es, se puede envolver,
-    // pero la implementación estándar en JS suele ser compatible.
-    val observableSettings = settings as ObservableSettings
-
-    val repo = SettingsRepository(observableSettings)
-
-    // 3. Configuramos el título del documento
-    document.title = "Material Calculator"
-
-    // 4. Arrancamos la ventana de Compose
+    // 2. Arrancamos la ventana
     ComposeViewport(document.body!!) {
+        // Obtenemos el título desde los recursos compartidos
+        val title = stringResource(Res.string.app_name)
+
+        // Actualizamos el título del navegador cuando el recurso esté disponible
+        LaunchedEffect(title) {
+            document.title = title
+        }
+
         App(settingsRepository = repo)
     }
 }

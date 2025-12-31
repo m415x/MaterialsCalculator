@@ -1,0 +1,31 @@
+<!--
+  ~ materialCalc
+  ~ Copyright (C) 2025 M415X
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
+<resources>
+    <!-- RECIPES: COMMON -->
+    <string name="recipe_section_resistance">Resistencia:</string>
+    <string name="recipe_unit_kilogram_per_square_centimeters">kg/cm²</string>
+
+    <!-- RECIPES: USES -->
+    <string name="recipe_uses_h8">Limpieza y rellenos (pobre)</string>
+    <string name="recipe_uses_h13">Cimientos y contrapisos</string>
+    <string name="recipe_uses_h17">Losas y columnas ligeras</string>
+    <string name="recipe_uses_h21">Vigas, losas y estructuras estándar</string>
+    <string name="recipe_uses_h25">Estructuras de alta carga</string>
+    <string name="recipe_uses_h30">Pavimentos y grandes estructuras</string>
+</resources>

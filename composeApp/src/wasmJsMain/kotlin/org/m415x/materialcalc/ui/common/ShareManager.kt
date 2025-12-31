@@ -16,11 +16,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.m415x.materialcalc.domain.utils
+package org.m415x.materialcalc.ui.common
 
 import kotlinx.browser.window
 
-actual object PlatformInfo {
-    actual val appVersion: String = "1.1.0-beta.2" // Puedes hardcodearlo aquí
-    actual val buildYear: String = "2025" 
+// En Wasm, js() solo se puede usar como cuerpo de funciones externas
+private fun hasShareApi(): Boolean = js("!!window.navigator.share")
+
+private fun shareContent(text: String): Unit = js("window.navigator.share({text: text})")
+
+actual fun getShareManager(): ShareManager = object : ShareManager {
+    override fun shareText(content: String) {
+        if (hasShareApi()) {
+            shareContent(content)
+        } else {
+            window.navigator.clipboard.writeText(content)
+            window.alert("Copiado al portapapeles")
+        }
+    }
+
+    override fun generateAndSharePdf(title: String, content: String) {
+        window.print()
+    }
 }

@@ -26,6 +26,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.ui.navigation.BottomTab
 
 /**
@@ -101,9 +102,12 @@ fun AppBottomBar(
         modifier = modifier,
     ){
         BottomTab.entries.forEach { tab ->
+            // Resolvemos el string aquí, dentro del Composable
+            val title = stringResource(tab.title)
+            
             NavigationBarItem(
-                icon = { Icon(tab.icon, contentDescription = tab.title) },
-                label = { Text(tab.title) },
+                icon = { Icon(tab.icon, contentDescription = title) },
+                label = { Text(title) },
                 selected = currentTab == tab,
                 onClick = { onTabSelected(tab) }
             )

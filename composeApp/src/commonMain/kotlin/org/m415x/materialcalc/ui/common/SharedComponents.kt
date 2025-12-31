@@ -18,32 +18,26 @@
 
 package org.m415x.materialcalc.ui.common
 
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.FocusInteraction
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.ProvideTextStyle
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import kotlinx.coroutines.delay
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.button_cancel
+import materialscalculator.composeapp.generated.resources.button_remove
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Componente genérico maestro para inputs
@@ -163,18 +157,6 @@ fun AppInput(
         colors = colors,
         visualTransformation = visualTransformation,
         interactionSource = interactionSource,
-
-//        modifier = modifier
-//            .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
-//            // Detectamos cuando gana el foco
-//            .onFocusChanged { focusState ->
-//                if (focusState.isFocused && !readOnly) {
-//                    // Seleccionamos todo el texto (Rango 0 hasta el final)
-//                    textFieldValue = textFieldValue.copy(
-//                        selection = TextRange(0, textFieldValue.text.length)
-//                    )
-//                }
-//            },
         modifier = modifier.then(
             if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier
         ),
@@ -220,11 +202,26 @@ fun NumericInput(
     placeholder: String? = null,
     focusRequester: FocusRequester? = null,
     nextFocusRequester: FocusRequester? = null,
-    onDone: (() -> Unit)? = null
+    onDone: (() -> Unit)? = null,
+    onlyInteger: Boolean = false
 ) {
     AppInput(
         value = value,
-        onValueChange = onValueChange,
+        onValueChange = { newValue ->
+            // Si es entero, solo permitimos dígitos
+            if (onlyInteger) {
+                if (newValue.all { it.isDigit() }) {
+                    onValueChange(newValue)
+                }
+            } else {
+                // Si permite decimales, usamos tu lógica actual o Regex
+                // (ej: permitir un solo punto o coma)
+                if (newValue.count { it == '.' || it == ',' } <= 1 &&
+                    newValue.all { it.isDigit() || it == '.' || it == ',' }) {
+                    onValueChange(newValue)
+                }
+            }
+        },
         label = label,
         suffix = suffix,
         modifier = modifier,
@@ -232,7 +229,7 @@ fun NumericInput(
         focusRequester = focusRequester,
         nextFocusRequester = nextFocusRequester,
         onDone = onDone,
-        keyboardType = KeyboardType.Number,
+        keyboardType = if (onlyInteger) KeyboardType.Number else KeyboardType.Decimal,
         maxLines = 1 // Los números siempre son 1 línea
     )
 }
@@ -319,8 +316,8 @@ fun CmInput(
 fun AppConfirmDialog(
     title: String = "Confirmar eliminación",
     text: String = "¿Estás seguro? Esta acción no se puede deshacer.",
-    confirmText: String = "Eliminar",
-    dismissText: String = "Cancelar",
+    confirmText: String = stringResource(Res.string.button_remove),
+    dismissText: String = stringResource(Res.string.button_cancel),
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {

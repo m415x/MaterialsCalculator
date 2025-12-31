@@ -18,31 +18,33 @@
 
 package org.m415x.materialcalc
 
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
-import com.russhwolf.settings.Settings
-import com.russhwolf.settings.ObservableSettings
+import com.russhwolf.settings.StorageSettings
+import kotlinx.browser.document
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.app_name
+import org.jetbrains.compose.resources.stringResource
+import org.m415x.materialcalc.data.ObservableStorageSettings
 import org.m415x.materialcalc.data.repository.SettingsRepository
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
-    /*
-    // 1. Usamos la fábrica Settings() y forzamos el cast a ObservableSettings.
-    // En Wasm, esto usará una implementación interna compatible.
-    val settings: ObservableSettings = Settings() as ObservableSettings
-
+    // 1. Configuramos Settings
+    val settings = ObservableStorageSettings(StorageSettings())
     val repo = SettingsRepository(settings)
 
-    // 2. Iniciamos la interfaz en el canvas del index.html
-    val content: @Composable () -> Unit = {
+    // 2. Arrancamos la ventana
+    ComposeViewport(document.body!!) {
+        // Obtenemos el título desde los recursos compartidos
+        val title = stringResource(Res.string.app_name)
+
+        // Actualizamos el título del navegador cuando el recurso esté disponible
+        LaunchedEffect(title) {
+            document.title = title
+        }
+
         App(settingsRepository = repo)
     }
-
-    ComposeViewport(
-        viewportContainerId = "ComposeVisualizer",
-        content = content
-    )
-
-     */
 }

@@ -20,12 +20,15 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
+val appVersion = "1.1.0-beta.2"
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    alias(libs.plugins.buildconfig)
     kotlin("plugin.serialization") version "2.2.21"
     id("com.diffplug.spotless") version "8.1.0"
 }
@@ -77,6 +80,26 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
         }
+        // Si usas un sourceSet compartido 'webMain' para JS y Wasm:
+        val webMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+                implementation(compose.ui)
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material3)
+                implementation("com.russhwolf:multiplatform-settings:1.3.0")
+                implementation("com.russhwolf:multiplatform-settings-coroutines:1.3.0")
+            }
+        }
+
+        val wasmJsMain by getting {
+            dependsOn(webMain)
+        }
+
+        val jsMain by getting {
+            dependsOn(webMain)
+        }
     }
 }
 
@@ -89,7 +112,7 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 3
-        versionName = "1.1.0-beta.2"
+        versionName = appVersion // Usamos la variable global
     }
     packaging {
         resources {
@@ -106,7 +129,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
-        buildConfig = true
+        buildConfig = false
     }
 }
 
@@ -121,9 +144,17 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "org.m415x.materialcalc"
-            packageVersion = "1.1.0"
+            packageVersion = "1.1.0" // Desktop suele requerir formato X.Y.Z estricto, cuidado con beta
         }
     }
+}
+
+buildConfig {
+    // Genera la clase BuildConfig en el paquete base
+    packageName("org.m415x.materialcalc")
+
+    // Define el campo APP_VERSION usando la variable global
+    buildConfigField("String", "APP_VERSION", "\"$appVersion\"")
 }
 
 spotless {

@@ -35,19 +35,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 import kotlinx.coroutines.launch
-
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.button_cancel
+import materialscalculator.composeapp.generated.resources.button_close
+import materialscalculator.composeapp.generated.resources.button_save
+import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
+import org.m415x.materialcalc.domain.common.MixCalculator
 import org.m415x.materialcalc.domain.model.CustomRecipe
 import org.m415x.materialcalc.domain.model.TipoHormigon
-import org.m415x.materialcalc.ui.common.AppInput
-import org.m415x.materialcalc.ui.common.NumericInput
-import org.m415x.materialcalc.ui.common.RequestFocusOnStart
-import org.m415x.materialcalc.ui.common.roundToDecimals
-import org.m415x.materialcalc.ui.common.toSafeDoubleOrNull
+import org.m415x.materialcalc.ui.common.*
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Composable
 fun RecipesTabContent(repository: SettingsRepository) {
@@ -78,7 +79,7 @@ fun RecipesTabContent(repository: SettingsRepository) {
                 list.add(MaterialUiModel(
                     id = type.name,
                     title = type.name, // Ej: H21
-                    subtitle = r.proporcionMezcla,
+                    subtitle = r.descripcionProporcion,
                     isCustom = false,
                     // Creamos un CustomRecipe temporal para facilitar la copia en el editor
                     originalData = CustomRecipe(
@@ -89,7 +90,16 @@ fun RecipesTabContent(repository: SettingsRepository) {
                         piedraM3 = r.piedraM3,
                         calKg = 0.0,
                         relacionAgua = r.relacionAgua,
-                        tipo = "CONCRETE"
+                        aguaLitros = r.aguaLitros, // Añadido
+                        tipo = "CONCRETE",
+                        usos = "",
+                        isEstructural = type.isStructural,
+                        isProportion = false,
+                        partCemento = 0.0,
+                        partCal = 0.0,
+                        partArena = 0.0,
+                        partPiedra = 0.0,
+                        partAgua = 0.0 // Añadido
                     )
                 ))
             }
@@ -242,7 +252,7 @@ fun RestoreRecipesDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Cerrar") }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.button_close)) }
         }
     )
 }
@@ -293,7 +303,7 @@ fun RecipeEditorDialog(
     var pCal by remember { mutableStateOf(recipeToEdit?.partCal.toPartString("0")) }
     var pArena by remember { mutableStateOf(recipeToEdit?.partArena.toPartString("3")) }
     var pPiedra by remember { mutableStateOf(recipeToEdit?.partPiedra.toPartString("3")) }
-    var pAgua by remember { mutableStateOf(recipeToEdit?.partAgua.toPartString("0.5")) }
+    var pAgua by remember { mutableStateOf(recipeToEdit?.partAgua.toPartString("0.5")) } // No existía partAgua en CustomRecipe, ahora sí
 
     // Estados MANUALES (Técnicos)
     var cemento by remember { mutableStateOf(recipeToEdit?.cementoKg?.toString()?.removeSuffix(".0") ?: "") }
@@ -305,7 +315,7 @@ fun RecipeEditorDialog(
     // --- PUNTO CLAVE 1: La Función de Sincronización ---
     // Esta función toma lo que hay en los inputs de "Partes" y sobrescribe los inputs "Técnicos"
     val sincronizarTecnicoDesdeProporcion = {
-        val res = CalculadoraMezcla.calcularPorPartes(
+        val res = MixCalculator.calculateByParts(
             partesCemento = pCemento.toSafeDoubleOrNull() ?: 0.0,
             partesCal = pCal.toSafeDoubleOrNull() ?: 0.0,
             partesArena = pArena.toSafeDoubleOrNull() ?: 0.0,
@@ -558,7 +568,7 @@ fun RecipeEditorDialog(
                     }
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = onDismiss) { Text("Cancelar") }
+                        TextButton(onClick = onDismiss) { Text(stringResource(Res.string.button_cancel)) }
                         Button(
                             enabled = name.isNotBlank() && cemento.isNotBlank(),
                             onClick = {
@@ -573,6 +583,9 @@ fun RecipeEditorDialog(
                                 // Si el switch está activo O si venimos del botón de calcular
                                 val shouldSaveAsProportion = isProportionMode || preserveProportions
 
+                                val cementoVal = cemento.toSafeDoubleOrNull() ?: 0.0
+                                val aguaVal = agua.toSafeDoubleOrNull() ?: 0.5
+
                                 onSave(
                                     CustomRecipe(
                                         id = recipeToEdit?.id?.ifBlank { Uuid.random().toString() } ?: Uuid.random()
@@ -581,11 +594,12 @@ fun RecipeEditorDialog(
                                         tipo = selectedType,
 
                                         // Usamos los valores de estado (que acabamos de sincronizar)
-                                        cementoKg = cemento.toSafeDoubleOrNull() ?: 0.0,
+                                        cementoKg = cementoVal,
                                         calKg = cal.toSafeDoubleOrNull() ?: 0.0,
                                         arenaM3 = arena.toSafeDoubleOrNull() ?: 0.0,
                                         piedraM3 = piedra.toSafeDoubleOrNull() ?: 0.0,
-                                        relacionAgua = agua.toSafeDoubleOrNull() ?: 0.5,
+                                        relacionAgua = aguaVal,
+                                        aguaLitros = cementoVal * aguaVal, // Calculamos aguaLitros
 
                                         usos = usos,
                                         isEstructural = if (selectedType == "CONCRETE") isEstructural else false,
@@ -603,7 +617,7 @@ fun RecipeEditorDialog(
                                             ?: 0.0 else 0.0
                                     ))
                             }
-                        ) { Text("Guardar") }
+                        ) { Text(stringResource(Res.string.button_save)) }
                     }
                 }
             }
@@ -614,65 +628,5 @@ fun RecipeEditorDialog(
 object RecipeType {
     const val CONCRETE = "CONCRETE"
     const val MORTAR = "MORTAR"
-    const val PLASTER = "PLASTER" // Revoque
-}
-
-// Helper object para calcular proporciones
-object CalculadoraMezcla {
-    // Densidades aproximadas (kg/m3)
-    const val DENSIDAD_CEMENTO = 1400.0
-
-    // Coeficientes de Aporte (Volumen Real / Volumen Aparente)
-    // Fuente: Chandias / Manuales de Construcción
-    const val COEF_CEMENTO = 0.47
-    const val COEF_CAL = 0.37 // Polvo
-    const val COEF_ARENA = 0.63
-    const val COEF_PIEDRA = 0.51
-    const val COEF_AGUA = 1.0
-
-    data class ResultadoProporcion(
-        val cementoKg: Double,
-        val calKg: Double,
-        val arenaM3: Double,
-        val piedraM3: Double,
-        val aguaLitros: Double
-    )
-
-    fun calcularPorPartes(
-        partesCemento: Double,
-        partesCal: Double,
-        partesArena: Double,
-        partesPiedra: Double,
-        partesAgua: Double // Generalmente es un porcentaje del cemento, pero si lo ponen por partes...
-    ): ResultadoProporcion {
-        // 1. Calcular el Volumen Real que genera esa suma de partes (ej: 1 balde + 3 baldes...)
-        val volumenReal = (partesCemento * COEF_CEMENTO) +
-                (partesCal * COEF_CAL) +
-                (partesArena * COEF_ARENA) +
-                (partesPiedra * COEF_PIEDRA) +
-                (partesAgua * COEF_AGUA)
-
-        if (volumenReal == 0.0) return ResultadoProporcion(0.0, 0.0, 0.0, 0.0, 0.0)
-
-        // 2. Factor de Multiplicación para llegar a 1 m3 (1000 litros)
-        // Cuántas veces entra esa "mezclita" en 1 metro cúbico real
-        val factor = 1000.0 / volumenReal // litros
-
-        // 3. Calcular cantidades por m3
-        // Cemento: (Partes * Factor) nos da LITROS aparentes de cemento. Multiplicamos por densidad para KG.
-        val cementoKg = (partesCemento * factor) * (DENSIDAD_CEMENTO / 1000.0)
-
-        // Cal: Similar, asumimos densidad aprox 600kg/m3 si quisiéramos kg, pero simplifiquemos
-        // Si la cal viene en bolsa de 25kg, y densidad ~500-600.
-        val calKg = (partesCal * factor) * 0.6 // Aprox 600kg/m3 densidad aparente
-
-        // Arena y Piedra: Queremos m3 aparentes (volumen de compra)
-        val arenaM3 = (partesArena * factor) / 1000.0
-        val piedraM3 = (partesPiedra * factor) / 1000.0
-
-        // Agua: Relación A/C estimada
-        val aguaLitros = (partesAgua * factor)
-
-        return ResultadoProporcion(cementoKg, calKg, arenaM3, piedraM3, aguaLitros / cementoKg)
-    }
+    const val PLASTER = "PLASTER"
 }

@@ -18,8 +18,8 @@
 
 package org.m415x.materialcalc.data.repository
 
-import org.m415x.materialcalc.domain.repository.MaterialRepository
 import org.m415x.materialcalc.domain.model.*
+import org.m415x.materialcalc.domain.repository.MaterialRepository
 
 class StaticMaterialRepository : MaterialRepository {
 
@@ -34,58 +34,70 @@ class StaticMaterialRepository : MaterialRepository {
         // H8: Hormigón de limpieza (pobre). Poco cemento.
         // Usos: Contrapisos, carpetas, nivelación.
         TipoHormigon.H8 to DosificacionHormigon(
-            proporcionMezcla = "1:3:5 (Cem:Arena:Piedra)",
+            nombre = "H8",
+            descripcionProporcion = "1:3:5 (Cem:Arena:Piedra)",
             cementoKg = 180.0,
             arenaM3 = 0.55,
             piedraM3 = 0.9,
+            aguaLitros = 180.0 * 0.6,
             relacionAgua = 0.6
         ),
 
         // H13: Hormigón simple (no estructural o estructuras muy livianas).
         TipoHormigon.H13 to DosificacionHormigon(
-            proporcionMezcla = "1:3:4 (Cem:Arena:Piedra)",
+            nombre = "H13",
+            descripcionProporcion = "1:3:4 (Cem:Arena:Piedra)",
             cementoKg = 260.0,
             arenaM3 = 0.63,
             piedraM3 = 0.84,
+            aguaLitros = 260.0 * 0.5,
             relacionAgua = 0.5
         ),
 
         // H17: Hormigón estándar para viviendas pequeñas (bases, encadenados).
         TipoHormigon.H17 to DosificacionHormigon(
-            proporcionMezcla = "1:3:3 (Cem:Arena:Piedra)",
+            nombre = "H17",
+            descripcionProporcion = "1:3:3 (Cem:Arena:Piedra)",
             cementoKg = 300.0,
             arenaM3 = 0.67,
             piedraM3 = 0.67,
+            aguaLitros = 300.0 * 0.5,
             relacionAgua = 0.5
         ),
 
         // H21: Hormigón ESTRUCTURAL estándar (Losas, vigas, columnas).
         // Es el más utilizado en construcción tradicional.
         TipoHormigon.H21 to DosificacionHormigon(
-            proporcionMezcla = "1:2:3 (Cem:Arena:Piedra)",
+            nombre = "H21",
+            descripcionProporcion = "1:2:3 (Cem:Arena:Piedra)",
             cementoKg = 350.0,
             arenaM3 = 0.55,
             piedraM3 = 0.75,
+            aguaLitros = 350.0 * 0.45,
             relacionAgua = 0.45
         ),
 
         // H25: Hormigón de alta resistencia.
         // Usos: Columnas muy cargadas, estructuras importantes.
         TipoHormigon.H25 to DosificacionHormigon(
-            proporcionMezcla = "1:2:2 (Cem:Arena:Piedra)",
+            nombre = "H25",
+            descripcionProporcion = "1:2:2 (Cem:Arena:Piedra)",
             cementoKg = 380.0,
             arenaM3 = 0.5,
             piedraM3 = 0.75,
+            aguaLitros = 380.0 * 0.42,
             relacionAgua = 0.42
         ),
 
         // H30: Hormigón de muy alta resistencia.
         // NOTA: Difícil de lograr a mano sin aditivos fluidificantes por la poca agua.
         TipoHormigon.H30 to DosificacionHormigon(
-            proporcionMezcla = "1:1:2 (Cem:Arena:Piedra)",
+            nombre = "H30",
+            descripcionProporcion = "1:1:2 (Cem:Arena:Piedra)",
             cementoKg = 430.0,
             arenaM3 = 0.45,
             piedraM3 = 0.70,
+            aguaLitros = 430.0 * 0.40,
             relacionAgua = 0.40
         )
     )
@@ -196,10 +208,11 @@ class StaticMaterialRepository : MaterialRepository {
      * @property mezclaCalReforzada Base de datos de mezclas (Valores estándar por m3 de mortero).
      */
     private val mezclaCalReforzada = DosificacionMortero(
-        dosificacionMezcla = "1/4:1:3 (Cem:Cal:Arena)",
+        proporcionMezcla = "1/4:1:3 (Cem:Cal:Arena)",
         cementoKg = 210.0,
         calKg = 150.0,
         arenaM3 = 1.05,
+        aguaLitros = 210.0 * 0.6,
         relacionAgua = 0.6
     )
 
@@ -209,10 +222,11 @@ class StaticMaterialRepository : MaterialRepository {
      * @property recetaGrueso Dosificación para 1 m3 de Revoque Grueso (1/4 Cemento : 1 Cal : 3 Arena).
      */
     private val mezclaCementoArena = DosificacionMortero(
-        dosificacionMezcla = "1:3 (Cem:Arena)",
+        proporcionMezcla = "1:3 (Cem:Arena)",
         cementoKg = 350.0,
         calKg = 0.0,
         arenaM3 = 1.1,
+        aguaLitros = 350.0 * 0.5,
         relacionAgua = 0.5
     )
 
@@ -222,10 +236,11 @@ class StaticMaterialRepository : MaterialRepository {
      * @property recetaGrueso Dosificación para 1 m3 de Revoque Grueso (1/4 Cemento : 1 Cal : 3 Arena).
      */
     private val recetaGrueso = DosificacionMortero(
-        dosificacionMezcla = "1/4:1:3 (Cem:Cal:Arena)",
+        proporcionMezcla = "1/4:1:3 (Cem:Cal:Arena)",
         cementoKg = 75.0,  // Aprox 3 bolsas por m3 (es una mezcla "bastarda", lleva menos cemento que un concreto)
         calKg = 160.0,     // Mucha cal para plasticidad
         arenaM3 = 1.1,      // Arena común
+        aguaLitros = 75.0 * 0.6,
         relacionAgua = 0.6
     )
 
@@ -235,10 +250,11 @@ class StaticMaterialRepository : MaterialRepository {
      * @property recetaFino Dosificación para 1 m3 de Revoque Fino Tradicional (1/8 Cemento : 1 Aérea : 2 Arena Fina).
      */
     private val recetaFino = DosificacionMortero(
-        dosificacionMezcla = "1/8:1:2 (Cem:Cal:Arena)",
+        proporcionMezcla = "1/8:1:2 (Cem:Cal:Arena)",
         cementoKg = 30.0,  // Muy poco, solo para ligar
         calKg = 250.0,     // Pura cal aérea
         arenaM3 = 1.0,      // Arena fina (voladora)
+        aguaLitros = 30.0 * 0.5,
         relacionAgua = 0.5
     )
 

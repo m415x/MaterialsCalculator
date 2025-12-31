@@ -108,14 +108,14 @@ fun App(
                 stringResource(screen.title) // <--- Aquí convertimos ID a Texto
             }
 
-            BottomTab.SAVED -> stringResource(Screen.Guardados.title)
+            BottomTab.SAVED -> stringResource(Screen.Saved.title)
             BottomTab.SETTINGS -> when (settingsSection) {
                 // Mapeamos el Enum de Settings directamente a recursos
-                SettingsSection.MENU -> stringResource(Res.string.title_settings)
-                SettingsSection.APPEARANCE -> stringResource(Res.string.subtitle_appearance)
-                SettingsSection.GLOBAL_PARAMS -> stringResource(Res.string.subtitle_global_params)
-                SettingsSection.MATERIALS_DB -> stringResource(Res.string.subtitle_materials)
-                SettingsSection.PRICES -> stringResource(Res.string.subtitle_prices)
+                SettingsSection.MENU -> stringResource(Res.string.settings_title_main)
+                SettingsSection.APPEARANCE -> stringResource(Res.string.settings_item_appearance_title)
+                SettingsSection.GLOBAL_PARAMS -> stringResource(Res.string.settings_item_params_title)
+                SettingsSection.MATERIALS_DB -> stringResource(Res.string.settings_item_materials_title)
+                SettingsSection.PRICES -> stringResource(Res.string.settings_item_prices_title)
             }
         }
 

@@ -66,6 +66,11 @@ import androidx.compose.ui.window.Dialog
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.launch
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.button_cancel
+import materialscalculator.composeapp.generated.resources.button_close
+import materialscalculator.composeapp.generated.resources.button_save
+import org.jetbrains.compose.resources.stringResource
 
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
@@ -295,7 +300,7 @@ fun RestoreBricksDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Cerrar") }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.button_close)) }
         }
     )
 }
@@ -431,7 +436,7 @@ fun BrickEditorDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) { Text("Cancelar") }
+                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.button_cancel)) }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         enabled = isFormValid,
@@ -462,7 +467,7 @@ fun BrickEditorDialog(
                             onSave(newBrick)
                         }
                     ) {
-                        Text("Guardar")
+                        Text(stringResource(Res.string.button_save))
                     }
                 }
             }

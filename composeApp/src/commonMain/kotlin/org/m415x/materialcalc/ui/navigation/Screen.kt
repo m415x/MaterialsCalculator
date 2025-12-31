@@ -36,14 +36,14 @@ import materialscalculator.composeapp.generated.resources.*
  * @property showBackButton Indicador de si debe mostrar el botón de regreso.
  */
 sealed class Screen(val title: StringResource, val showBackButton: Boolean) {
-    data object Home : Screen(Res.string.title_home, false)
-    data object Hormigon : Screen(Res.string.title_concrete, true)
-    data object Muro : Screen(Res.string.title_wall, true)
-    data object Estructura : Screen(Res.string.title_structure, true)
-    data object Revoque : Screen(Res.string.title_plaster, true)
+    data object Home : Screen(Res.string.home_title_main, false)
+    data object Concrete : Screen(Res.string.home_category_concrete, true)
+    data object Wall : Screen(Res.string.home_category_wall, true)
+    data object Structure : Screen(Res.string.home_category_structure, true)
+    data object Plaster : Screen(Res.string.home_category_plaster, true)
 
-    data object Guardados : Screen(Res.string.title_saved, false)
-    data object Configuracion : Screen(Res.string.title_settings, false)
+    data object Saved : Screen(Res.string.saved_title_main, false)
+    data object Settings : Screen(Res.string.settings_title_main, false)
 }
 
 /**
@@ -55,11 +55,12 @@ sealed class Screen(val title: StringResource, val showBackButton: Boolean) {
  * @property screen Pantalla asociada a la sección.
  */
 enum class BottomTab(
-    val title: String,
+    val title: StringResource, // Cambiado de String a StringResource
     val icon: ImageVector,
     val screen: Screen // A qué pantalla nos lleva este tab
 ) {
-    CALCULATOR("Calcular", Icons.Default.Calculate, Screen.Home),
-    SAVED("Guardados", Icons.Default.Save, Screen.Guardados),
-    SETTINGS("Ajustes", Icons.Default.Settings, Screen.Configuracion)
+    // Usamos los IDs de recursos directamente
+    CALCULATOR(Res.string.nav_home, Icons.Default.Calculate, Screen.Home),
+    SAVED(Res.string.nav_saved, Icons.Default.Save, Screen.Saved),
+    SETTINGS(Res.string.nav_settings, Icons.Default.Settings, Screen.Settings)
 }

@@ -29,7 +29,7 @@ import org.m415x.materialcalc.domain.utils.ConstructionConstants.formatPart
  */
 fun DosificacionHormigon.estimarProporcionTexto(): String {
     // 1. SI TENEMOS EL DATO ORIGINAL, LO USAMOS (Prioridad Absoluta)
-    if (!partes.isNullOrBlank()) return partes
+    if (descripcionProporcion.isNotBlank()) return descripcionProporcion
 
     // 2. Calcular volumen aparente del cemento (el "1" de la fórmula)
     val volCemento = this.cementoKg / DENSIDAD_CEMENTO_SUELTO

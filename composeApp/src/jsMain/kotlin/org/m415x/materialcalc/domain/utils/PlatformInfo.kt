@@ -16,11 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.m415x.materialcalc.ui.common
+package org.m415x.materialcalc.domain.utils
 
-// En la web no podemos controlar el brillo del sistema del usuario por seguridad
-actual fun getBrightnessManager(): BrightnessManager = object : BrightnessManager {
-    override fun setBrightness(level: Float?) {
-        // No hace nada en Web
-    }
+import org.m415x.materialcalc.BuildConfig
+import kotlin.js.Date
+
+actual object PlatformInfo {
+    actual val appVersion: String = BuildConfig.APP_VERSION
+    actual val buildYear: String = Date().getFullYear().toString()
 }

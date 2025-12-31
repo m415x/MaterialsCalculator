@@ -19,61 +19,73 @@
 package org.m415x.materialcalc.domain.model
 
 /**
- * Enumeración que representa los diámetros estándar de hierro para estructuras.
+ * Enumeración que representa los tipos de estructuras.
  *
- * @property mm Valor en milímetros del diámetro
+ * @property label Etiqueta para mostrar en la UI.
  */
-enum class DiametroHierro(val nombre: String, val mm: Int) {
-    HIERRO_6("Hierro Ø 6 mm", 6),
-    HIERRO_8("Hierro Ø 8 mm", 8),
-    HIERRO_10("Hierro Ø 10 mm", 10),
-    HIERRO_12("Hierro Ø 12 mm", 12),
-    HIERRO_16("Hierro Ø 16 mm", 16)
+enum class StructureType(val label: String) {
+    BEAM("Viga"),
+    COLUMN("Columna"),
+    SLAB("Losa")
 }
 
 /**
- * Data class para el resultado de vigas/columnas.
+ * Enumeración que representa los diámetros de hierro.
  *
- * @property volumenHormigonM3 Volumen de hormigón en metros cúbicos
- * @property cementoKg Cantidad de cemento en kilogramos
- * @property arenaM3 Cantidad de arena en metros cúbicos
- * @property piedraM3 Cantidad de piedra en metros cúbicos
- * @property aguaLitros Cantidad de agua en litros
- * @property bolsaCementoKg Cantidad de bolsas de cemento
- * @property dosificacionHormigon Dosificación de hormigón
- * @property porcentajeDesperdicioHormigon Porcentaje de desperdicio de hormigón
- * @property diametroPrincipal Diámetro principal de hierro
- * @property diametroEstribo Diámetro de estribo de hierro
- * @property hierroPrincipalKg Cantidad de hierro principal en kilogramos
- * @property hierroEstribosKg Cantidad de hierro estribos en kilogramos
- * @property hierroPrincipalMetros Longitud total de hierro principal en metros
- * @property hierroEstribosMetros Longitud total de hierro estribos en metros
- * @property cantidadHierroPrincipal Cantidad de hierro principal a comprar (aprox)
- * @property cantidadHierroEstribos Cantidad de hierro estribos a comprar (aprox)
- * @property longitudComercialHierroMetros Longitud comercial de hierro en metros
- * @property porcentajeDesperdicioHierroPrincipal Porcentaje de desperdicio de hierro principal
- * @property porcentajeDesperdicioHierroEstribos Porcentaje de desperdicio de hierro estribos
+ * @property mm Diámetro en milímetros.
+ * @property pesoLinealKgM Peso lineal en kg/m.
+ */
+enum class DiametroHierro(val mm: Double, val pesoLinealKgM: Double) {
+    HIERRO_4_2(4.2, 0.109),
+    HIERRO_6(6.0, 0.222),
+    HIERRO_8(8.0, 0.395),
+    HIERRO_10(10.0, 0.617),
+    HIERRO_12(12.0, 0.888),
+    HIERRO_16(16.0, 1.578),
+    HIERRO_20(20.0, 2.466),
+    HIERRO_25(25.0, 3.853)
+}
+
+/**
+ * Representa el resultado del cálculo de una estructura.
+ *
+ * @property volumenHormigonM3 Volumen de hormigón en m³.
+ * @property porcentajeDesperdicioHormigon Porcentaje de desperdicio de hormigón.
+ * @property cementoKg Cantidad de cemento en kg.
+ * @property bolsaCementoKg Peso de la bolsa de cemento.
+ * @property arenaM3 Cantidad de arena en m³.
+ * @property piedraM3 Cantidad de piedra en m³.
+ * @property aguaLitros Cantidad de agua en litros.
+ * @property diametroPrincipal Diámetro del hierro principal.
+ * @property hierroPrincipalMetros Metros de hierro principal.
+ * @property hierroPrincipalKg Kilos de hierro principal.
+ * @property cantidadHierroPrincipal Cantidad de barras de hierro principal.
+ * @property porcentajeDesperdicioHierroPrincipal Porcentaje de desperdicio de hierro principal.
+ * @property diametroEstribo Diámetro del hierro de estribo.
+ * @property hierroEstribosMetros Metros de hierro de estribo.
+ * @property hierroEstribosKg Kilos de hierro de estribo.
+ * @property cantidadHierroEstribos Cantidad de barras de hierro de estribo.
+ * @property porcentajeDesperdicioHierroEstribos Porcentaje de desperdicio de hierro de estribo.
  */
 data class ResultadoEstructura(
+    // Hormigón
     val volumenHormigonM3: Double,
-    // Materiales Hormigón
+    val porcentajeDesperdicioHormigon: Double,
     val cementoKg: Double,
+    val bolsaCementoKg: Int,
     val arenaM3: Double,
     val piedraM3: Double,
     val aguaLitros: Double,
-    val bolsaCementoKg: Int,
-    val dosificacionHormigon: String,
-    val porcentajeDesperdicioHormigon: Double,
-    // Materiales Armadura
+    // Hierro Principal
     val diametroPrincipal: DiametroHierro,
-    val diametroEstribo: DiametroHierro,
-    val hierroPrincipalKg: Double,
-    val hierroEstribosKg: Double,
     val hierroPrincipalMetros: Double,
-    val hierroEstribosMetros: Double,
+    val hierroPrincipalKg: Double,
     val cantidadHierroPrincipal: Int,
-    val cantidadHierroEstribos: Int,
-    val longitudComercialHierroMetros: Int,
     val porcentajeDesperdicioHierroPrincipal: Double,
+    // Estribos
+    val diametroEstribo: DiametroHierro,
+    val hierroEstribosMetros: Double,
+    val hierroEstribosKg: Double,
+    val cantidadHierroEstribos: Int,
     val porcentajeDesperdicioHierroEstribos: Double
 )

@@ -32,6 +32,7 @@ interface MaterialRecipe {
     val calKg: Double
     val arenaM3: Double
     val piedraM3: Double
+    val aguaLitros: Double
     val relacionAgua: Double
 }
 
@@ -39,7 +40,8 @@ interface MaterialRecipe {
  * Contiene las constantes de materiales para 1 m³ de hormigón. (Valores promedio de tablas
  * estándar)
  *
- * @property proporcionMezcla Proporcion de la mezcla
+ * @property nombre Nombre de la mezcla (ej: "H21", "Mi Mezcla")
+ * @property descripcionProporcion Descripción de la proporción (ej: "1:3:3")
  * @property cementoKg Cantidad de cemento en kilogramos
  * @property arenaM3 Cantidad de arena en metros cúbicos
  * @property piedraM3 Cantidad de piedra en metros cúbicos
@@ -47,19 +49,20 @@ interface MaterialRecipe {
  * @property calKg Cantidad de cal en kilogramos
  */
 data class DosificacionHormigon(
-    val proporcionMezcla: String,
+    val nombre: String,
+    val descripcionProporcion: String,
     override val cementoKg: Double,
     override val arenaM3: Double,
     override val piedraM3: Double,
+    override val aguaLitros: Double,
     override val relacionAgua: Double,
-    override val calKg: Double = 0.0,
-    val partes: String? = null
+    override val calKg: Double = 0.0
 ) : MaterialRecipe
 
 /**
  * Contiene las constantes de materiales para 1 m³ de mortero. (Valores promedio de tablas estándar)
  *
- * @property dosificacionMezcla Proporcion de la mezcla
+ * @property proporcionMezcla Proporcion de la mezcla
  * @property cementoKg Cantidad de cemento en kilogramos
  * @property calKg Cantidad de cal en kilogramos
  * @property arenaM3 Cantidad de arena en metros cúbicos
@@ -67,10 +70,11 @@ data class DosificacionHormigon(
  * @property piedraM3 Cantidad de piedra en metros cúbicos
  */
 data class DosificacionMortero(
-    val dosificacionMezcla: String,
+    val proporcionMezcla: String,
     override val cementoKg: Double,
     override val calKg: Double,
     override val arenaM3: Double,
+    override val aguaLitros: Double,
     override val relacionAgua: Double,
     override val piedraM3: Double = 0.0,
     val partes: String? = null

@@ -53,6 +53,19 @@ import androidx.compose.ui.unit.dp
 import materialscalculator.composeapp.generated.resources.Res
 import materialscalculator.composeapp.generated.resources.about_version
 import materialscalculator.composeapp.generated.resources.app_name
+import materialscalculator.composeapp.generated.resources.settings_item_about_title
+import materialscalculator.composeapp.generated.resources.settings_item_appearance_title
+import materialscalculator.composeapp.generated.resources.settings_item_params_title
+import materialscalculator.composeapp.generated.resources.settings_item_materials_title
+import materialscalculator.composeapp.generated.resources.settings_item_prices_title
+import materialscalculator.composeapp.generated.resources.settings_section_database
+import materialscalculator.composeapp.generated.resources.settings_section_general
+import materialscalculator.composeapp.generated.resources.settings_section_info
+import materialscalculator.composeapp.generated.resources.settings_item_about_desc
+import materialscalculator.composeapp.generated.resources.settings_item_appearance_desc
+import materialscalculator.composeapp.generated.resources.settings_item_params_desc
+import materialscalculator.composeapp.generated.resources.settings_item_materials_desc
+import materialscalculator.composeapp.generated.resources.settings_item_prices_desc
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.domain.utils.PlatformInfo
 
@@ -69,39 +82,53 @@ fun SettingsMainMenu(onNavigate: (SettingsSection) -> Unit) {
     // Estado para controlar la visibilidad del diálogo
     var showAboutDialog by remember { mutableStateOf(false) }
 
-    val version = PlatformInfo.appVersion
+    val labelGeneral = stringResource(Res.string.settings_section_general)
+    val h2Appearance = stringResource(Res.string.settings_item_appearance_title)
+    val pAppearance = stringResource(Res.string.settings_item_appearance_desc)
+    val h2GlobalParams = stringResource(Res.string.settings_item_params_title)
+    val pGlobalParams = stringResource(Res.string.settings_item_params_desc)
+    val labelDataBase = stringResource(Res.string.settings_section_database)
+    val h2Materials = stringResource(Res.string.settings_item_materials_title)
+    val pMaterials = stringResource(Res.string.settings_item_materials_desc)
+    val h2Prices = stringResource(Res.string.settings_item_prices_title)
+    val pPrices = stringResource(Res.string.settings_item_prices_desc)
+    val labelInformation = stringResource(Res.string.settings_section_info)
+    val h2About = stringResource(Res.string.settings_item_about_title)
+    val pAbout = stringResource(Res.string.settings_item_about_desc)
+    val appName = stringResource(Res.string.app_name)
+    val version = stringResource(Res.string.about_version, PlatformInfo.appVersion)
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 32.dp)
     ) {
         item {
-            SettingsCategoryTitle("General")
+            SettingsCategoryTitle(labelGeneral)
             SettingsMenuItem(
-                title = "Apariencia",
-                subtitle = "Tema oscuro, claro y alto contraste",
+                title = h2Appearance,
+                subtitle = pAppearance,
                 icon = Icons.Default.Palette,
                 onClick = { onNavigate(SettingsSection.APPEARANCE) }
             )
             SettingsMenuItem(
-                title = "Parámetros Globales",
-                subtitle = "Pesos de bolsas, capacidad de baldes y carretillas",
+                title = h2GlobalParams,
+                subtitle = pGlobalParams,
                 icon = Icons.Default.Tune,
                 onClick = { onNavigate(SettingsSection.GLOBAL_PARAMS) }
             )
         }
 
         item {
-            SettingsCategoryTitle("Base de Datos")
+            SettingsCategoryTitle(labelDataBase)
             SettingsMenuItem(
-                title = "Materiales y Medidas",
-                subtitle = "Editar ladrillos, hierros y proporciones",
+                title = h2Materials,
+                subtitle = pMaterials,
                 icon = Icons.Default.Construction,
                 onClick = { onNavigate(SettingsSection.MATERIALS_DB) }
             )
             SettingsMenuItem(
-                title = "Precios",
-                subtitle = "Configurar costos unitarios",
+                title = h2Prices,
+                subtitle = pPrices,
                 icon = Icons.Default.AttachMoney,
                 onClick = { onNavigate(SettingsSection.PRICES) }
             )
@@ -118,10 +145,10 @@ fun SettingsMainMenu(onNavigate: (SettingsSection) -> Unit) {
         }
         */
         item {
-            SettingsCategoryTitle("Información")
+            SettingsCategoryTitle(labelInformation)
             SettingsMenuItem(
-                title = "Acerca de",
-                subtitle = "Versión, desarrollador y contacto",
+                title = h2About,
+                subtitle = pAbout,
                 icon = Icons.Default.Info, // Icono de información
                 onClick = { showAboutDialog = true } // Activamos el diálogo
             )
@@ -129,7 +156,7 @@ fun SettingsMainMenu(onNavigate: (SettingsSection) -> Unit) {
         item {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "${stringResource(Res.string.app_name)} ${stringResource(Res.string.about_version, version)}",
+                text = "$appName $version",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.fillMaxWidth(),

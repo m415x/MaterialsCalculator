@@ -16,11 +16,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.m415x.materialcalc.domain.utils
+package org.m415x.materialcalc.domain.registry
 
-import kotlinx.browser.window
+data class SimaMesh(
+    val id: String,
+    val name: String,
+    val phiMm: Double,
+    val separationCm: Int,
+    val weightKgM2: Double,
+    val panelWidthM: Double = 2.0,
+    val panelLengthM: Double = 5.0
+)
 
-actual object PlatformInfo {
-    actual val appVersion: String = "1.1.0-beta.2" // Puedes hardcodearlo aquí
-    actual val buildYear: String = "2025" 
+object SimaMeshRegistry {
+    val standardMeshes = listOf(
+        SimaMesh("q92", "Q-92", 4.2, 15, 1.48),
+        SimaMesh("q131", "Q-131", 5.0, 15, 2.09),
+        SimaMesh("q188", "Q-188", 6.0, 15, 3.02),
+        SimaMesh("q257", "Q-257", 7.0, 15, 4.11),
+        SimaMesh("q335", "Q-335", 8.0, 15, 5.37)
+    )
+
+    fun getMeshById(id: String) = standardMeshes.find { it.id == id } ?: standardMeshes[1] // Default Q131
 }

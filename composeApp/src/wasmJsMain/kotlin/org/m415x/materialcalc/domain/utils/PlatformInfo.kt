@@ -16,18 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.m415x.materialcalc.ui.common
+package org.m415x.materialcalc.domain.utils
 
-// Solo esta clase, sin duplicados
-class WebShareManager : ShareManager {
-    override fun shareText(content: String) {
-        // TODO: Implementar con JS window.navigator.share
-        println("Compartir: $content")
-    }
+import org.m415x.materialcalc.BuildConfig
 
-    override fun generateAndSharePdf(title: String, content: String) {
-        println("PDF no soportado en web aún")
-    }
+// Función externa para obtener el año en Wasm
+private fun getCurrentYear(): String = js("new Date().getFullYear().toString()")
+
+actual object PlatformInfo {
+    actual val appVersion: String = BuildConfig.APP_VERSION
+    actual val buildYear: String = getCurrentYear()
 }
-
-actual fun getShareManager(): ShareManager = WebShareManager()

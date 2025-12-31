@@ -16,23 +16,6 @@
   ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   -->
 
-<!DOCTYPE html>
-<html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Material Calc</title>
-        <script src="MaterialsCalculator-composeApp.mjs" type="module"></script>
-        <style>
-            body { margin: 0; padding: 0; background-color: #000; }
-            /* El canvas debe ocupar toda la pantalla */
-            #ComposeVisualizer {
-                width: 100%;
-                height: 100%;
-            }
-        </style>
-    </head>
-    <body>
-        <canvas id="ComposeVisualizer"></canvas>
-    </body>
-</html>
+<resources>
+
+</resources>

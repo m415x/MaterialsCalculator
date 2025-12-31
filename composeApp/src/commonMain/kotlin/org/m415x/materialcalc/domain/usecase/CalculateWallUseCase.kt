@@ -117,7 +117,7 @@ class CalculateWallUseCase {
             porcentajeDesperdicioMortero = desperdicioMortero,
 
             // Configuración
-            proporcionMezcla = dosis.dosificacionMezcla,
+            proporcionMezcla = dosis.proporcionMezcla,
             bolsaCementoKg = bolsaCementoKg,
             bolsaCalKg = bolsaCalKg
         )

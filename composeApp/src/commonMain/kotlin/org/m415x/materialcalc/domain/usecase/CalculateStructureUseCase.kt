@@ -45,7 +45,6 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
      * @param cantidadVarillas Cantidad de varillas.
      * @param diametroEstribo Diámetro de estribo de hierro.
      * @param separacionEstriboMetros Separación de estribo en metros.
-     * @param longitudComercialHierroMetros Longitud comercial de hierro en metros.
      * @param pesoBolsaCementoKg Peso de la bolsa de cemento en kg.
      * @return Resultado del cálculo.
      */
@@ -68,7 +67,6 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
         separacionEstriboMetros: Double,
 
         // Configuraciones opcionales (con defaults)
-        longitudComercialHierroMetros: Int = 12,
         pesoBolsaCementoKg: Int = 25,
         desperdicioHormigon: Double,
         desperdicioHierroPrincipal: Double,
@@ -114,6 +112,7 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
         val longitudTotalPrincipal = (cantidadVarillas * largoMetros) * (1 + desperdicioHierroPrincipal)
         val pesoTotalPrincipal = longitudTotalPrincipal * pesoMetroPrincipal
 
+        val longitudComercialHierroMetros = 12 // Hardcoded for now
         val barrasPrincipalComprar = ceil(longitudTotalPrincipal / longitudComercialHierroMetros).toInt()
 
         // --- B. Estribos ---
@@ -146,7 +145,6 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
             piedraM3 = matsConcreto.piedraM3,
             aguaLitros = matsConcreto.aguaLitros,
             bolsaCementoKg = pesoBolsaCementoKg,
-            dosificacionHormigon = receta.proporcionMezcla,
             porcentajeDesperdicioHormigon = desperdicioHormigon,
 
             // Armadura (Calculada aquí)
@@ -158,9 +156,53 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
             hierroEstribosMetros = longitudTotalEstribos,
             cantidadHierroPrincipal = barrasPrincipalComprar,
             cantidadHierroEstribos = barrasEstribosComprar,
-            longitudComercialHierroMetros = longitudComercialHierroMetros,
             porcentajeDesperdicioHierroPrincipal = desperdicioHierroPrincipal,
             porcentajeDesperdicioHierroEstribos = desperdicioEstribos
+        )
+    }
+
+    fun calculateSlab(
+        widthX: Double,      // m
+        lengthY: Double,     // m
+        sepXcm: Double,      // cm
+        sepYcm: Double,      // cm
+        phiX: Double,        // mm
+        phiY: Double,        // mm
+        wastePct: Double,    // % (desde Settings)
+        includeHooks: Boolean
+    ): SlabResult {
+        val sepXm = sepXcm / 100.0
+        val sepYm = sepYcm / 100.0
+
+        // 1. Cantidad de barras (CIRSOC 201 sugiere cubrir todo el paño)
+        val countX = ceil(lengthY / sepXm).toInt() + 1
+        val countY = ceil(widthX / sepYm).toInt() + 1
+
+        // 2. Longitud individual (Recubrimiento típico 2cm por lado)
+        val recubrimiento = 0.02 * 2
+        val hookL = if (includeHooks) (10 * (phiX / 1000.0)) * 2 else 0.0 // Pata estándar 10*phi
+
+        val individualLengthX = (widthX - recubrimiento) + hookL
+        val individualLengthY = (lengthY - recubrimiento) + hookL
+
+        // 3. Totales
+        val netMeters = (countX * individualLengthX) + (countY * individualLengthY)
+        val totalMeters = netMeters * (1 + (wastePct / 100))
+
+        // Peso específico del acero: (phi^2 / 162.2) kg/m
+        val weightX = (phiX * phiX / 162.2) * (countX * individualLengthX)
+        val weightY = (phiY * phiY / 162.2) * (countY * individualLengthY)
+        val totalWeight = (weightX + weightY) * (1 + (wastePct / 100))
+
+        return SlabResult(
+            totalWeightKg = totalWeight,
+            totalMeters = totalMeters,
+            countX = countX,
+            countY = countY,
+            lengthX = individualLengthX,
+            lengthY = individualLengthY,
+            commercialBars12m = ceil(totalMeters / 12.0).toInt(),
+            wasteAmountKg = totalWeight - (weightX + weightY)
         )
     }
 }

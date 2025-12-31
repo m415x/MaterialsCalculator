@@ -28,6 +28,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.button_cancel
+import materialscalculator.composeapp.generated.resources.button_remove
+import org.jetbrains.compose.resources.stringResource
 
 // --- MODELO GENÉRICO PARA LA LISTA ---
 // Usamos este modelo para que la LazyColumn sea igual para todos
@@ -117,9 +121,9 @@ fun DeleteOrHideDialog(
                 onClick = onConfirm,
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
             ) {
-                Text(if (isStatic) "Ocultar" else "Eliminar")
+                Text(if (isStatic) "Ocultar" else stringResource(Res.string.button_remove))
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.button_cancel)) } }
     )
 }

@@ -18,6 +18,8 @@
 
 package org.m415x.materialcalc.domain.common
 
+import org.m415x.materialcalc.ui.common.roundToDecimals
+
 /**
  * Convierte Centímetros a Metros.
  *
@@ -39,5 +41,5 @@ val Int.cmToMeters: Double
  *
  * @property metersToCm Convierte Double a Centímetros.
  */
-val Double.metersToCm: Double
-    get() = this * 100.0
+val Double.metersToCm: String
+    get() = (this * 100.0).roundToDecimals(1)

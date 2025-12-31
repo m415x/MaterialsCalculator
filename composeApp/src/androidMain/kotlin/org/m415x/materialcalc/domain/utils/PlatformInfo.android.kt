@@ -24,7 +24,7 @@ import org.m415x.materialcalc.BuildConfig
 
 actual object PlatformInfo {
     // Lee directamente lo que pusiste en android { defaultConfig { versionName ... } }
-    actual val appVersion: String = BuildConfig.VERSION_NAME
+    actual val appVersion: String = BuildConfig.APP_VERSION
 
     // Calculamos el año actual dinámicamente usando la API de Java disponible en Android
     actual val buildYear: String = Calendar.getInstance().get(Calendar.YEAR).toString()

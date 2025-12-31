@@ -101,6 +101,7 @@ fun SettingsScreen(
                 MaterialsDbScreen(repository)
             }
 
+
             SettingsSection.PRICES -> {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("Próximamente: Precios")
@@ -133,18 +134,4 @@ fun SettingsMenuItem(
         modifier = Modifier.clickable { onClick() }
     )
     HorizontalDivider()
-}
-
-/**
- * Item de configuración.
- *
- * @param label Etiqueta del item.
- * @param value Valor del item.
- */
-@Composable
-fun SettingItem(label: String, value: String) {
-    ListItem(
-        headlineContent = { Text(label) },
-        trailingContent = { Text(value, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary) }
-    )
 }

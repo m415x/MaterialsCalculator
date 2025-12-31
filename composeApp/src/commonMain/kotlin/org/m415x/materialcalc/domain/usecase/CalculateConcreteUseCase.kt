@@ -41,6 +41,7 @@ class CalculateConcreteUseCase {
         anchoMetros: Double,
         largoMetros: Double,
         espesorMetros: Double,
+        quantityUnits: Int,
         receta: DosificacionHormigon,
         pesoBolsaCementoKg: Int,
         pesoBolsaCalKg: Int,
@@ -48,7 +49,7 @@ class CalculateConcreteUseCase {
     ): ResultadoHormigon {
 
         // 1. Geometría (Esta es la única responsabilidad única de este UseCase)
-        val volumenGeometrico = anchoMetros * largoMetros * espesorMetros
+        val volumenGeometrico = anchoMetros * largoMetros * espesorMetros * quantityUnits
 
         // 2. El motor hace el cálculo
         val mats = calculateWetMaterials(
@@ -68,7 +69,7 @@ class CalculateConcreteUseCase {
             aguaLitros = mats.aguaLitros,
             bolsaCementoKg = pesoBolsaCementoKg,
             porcentajeDesperdicioHormigon = porcentajeDesperdicio,
-            dosificacionMezcla = receta.proporcionMezcla
+            proporcionMezcla = receta.descripcionProporcion
         )
     }
 }

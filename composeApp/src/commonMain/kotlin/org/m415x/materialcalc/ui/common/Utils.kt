@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
@@ -45,7 +44,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import materialscalculator.composeapp.generated.resources.Res
 import materialscalculator.composeapp.generated.resources.*
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 import org.m415x.materialcalc.domain.model.DosificacionMortero
@@ -97,9 +95,17 @@ fun RequestFocusOnStart(
 fun AboutAppDialog(onDismiss: () -> Unit) {
 
     val version = PlatformInfo.appVersion
-    val email = stringResource(Res.string.about_email)
-    val uriHandler = LocalUriHandler.current
     val year = PlatformInfo.buildYear
+    val appName = stringResource(Res.string.app_name)
+    val formattedVersion =
+        "${stringResource(Res.string.about_label_version)} ${stringResource(Res.string.about_version, version)}"
+    val description = stringResource(Res.string.about_description)
+    val developer = "${stringResource(Res.string.about_label_developer)}\n${stringResource(Res.string.dev_name)}"
+    val email = stringResource(Res.string.dev_email)
+    val devHandle = stringResource(Res.string.dev_handle)
+    val copyright = stringResource(Res.string.about_copyright_format, year, devHandle)
+    val allRightReserved = stringResource(Res.string.about_all_rights_reserved)
+    val uriHandler = LocalUriHandler.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -108,7 +114,7 @@ fun AboutAppDialog(onDismiss: () -> Unit) {
 //            Icon(painterResource(Res.drawable.ic_materialcalc), null, modifier = Modifier.size(24.dp))
         },
         title = {
-            Text(text = stringResource(Res.string.app_name))
+            Text(text = appName)
         },
         text = {
             Column(
@@ -116,7 +122,7 @@ fun AboutAppDialog(onDismiss: () -> Unit) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Versión ${stringResource(Res.string.about_version, version)}",
+                    text = formattedVersion,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -124,7 +130,7 @@ fun AboutAppDialog(onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = stringResource(Res.string.about_description),
+                    text = description,
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -136,7 +142,7 @@ fun AboutAppDialog(onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Desarrollado por\n${stringResource(Res.string.about_developer)}",
+                    text = developer,
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold
@@ -160,7 +166,14 @@ fun AboutAppDialog(onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "${stringResource(Res.string.about_copyright, year)}\nTodos los derechos reservados.",
+                    text = copyright,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+
+                Text(
+                    text = allRightReserved,
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline
@@ -169,7 +182,7 @@ fun AboutAppDialog(onDismiss: () -> Unit) {
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cerrar")
+                Text(stringResource(Res.string.button_close))
             }
         },
         // Opcional: Botón extra para ir a GitHub o web

@@ -18,9 +18,21 @@
 
 package org.m415x.materialcalc.ui.common
 
-// En la web no podemos controlar el brillo del sistema del usuario por seguridad
-actual fun getBrightnessManager(): BrightnessManager = object : BrightnessManager {
-    override fun setBrightness(value: Float?) {
-        // No hace nada en Web
+import kotlinx.browser.window
+
+actual fun getShareManager(): ShareManager = object : ShareManager {
+    override fun shareText(content: String) {
+        val nav = window.navigator.asDynamic()
+        if (nav.share != null) {
+            // Corregido: 'content' en lugar de 'text' que no existe
+            nav.share(js("({text: content})")) 
+        } else {
+            window.navigator.clipboard.writeText(content)
+            window.alert("Copiado al portapapeles")
+        }
+    }
+
+    override fun generateAndSharePdf(title: String, content: String) {
+        window.print()
     }
 }

@@ -33,6 +33,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.launch
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.button_cancel
+import materialscalculator.composeapp.generated.resources.button_close
+import materialscalculator.composeapp.generated.resources.button_save
+import org.jetbrains.compose.resources.stringResource
 
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
@@ -61,7 +66,7 @@ fun IronsTabContent(repository: SettingsRepository) {
             MaterialUiModel(
                 id = it.id,
                 title = it.nombre,
-                subtitle = "Ø ${it.diametroMm}mm | ${it.pesoPorMetro} kg/m",
+                subtitle = "Ø ${it.diametro}mm | ${it.pesoLineal} kg/m",
                 isCustom = true,
                 originalData = it // Guardamos el CustomIron aquí
             )
@@ -80,8 +85,8 @@ fun IronsTabContent(repository: SettingsRepository) {
                     originalData = CustomIron(
                         id = "",
                         nombre = "Hierro Ø ${type.mm} mm",
-                        diametroMm = type.mm,
-                        pesoPorMetro = peso
+                        diametro = type.mm,
+                        pesoLineal = peso
                     )
                 ))
             }
@@ -212,7 +217,7 @@ fun RestoreIronsDialog(
             ) {
                 items(hiddenIds.toList()) { id ->
                     // Buscamos el nombre legible usando el Enum
-                    val nombre = try { DiametroHierro.valueOf(id).nombre } catch (e: Exception) { id }
+                    val nombre = try { DiametroHierro.valueOf(id).mm.toString() } catch (e: Exception) { id }
 
                     Row(
                         modifier = Modifier
@@ -230,7 +235,7 @@ fun RestoreIronsDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Cerrar") }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.button_close)) }
         }
     )
 }
@@ -245,13 +250,13 @@ fun IronEditorDialog(
     // Inicializamos valores (Convertimos Metros a String MM para inputs)
     var name by remember { mutableStateOf(ironToEdit?.nombre ?: "") }
 
-    var diamMm by remember {
-        mutableStateOf(ironToEdit?.diametroMm?.let { if (it == 0) "" else it.toString() } ?: "")
+    var diam by remember {
+        mutableStateOf(ironToEdit?.diametro?.let { if (it == 0.0) "" else it.toString() } ?: "")
     }
 
-    var pesoMetro by remember { mutableStateOf((ironToEdit?.pesoPorMetro ?: 0.0).toString()) }
+    var pesoMetro by remember { mutableStateOf((ironToEdit?.pesoLineal ?: 0.0).toString()) }
 
-    val isFormValid = name.isNotBlank() && diamMm.isNotBlank() && pesoMetro.isNotBlank()
+    val isFormValid = name.isNotBlank() && diam.isNotBlank() && pesoMetro.isNotBlank()
 
     // Definimos los FocusRequesters necesarios
     val focusNombreHierro = remember { FocusRequester() }
@@ -285,8 +290,8 @@ fun IronEditorDialog(
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     NumericInput(
-                        value = diamMm,
-                        onValueChange = { diamMm = it },
+                        value = diam,
+                        onValueChange = { diam = it },
                         label = "Diámetro",
                         suffix = { Text("mm") },
                         modifier = Modifier.weight(1f),
@@ -308,12 +313,12 @@ fun IronEditorDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) { Text("Cancelar") }
+                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.button_cancel)) }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         enabled = isFormValid,
                         onClick = {
-                            val diam = diamMm.toIntOrNull() ?: 0
+                            val d = diam.toSafeDoubleOrNull() ?: 0.0
                             val peso = pesoMetro.toSafeDoubleOrNull() ?: 0.0
 
                             // Verificamos si es nulo O ESTÁ VACÍO.
@@ -326,13 +331,13 @@ fun IronEditorDialog(
                             val newIron = CustomIron(
                                 id = finalId,
                                 nombre = name,
-                                diametroMm = diam,
-                                pesoPorMetro = peso
+                                diametro = d,
+                                pesoLineal = peso
                             )
                             onSave(newIron)
                         }
                     ) {
-                        Text("Guardar")
+                        Text(stringResource(Res.string.button_save))
                     }
                 }
             }

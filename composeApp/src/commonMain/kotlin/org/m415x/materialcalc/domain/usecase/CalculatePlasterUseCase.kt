@@ -121,13 +121,13 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
             gruesoCalKg = matsGrueso.calKg,
             gruesoArenaM3 = matsGrueso.arenaM3,
             porcentajeDesperdicioGrueso = porcentajeDesperdicio,
-            dosificacionGrueso = recetaGrueso.dosificacionMezcla,
+            dosificacionGrueso = recetaGrueso.proporcionMezcla,
 
             finoPremezclaKg = finoPremezclaTotal,
             finoCalKg = matsFino.calKg,
             finoArenaM3 = matsFino.arenaM3,
             porcentajeDesperdicioFino = desperdicioFino,
-            dosificacionFino = recetaFino.dosificacionMezcla
+            dosificacionFino = recetaFino.proporcionMezcla
         )
     }
 }

@@ -34,6 +34,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.button_calculate
+import materialscalculator.composeapp.generated.resources.button_cancel
+import materialscalculator.composeapp.generated.resources.button_close
+import materialscalculator.composeapp.generated.resources.button_save
+import org.jetbrains.compose.resources.stringResource
 
 import org.m415x.materialcalc.domain.model.Abertura
 
@@ -167,10 +173,10 @@ fun EditAberturaDialog(
         confirmButton = {
             TextButton(
                 onClick = { onSaveAttempt() }
-            ) { Text("Guardar") }
+            ) { Text(stringResource(Res.string.button_save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.button_cancel)) }
         }
     )
 }

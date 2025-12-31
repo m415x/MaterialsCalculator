@@ -18,36 +18,18 @@
 
 package org.m415x.materialcalc.ui.screen.settings.global
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.Science
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.SettingsRepository.Defaults
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
@@ -73,7 +55,7 @@ private data class BrickDisplayOption(
 private data class RecipeDisplayOption(
     val id: String,
     val name: String,
-    val proportions: String, // Ej: "1:3:3" o "300kg Cem..."
+    val proporcionMezcla: String, // Ej: "1:3:3" o "300kg Cem..."
     val isCustom: Boolean
 ) {
     override fun toString(): String = name
@@ -128,7 +110,7 @@ fun GlobalParamsSubScreen(repository: SettingsRepository) {
                 RecipeDisplayOption(
                     id = t.name,
                     name = t.name,
-                    proportions = d.proporcionMezcla,
+                    proporcionMezcla = d.descripcionProporcion,
                     isCustom = false
                 )
             )
@@ -142,7 +124,7 @@ fun GlobalParamsSubScreen(repository: SettingsRepository) {
                 RecipeDisplayOption(
                     id = c.id,
                     name = "${c.nombre} (C)",
-                    proportions = desc,
+                    proporcionMezcla = desc,
                     isCustom = true
                 )
             )
@@ -160,7 +142,7 @@ fun GlobalParamsSubScreen(repository: SettingsRepository) {
             RecipeDisplayOption(
                 id = "STD_JAHARRO",
                 name = "Jaharro (Estándar)",
-                proportions = jaharro.dosificacionMezcla,
+                proporcionMezcla = jaharro.proporcionMezcla,
                 isCustom = false
             )
         )
@@ -171,7 +153,7 @@ fun GlobalParamsSubScreen(repository: SettingsRepository) {
                 RecipeDisplayOption(
                     id = c.id,
                     name = c.nombre,
-                    proportions = c.proporcionMezcla,
+                    proporcionMezcla = c.nombre,
                     isCustom = true
                 )
             )
@@ -468,7 +450,7 @@ private fun RecipeItemRow(option: RecipeDisplayOption) {
             )
             Spacer(Modifier.width(4.dp))
             Text(
-                option.proportions,
+                option.proporcionMezcla,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.secondary
             )
