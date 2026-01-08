@@ -31,7 +31,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import org.m415x.materialcalc.domain.model.Abertura
+import materialscalculator.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
+import org.m415x.materialcalc.domain.model.Aperture
 
 /**
  * Sección reutilizable para gestionar aberturas (Agregar, Listar, Editar, Borrar).
@@ -40,7 +42,7 @@ import org.m415x.materialcalc.domain.model.Abertura
  */
 @Composable
 fun OpeningsSection(
-    aberturas: MutableList<Abertura>, // Recibimos la lista para modificarla
+    aberturas: MutableList<Aperture>, // Recibimos la lista para modificarla
     modifier: Modifier = Modifier,
     focusRequesterAncho: FocusRequester? = null, // Parámetro opcional para recibir el foco desde el padre
     nextFocusRequesterAlto: FocusRequester? = null // Para que al terminar la abertura, salte al siguiente campo del padre
@@ -51,9 +53,11 @@ fun OpeningsSection(
     var altoInput by remember { mutableStateOf("") }
 
     // Control de diálogos
-    var openingToEdit by remember { mutableStateOf<Abertura?>(null) }
+    var openingToEdit by remember { mutableStateOf<Aperture?>(null) }
     var indexToEdit by remember { mutableStateOf<Int?>(null) }
-    var openingToDelete by remember { mutableStateOf<Abertura?>(null) }
+    var openingToDelete by remember { mutableStateOf<Aperture?>(null) }
+
+    val openingStr = stringResource(Res.string.openings_aperture)
 
     // Focos
     val focusAncho = focusRequesterAncho ?: remember { FocusRequester() }
@@ -65,8 +69,8 @@ fun OpeningsSection(
             NumericInput(
                 value = anchoInput,
                 onValueChange = { anchoInput = it },
-                label = "Ancho (m)",
-                suffix = { Text("m") },
+                label = stringResource(Res.string.label_width, stringResource(Res.string.unit_meters)),
+                suffix = { Text(stringResource(Res.string.unit_meters)) },
                 modifier = Modifier.weight(1f),
                 focusRequester = focusAncho,
                 nextFocusRequester = focusAlto
@@ -74,8 +78,8 @@ fun OpeningsSection(
             NumericInput(
                 value = altoInput,
                 onValueChange = { altoInput = it },
-                label = "Alto (m)",
-                suffix = { Text("m") },
+                label = stringResource(Res.string.label_height, stringResource(Res.string.unit_meters)),
+                suffix = { Text(stringResource(Res.string.unit_meters)) },
                 modifier = Modifier.weight(1f),
                 focusRequester = focusAlto,
                 nextFocusRequester = nextFocusRequesterAlto,
@@ -86,11 +90,12 @@ fun OpeningsSection(
                     val w = anchoInput.toSafeDoubleOrNull()
                     val h = altoInput.toSafeDoubleOrNull()
                     if (areValidDimensions(w, h)) {
-                        aberturas.add(Abertura(
-                            anchoMetros = w!!,
-                            altoMetros = h!!,
-                            cantidad = 1,
-                            nombre = "Abertura ${aberturas.size + 1}"
+                        aberturas.add(
+                            Aperture(
+                                widthMeters = w!!,
+                                heightMeters = h!!,
+                                quantity = 1,
+                                name = "$openingStr ${aberturas.size + 1}"
                         ))
                         // Limpiar y re-enfocar
                         anchoInput = ""
@@ -100,7 +105,7 @@ fun OpeningsSection(
                 },
                 modifier = Modifier.padding(top = 8.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Agregar")
+                Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.openings_add))
             }
         }
 
@@ -127,20 +132,20 @@ fun OpeningsSection(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "${abertura.cantidad} x ",
+                                    text = "${abertura.quantity} x ",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                                 Column {
                                     Text(
-                                        text = abertura.nombre,
+                                        text = abertura.name,
                                         style = MaterialTheme.typography.bodyMedium,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        text = "${abertura.anchoMetros}x${abertura.altoMetros} m",
+                                        text = "${abertura.widthMeters}x${abertura.heightMeters} m",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -150,7 +155,11 @@ fun OpeningsSection(
                                 onClick = { openingToDelete = abertura },
                                 modifier = Modifier.size(24.dp)
                             ) {
-                                Icon(Icons.Default.Delete, "Borrar", tint = MaterialTheme.colorScheme.error)
+                                Icon(
+                                    Icons.Default.Delete,
+                                    stringResource(Res.string.openings_delete),
+                                    tint = MaterialTheme.colorScheme.error
+                                )
                             }
                         }
                         if (index < aberturas.size - 1) HorizontalDivider(thickness = 0.5.dp)
@@ -160,7 +169,7 @@ fun OpeningsSection(
         } else {
             // Mensaje vacío opcional
             Text(
-                "Sin aberturas cargadas.",
+                stringResource(Res.string.openings_message_empty),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.padding(start = 4.dp)
@@ -172,7 +181,7 @@ fun OpeningsSection(
 
     // 1. Editar
     if (openingToEdit != null && indexToEdit != null) {
-        EditAberturaDialog(
+        EditOpeningDialog(
             abertura = openingToEdit!!,
             onDismiss = {
                 openingToEdit = null
@@ -191,8 +200,8 @@ fun OpeningsSection(
     // 2. Borrar
     if (openingToDelete != null) {
         AppConfirmDialog(
-            title = "Borrar Abertura",
-            text = "¿Quitar '${openingToDelete!!.nombre}'?",
+            title = stringResource(Res.string.openings_delete, stringResource(Res.string.openings_aperture)),
+            text = stringResource(Res.string.openings_quit, openingToDelete!!.name),
             onConfirm = {
                 aberturas.remove(openingToDelete)
                 openingToDelete = null

@@ -21,61 +21,65 @@ package org.m415x.materialcalc.domain.model
 /**
  * Interfaz común para cualquier mezcla húmeda
  *
- * @property cementoKg Cantidad de cemento en kilogramos
- * @property calKg Cantidad de cal en kilogramos
- * @property arenaM3 Cantidad de arena en metros cúbicos
- * @property piedraM3 Cantidad de piedra en metros cúbicos
- * @property relacionAgua Relación de agua con cemento
+ * @property cementKg Cantidad de cemento en kilogramos
+ * @property limeKg Cantidad de cal en kilogramos
+ * @property sandM3 Cantidad de arena en metros cúbicos
+ * @property gravelM3 Cantidad de piedra en metros cúbicos
+ * @property waterLiters Cantidad de agua en litros
+ * @property waterCementRatio Relación de agua con cemento
  */
 interface MaterialRecipe {
-    val cementoKg: Double
-    val calKg: Double
-    val arenaM3: Double
-    val piedraM3: Double
-    val aguaLitros: Double
-    val relacionAgua: Double
+    val cementKg: Double
+    val limeKg: Double
+    val sandM3: Double
+    val gravelM3: Double
+    val waterLiters: Double
+    val waterCementRatio: Double
 }
 
 /**
  * Contiene las constantes de materiales para 1 m³ de hormigón. (Valores promedio de tablas
  * estándar)
  *
- * @property nombre Nombre de la mezcla (ej: "H21", "Mi Mezcla")
- * @property descripcionProporcion Descripción de la proporción (ej: "1:3:3")
- * @property cementoKg Cantidad de cemento en kilogramos
- * @property arenaM3 Cantidad de arena en metros cúbicos
- * @property piedraM3 Cantidad de piedra en metros cúbicos
- * @property relacionAgua Relación de agua con cemento
- * @property calKg Cantidad de cal en kilogramos
+ * @property name Nombre de la mezcla (ej: "H21", "Mi Mezcla")
+ * @property descriptionProportion Descripción de la proporción (ej: "1:3:3")
+ * @property cementKg Cantidad de cemento en kilogramos
+ * @property sandM3 Cantidad de arena en metros cúbicos
+ * @property gravelM3 Cantidad de piedra en metros cúbicos
+ * @property waterLiters Cantidad de agua en litros
+ * @property waterCementRatio Relación de agua con cemento
+ * @property limeKg Cantidad de cal en kilogramos
  */
-data class DosificacionHormigon(
-    val nombre: String,
-    val descripcionProporcion: String,
-    override val cementoKg: Double,
-    override val arenaM3: Double,
-    override val piedraM3: Double,
-    override val aguaLitros: Double,
-    override val relacionAgua: Double,
-    override val calKg: Double = 0.0
+data class ConcreteDosing(
+    val name: String,
+    val descriptionProportion: String,
+    override val cementKg: Double,
+    override val sandM3: Double,
+    override val gravelM3: Double,
+    override val waterLiters: Double,
+    override val waterCementRatio: Double,
+    override val limeKg: Double = 0.0
 ) : MaterialRecipe
 
 /**
  * Contiene las constantes de materiales para 1 m³ de mortero. (Valores promedio de tablas estándar)
  *
- * @property proporcionMezcla Proporcion de la mezcla
- * @property cementoKg Cantidad de cemento en kilogramos
- * @property calKg Cantidad de cal en kilogramos
- * @property arenaM3 Cantidad de arena en metros cúbicos
- * @property relacionAgua Relación de agua con cemento
- * @property piedraM3 Cantidad de piedra en metros cúbicos
+ * @property mixingRatio Proporcion de la mezcla
+ * @property cementKg Cantidad de cemento en kilogramos
+ * @property limeKg Cantidad de cal en kilogramos
+ * @property sandM3 Cantidad de arena en metros cúbicos
+ * @property waterLiters Cantidad de agua en litros
+ * @property waterCementRatio Relación de agua con cemento
+ * @property gravelM3 Cantidad de piedra en metros cúbicos
+ * @property parts Descripción de las partes de la mezcla (ej: "1:4", "1:1:6")
  */
-data class DosificacionMortero(
-    val proporcionMezcla: String,
-    override val cementoKg: Double,
-    override val calKg: Double,
-    override val arenaM3: Double,
-    override val aguaLitros: Double,
-    override val relacionAgua: Double,
-    override val piedraM3: Double = 0.0,
-    val partes: String? = null
+data class MortarDosing(
+    val mixingRatio: String,
+    override val cementKg: Double,
+    override val limeKg: Double,
+    override val sandM3: Double,
+    override val waterLiters: Double,
+    override val waterCementRatio: Double,
+    override val gravelM3: Double = 0.0,
+    val parts: String? = null
 ) : MaterialRecipe

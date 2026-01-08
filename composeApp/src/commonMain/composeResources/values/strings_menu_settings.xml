@@ -23,16 +23,16 @@
     <!-- SETTINGS: General -->
     <string name="settings_section_general">General</string>
     <string name="settings_item_appearance_title">Apariencia</string>
-    <string name="settings_item_appearance_desc">Tema oscuro, claro y alto contraste</string>
+    <string name="settings_item_appearance_desc">Temas, colores, contrastes y tamaños</string>
     <string name="settings_item_params_title">Parámetros Globales</string>
-    <string name="settings_item_params_desc">Pesos de bolsas, capacidad de baldes y carretillas</string>
+    <string name="settings_item_params_desc">Pesos, capacidades y desperdicios</string>
 
     <!-- SETTINGS: Database -->
     <string name="settings_section_database">Base de Datos</string>
     <string name="settings_item_materials_title">Materiales y Medidas</string>
-    <string name="settings_item_materials_desc">Editar ladrillos, hierros y proporciones</string>
+    <string name="settings_item_materials_desc">Ladrillos, hierros y mezclas</string>
     <string name="settings_item_prices_title">Precios</string>
-    <string name="settings_item_prices_desc">Configurar costos unitarios</string>
+    <string name="settings_item_prices_desc">Configurar costos unitarios de materiales y mano de obra</string>
     <string name="settings_item_sync_title">Sincronización Nube</string>
     <string name="settings_item_sync_desc">Guardar mis datos</string>
 

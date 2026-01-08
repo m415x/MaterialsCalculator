@@ -34,31 +34,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
-import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.domain.common.toPresentationUnit
-import org.m415x.materialcalc.domain.model.DosificacionHormigon
-import org.m415x.materialcalc.domain.model.ResultadoHormigon
+import org.m415x.materialcalc.domain.model.AppSettingsState
+import org.m415x.materialcalc.domain.model.ConcreteDosing
+import org.m415x.materialcalc.domain.model.ConcreteResult
 import org.m415x.materialcalc.domain.usecase.CalculateConcreteUseCase
 import org.m415x.materialcalc.ui.common.*
 
 /**
  * Pantalla principal de la calculadora de hormigón.
  *
- * @param settingsRepository El repositorio de configuración.
+ * @param appSettings El estado global de la configuración.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ConcreteScreen(settingsRepository: SettingsRepository) {
+fun ConcreteScreen(appSettings: AppSettingsState) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val appName = stringResource(Res.string.app_name)
     val calculateConcrete = remember { CalculateConcreteUseCase() }
 
-    val weightBagCement by settingsRepository.bagCementKg.collectAsState(initial = 25)
-    val weightBagLime by settingsRepository.bagLimeKg.collectAsState(initial = 25)
-    val wasteConcretePct by settingsRepository.wasteConcretePct.collectAsState(5.0)
-
-    // Usamos `null` como valor inicial para indicar que está cargando
-    val defaultConcreteId by settingsRepository.defaultConcreteGenId.collectAsState(initial = null)
+    // Usamos los valores directamente desde appSettings
+    val weightBagCement = appSettings.bagCementKg
+    val weightBagLime = appSettings.bagLimeKg
+    val wasteConcretePct = appSettings.wasteConcretePct
+    val defaultConcreteId = appSettings.defaultConcreteGenId
 
     var width by remember { mutableStateOf("") }
     var length by remember { mutableStateOf("") }
@@ -67,11 +66,21 @@ fun ConcreteScreen(settingsRepository: SettingsRepository) {
 
     // Estado para el selector de hormigón
     var selectedRecipeId by remember { mutableStateOf("") }
-    var selectedRecipe by remember { mutableStateOf<DosificacionHormigon?>(null) }
+    var selectedRecipe by remember { mutableStateOf<ConcreteDosing?>(null) }
 
-    var result by remember { mutableStateOf<ResultadoHormigon?>(null) }
-    var showError by remember { mutableStateOf(false) } // Cambiado a Boolean
+    // Efecto para actualizar la selección si el default cambia y el usuario no ha elegido nada
+    LaunchedEffect(defaultConcreteId) {
+        if (selectedRecipeId.isBlank() && defaultConcreteId.isNotBlank()) {
+            selectedRecipeId = defaultConcreteId
+        }
+    }
+
+    var result by remember { mutableStateOf<ConcreteResult?>(null) }
+    var errorMsg by remember { mutableStateOf<String?>(null) }
     var showResultSheet by remember { mutableStateOf(false) }
+
+    val errorString = stringResource(Res.string.label_error)
+    val errorValidation = stringResource(Res.string.concrete_message_error_validation)
 
     val shareManager = remember { getShareManager() }
 
@@ -94,20 +103,24 @@ fun ConcreteScreen(settingsRepository: SettingsRepository) {
                     val q = quantity.toIntOrNull()
 
                     if (areValidDimensions(w, l, h, q) && selectedRecipe != null) {
-                        result = calculateConcrete(
-                            anchoMetros = w!!,
-                            largoMetros = l!!,
-                            espesorMetros = h!!,
-                            quantityUnits = q!!,
-                            receta = selectedRecipe!!,
-                            pesoBolsaCementoKg = weightBagCement,
-                            pesoBolsaCalKg = weightBagLime,
-                            porcentajeDesperdicio = wasteConcretePct / 100.0
-                        )
-                        showError = false
-                        showResultSheet = true
+                        try {
+                            result = calculateConcrete(
+                                widthMeters = w!!,
+                                lengthMeters = l!!,
+                                thicknessMeters = h!!,
+                                quantityUnits = q!!,
+                                recipe = selectedRecipe!!,
+                                cementBagWeightKg = weightBagCement,
+                                limeBagWeightKg = weightBagLime,
+                                wastePercentage = wasteConcretePct / 100.0
+                            )
+                            errorMsg = null
+                            showResultSheet = true
+                        } catch (e: Exception) {
+                            errorMsg = "$errorString ${e.message}"
+                        }
                     } else {
-                        showError = true
+                        errorMsg = errorValidation
                         result = null
                     }
                 },
@@ -131,7 +144,7 @@ fun ConcreteScreen(settingsRepository: SettingsRepository) {
                         value = width,
                         onValueChange = { width = it },
                         label = stringResource(
-                            Res.string.concrete_label_width,
+                            Res.string.label_width,
                             stringResource(Res.string.unit_meters)
                         ),
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
@@ -143,7 +156,7 @@ fun ConcreteScreen(settingsRepository: SettingsRepository) {
                         value = length,
                         onValueChange = { length = it },
                         label = stringResource(
-                            Res.string.concrete_label_length,
+                            Res.string.label_length,
                             stringResource(Res.string.unit_meters)
                         ),
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
@@ -158,7 +171,7 @@ fun ConcreteScreen(settingsRepository: SettingsRepository) {
                         value = high,
                         onValueChange = { high = it },
                         label = stringResource(
-                            Res.string.concrete_label_thickness,
+                            Res.string.label_thickness,
                             stringResource(Res.string.unit_meters)
                         ),
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
@@ -166,40 +179,38 @@ fun ConcreteScreen(settingsRepository: SettingsRepository) {
                         focusRequester = focusHigh,
                         nextFocusRequester = focusQuantity
                     )
-                    NumericInput(
-                        value = quantity,
-                        onValueChange = { quantity = it },
-                        label = stringResource(
-                            Res.string.concrete_label_quantity,
-                        ),
-                        suffix = { Text(stringResource(Res.string.unit_units)) },
-                        modifier = Modifier.weight(1f),
-                        onlyInteger = true,
-                        focusRequester = focusQuantity,
-                        nextFocusRequester = focusConcrete
-                    )
+//                    NumericInput(
+//                        value = quantity,
+//                        onValueChange = { quantity = it },
+//                        label = stringResource(
+//                            Res.string.label_quantity,
+//                        ),
+//                        suffix = { Text(stringResource(Res.string.unit_units)) },
+//                        modifier = Modifier.weight(1f),
+//                        onlyInteger = true,
+//                        focusRequester = focusQuantity,
+//                        nextFocusRequester = focusConcrete
+//                    )
                 }
             }
 
             InputSection(title = stringResource(Res.string.concrete_section_resistance), showDivider = false) {
+
                 ConcreteSelectorField(
                     selectedRecipeId = selectedRecipeId,
                     onRecipeSelected = { id, receta ->
                         selectedRecipeId = id
                         selectedRecipe = receta
                     },
-                    settingsRepository = settingsRepository,
+                    customRecipes = appSettings.customRecipes,
+                    hiddenIds = appSettings.hiddenRecipeIds,
                     modifier = Modifier.fillMaxWidth().focusRequester(focusConcrete),
                     defaultRecipeId = defaultConcreteId
                 )
+
             }
 
-            if (showError) {
-                Text(
-                    text = stringResource(Res.string.concrete_error_validation),
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
+            ErrorMessage(errorMsg)
 
             Spacer(Modifier.height(80.dp))
         }
@@ -211,10 +222,10 @@ fun ConcreteScreen(settingsRepository: SettingsRepository) {
             result = result!!,
             width = width.toSafeDoubleOrNull() ?: 0.0,
             length = length.toSafeDoubleOrNull() ?: 0.0,
-            high = high.toSafeDoubleOrNull() ?: 0.0,
+            thickness = high.toSafeDoubleOrNull() ?: 0.0,
             quantity = quantity.toIntOrNull() ?: 1,
-            nameConcrete = selectedRecipe?.nombre ?: "N/A",
-            proportionConcrete = selectedRecipe?.descripcionProporcion ?: "N/A",
+            nameConcrete = selectedRecipe?.name ?: "N/A",
+            proportionConcrete = selectedRecipe?.descriptionProportion ?: "N/A",
             appName = appName
         )
 
@@ -230,7 +241,7 @@ fun ConcreteScreen(settingsRepository: SettingsRepository) {
 }
 
 @Composable
-fun ConcreteResultContent(res: ResultadoHormigon) {
+fun ConcreteResultContent(res: ConcreteResult) {
     val unitM3 = stringResource(Res.string.unit_cubic_meters)
     val unitKg = stringResource(Res.string.unit_kilograms)
     val unitLt = stringResource(Res.string.unit_liters)
@@ -238,7 +249,7 @@ fun ConcreteResultContent(res: ResultadoHormigon) {
     Text(
         stringResource(
             Res.string.concrete_result_total_volume,
-            res.volumenTotalM3.roundToDecimals(2),
+            res.totalVolumeM3.roundToDecimals(2),
             unitM3
         ),
         fontWeight = FontWeight.Bold,
@@ -247,7 +258,7 @@ fun ConcreteResultContent(res: ResultadoHormigon) {
     Text(
         stringResource(
             Res.string.concrete_result_waste_included,
-            (res.porcentajeDesperdicioHormigon * 100).toInt()
+            (res.percentageConcreteWaste * 100).toInt()
         ),
         style = MaterialTheme.typography.bodySmall
     )
@@ -256,8 +267,8 @@ fun ConcreteResultContent(res: ResultadoHormigon) {
 
     ResultRow(
         label = stringResource(Res.string.concrete_result_cement),
-        value = res.cementoKg.toPresentationUnit(
-            res.bolsaCementoKg,
+        value = res.cementKg.toPresentationUnit(
+            res.cementBagKg,
             Res.string.unit_bag,
             Res.string.unit_bags
         )
@@ -265,7 +276,7 @@ fun ConcreteResultContent(res: ResultadoHormigon) {
     Text(
         stringResource(
             Res.string.concrete_result_weight_kg,
-            res.cementoKg.roundToDecimals(1),
+            res.cementKg.roundToDecimals(1),
             unitKg
         ),
         style = MaterialTheme.typography.bodySmall
@@ -277,7 +288,7 @@ fun ConcreteResultContent(res: ResultadoHormigon) {
         label = stringResource(Res.string.concrete_result_sand),
         value = stringResource(
             Res.string.concrete_result_volume_m3,
-            res.arenaM3.roundToDecimals(2),
+            res.sandM3.roundToDecimals(2),
             unitM3
         )
     )
@@ -286,7 +297,7 @@ fun ConcreteResultContent(res: ResultadoHormigon) {
         label = stringResource(Res.string.concrete_result_gravel),
         value = stringResource(
             Res.string.concrete_result_volume_m3,
-            res.piedraM3.roundToDecimals(2),
+            res.gravelM3.roundToDecimals(2),
             unitM3
         )
     )
@@ -295,7 +306,7 @@ fun ConcreteResultContent(res: ResultadoHormigon) {
         label = stringResource(Res.string.concrete_result_water),
         value = stringResource(
             Res.string.concrete_result_volume_liters,
-            res.aguaLitros.roundToDecimals(1),
+            res.waterLiters.roundToDecimals(1),
             unitLt
         )
     )

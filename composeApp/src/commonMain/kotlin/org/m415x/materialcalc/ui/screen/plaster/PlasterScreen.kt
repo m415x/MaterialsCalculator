@@ -33,12 +33,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
-import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
 import org.m415x.materialcalc.domain.common.toPresentationUnit
-import org.m415x.materialcalc.domain.common.toShareText
-import org.m415x.materialcalc.domain.model.Abertura
-import org.m415x.materialcalc.domain.model.DosificacionMortero
+import org.m415x.materialcalc.domain.model.Aperture
+import org.m415x.materialcalc.domain.model.AppSettingsState
+import org.m415x.materialcalc.domain.model.MortarDosing
 import org.m415x.materialcalc.domain.model.ResultadoRevoque
 import org.m415x.materialcalc.domain.usecase.CalculatePlasterUseCase
 import org.m415x.materialcalc.ui.common.*
@@ -46,11 +45,11 @@ import org.m415x.materialcalc.ui.common.*
 /**
  * Pantalla principal de la calculadora de revoques.
  *
- * @param settingsRepository El repositorio de configuración.
+ * @param appSettings El estado global de la configuración.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlasterScreen(settingsRepository: SettingsRepository) {
+fun PlasterScreen(appSettings: AppSettingsState) {
     val keyboardController = LocalSoftwareKeyboardController.current
 
     // Nombre de la app
@@ -59,41 +58,41 @@ fun PlasterScreen(settingsRepository: SettingsRepository) {
     val staticRepo = remember { StaticMaterialRepository() }
     val calcularRevoque = remember { CalculatePlasterUseCase(staticRepo) }
 
-    // 2. Observamos todo
-    val defaultPlasterId by settingsRepository.defaultPlasterRoughId.collectAsState(initial = "STD_JAHARRO")
-    val customRecipes by settingsRepository.customRecipes.collectAsState(initial = emptyList())
-    val pesoBolsaCemento by settingsRepository.bagCementKg.collectAsState(initial = 25)
-    val pesoBolsaCal by settingsRepository.bagLimeKg.collectAsState(initial = 25)
-    val pesoBolsaPremezcla by settingsRepository.bagPremixKg.collectAsState(initial = 25)
-    val espesorFinoMm by settingsRepository.fineThicknessMm.collectAsState(3.0)
-    val desperdicioRevoquePct by settingsRepository.wastePlasterPct.collectAsState(10.0)
+    // Usamos los valores directamente desde appSettings
+    val defaultPlasterId = appSettings.defaultPlasterId
+    val customRecipes = appSettings.customRecipes
+    val pesoBolsaCemento = appSettings.bagCementKg
+    val pesoBolsaCal = appSettings.bagLimeKg
+    val pesoBolsaPremezcla = appSettings.bagPremixKg
+    val espesorFinoMm = appSettings.fineThicknessMm
+    val desperdicioRevoquePct = appSettings.wastePlasterPct
 
     // Estados Inputs
     var largo by remember { mutableStateOf("") }
     var alto by remember { mutableStateOf("") }
-    val aberturas = remember { mutableStateListOf<Abertura>() }
+    val aberturas = remember { mutableStateListOf<Aperture>() }
     var espesorGrueso by remember { mutableStateOf("0.02") } // Valor por defecto sugerido
     var ambasCaras by remember { mutableStateOf(false) } // Switch
 
     // CALCULAMOS LA MEZCLA ACTIVA (Lógica pura, sin UI)
-    val mezclaActiva: DosificacionMortero = remember(defaultPlasterId, customRecipes) {
+    val mezclaActiva: MortarDosing = remember(defaultPlasterId, customRecipes) {
         // A. Buscamos en Custom
         val customFound = customRecipes.find { it.id == defaultPlasterId }
 
         if (customFound != null) {
             // Convertimos CustomRecipe -> DosificacionMortero
-            DosificacionMortero(
-                proporcionMezcla = customFound.nombre,
-                cementoKg = customFound.cementoKg,
-                calKg = customFound.calKg,
-                arenaM3 = customFound.arenaM3,
-                relacionAgua = customFound.relacionAgua,
-                aguaLitros = customFound.cementoKg * customFound.relacionAgua
+            MortarDosing(
+                mixingRatio = customFound.nombre,
+                cementKg = customFound.cementKg,
+                limeKg = customFound.limeKg,
+                sandM3 = customFound.sandM3,
+                waterCementRatio = customFound.waterCementRatio,
+                waterLiters = customFound.cementKg * customFound.waterCementRatio
             )
         } else {
             // B. Si no es custom, asumimos Estándar (Jaharro)
             // (Incluso si el ID no coincide, el fallback es Jaharro)
-            staticRepo.getRecetaGrueso()
+            staticRepo.getThickPlasterRecipe()
         }
     }
 
@@ -204,7 +203,7 @@ fun PlasterScreen(settingsRepository: SettingsRepository) {
                     Column(modifier = Modifier.weight(1.25f)) {
                         Text("Mezcla", style = MaterialTheme.typography.bodyLarge)
                         Text(
-                            text = mezclaActiva.proporcionMezcla,
+                            text = mezclaActiva.mixingRatio,
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -242,14 +241,8 @@ fun PlasterScreen(settingsRepository: SettingsRepository) {
                     )
                 }
             }
-
-
-            if (errorMsg != null) {
-                Text(
-                    text = errorMsg!!,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
+            
+            ErrorMessage(errorMsg)
 
             Spacer(modifier = Modifier.height(80.dp))
         }
@@ -257,26 +250,20 @@ fun PlasterScreen(settingsRepository: SettingsRepository) {
 
     // --- MODAL DE RESULTADOS ---
     if (showResultSheet && resultado != null) {
+        val shareText = rememberPlasterShareText(
+            resultado = resultado!!,
+            largo = largo.toSafeDoubleOrNull() ?: 0.0,
+            alto = alto.toSafeDoubleOrNull() ?: 0.0,
+            espesorGruesoMetros = espesorGrueso.toSafeDoubleOrNull() ?: 0.0,
+            ambasCaras = ambasCaras,
+            appName = nombreApp
+        )
+
         AppResultBottomSheet(
             onDismissRequest = { showResultSheet = false },
-            onSave = { /* TODO */ },
+            onSave = { /* ... */ },
             onEdit = { showResultSheet = false },
-            onShare = {
-                val l = largo.toSafeDoubleOrNull() ?: 0.0
-                val a = alto.toSafeDoubleOrNull() ?: 0.0
-                // El input ya es "2.0" (cm), lo usaremos para mostrar
-                val e = espesorGrueso.toSafeDoubleOrNull() ?: 2.0
-
-                val texto = resultado!!.toShareText(
-                    largo = l,
-                    alto = a,
-                    espesorGruesoMetros = e,
-                    ambasCaras = ambasCaras,
-                    appName = nombreApp
-                )
-
-                shareManager.shareText(texto)
-            }
+            onShare = { shareManager.shareText(shareText) }
         ) {
             PlasterResultContent(resultado!!)
         }

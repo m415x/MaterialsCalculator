@@ -18,36 +18,29 @@
 
 package org.m415x.materialcalc
 
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.launch
-import materialscalculator.composeapp.generated.resources.Res
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
-
 import org.m415x.materialcalc.data.repository.SettingsRepository
-import org.m415x.materialcalc.ui.common.AppBottomBar
-import org.m415x.materialcalc.ui.common.AppTopBar
-import org.m415x.materialcalc.ui.common.clearFocusOnTap
-import org.m415x.materialcalc.ui.common.getBrightnessManager
-import org.m415x.materialcalc.ui.common.KmpBackHandler
+import org.m415x.materialcalc.domain.model.AppSettingsState
+import org.m415x.materialcalc.ui.common.*
 import org.m415x.materialcalc.ui.navigation.BottomTab
 import org.m415x.materialcalc.ui.navigation.Screen
 import org.m415x.materialcalc.ui.screen.calculator.CalculatorTabContent
 import org.m415x.materialcalc.ui.screen.saved.SavedScreen
 import org.m415x.materialcalc.ui.screen.settings.SettingsScreen
 import org.m415x.materialcalc.ui.screen.settings.SettingsSection
-import org.m415x.materialcalc.ui.theme.*
 import org.m415x.materialcalc.ui.theme.AppTheme
+import org.m415x.materialcalc.ui.theme.ContrastMode
+import org.m415x.materialcalc.ui.theme.ThemeMode
 
 /**
  * Composable principal de la aplicación.
@@ -59,25 +52,58 @@ fun App(
     // Recibe el repositorio (Inyección de Dependencias manual)
     settingsRepository: SettingsRepository
 ) {
-    // Estado para saber en qué sub-sección de ajustes estamos
+    // --- ESTADO GLOBAL DE LA APP ---
+    val appSettings by produceState(initialValue = AppSettingsState()) {
+        // Lanzamos cada recolección en una corrutina separada para no bloquear
+        launch { settingsRepository.themeMode.collect { value = value.copy(themeMode = it) } }
+        launch { settingsRepository.contrastMode.collect { value = value.copy(contrastMode = it) } }
+        launch { settingsRepository.colorPalette.collect { value = value.copy(colorPalette = it) } }
+        launch { settingsRepository.outdoorMode.collect { value = value.copy(isOutdoorMode = it) } }
+
+        launch { settingsRepository.bagCementKg.collect { value = value.copy(bagCementKg = it) } }
+        launch { settingsRepository.bagLimeKg.collect { value = value.copy(bagLimeKg = it) } }
+        launch { settingsRepository.bagPremixKg.collect { value = value.copy(bagPremixKg = it) } }
+
+        launch { settingsRepository.bucketCapacityLiters.collect { value = value.copy(bucketVolL = it) } }
+        launch { settingsRepository.barrowCapacityLiters.collect { value = value.copy(barrowVolL = it) } }
+        launch { settingsRepository.mixerCapacityLiters.collect { value = value.copy(mixerVolL = it) } }
+
+        launch { settingsRepository.wasteConcretePct.collect { value = value.copy(wasteConcretePct = it) } }
+        launch { settingsRepository.wasteMortarPct.collect { value = value.copy(wasteMortarPct = it) } }
+        launch { settingsRepository.wasteBricksPct.collect { value = value.copy(wasteBrickPct = it) } }
+        launch { settingsRepository.wasteIronMainPct.collect { value = value.copy(wasteIronMainPct = it) } }
+        launch { settingsRepository.wasteIronStirrupPct.collect { value = value.copy(wasteIronStirrupPct = it) } }
+        launch { settingsRepository.wastePlasterPct.collect { value = value.copy(wastePlasterPct = it) } }
+
+        launch { settingsRepository.fineThicknessMm.collect { value = value.copy(fineThicknessMm = it) } }
+
+        launch { settingsRepository.defaultBrickId.collect { value = value.copy(defaultBrickId = it) } }
+        launch { settingsRepository.defaultConcreteGenId.collect { value = value.copy(defaultConcreteGenId = it) } }
+        launch { settingsRepository.defaultConcreteStrId.collect { value = value.copy(defaultConcreteStrId = it) } }
+        launch { settingsRepository.defaultPlasterRoughId.collect { value = value.copy(defaultPlasterId = it) } }
+
+        launch { settingsRepository.customBricks.collect { value = value.copy(customBricks = it) } }
+        launch { settingsRepository.customIrons.collect { value = value.copy(customIrons = it) } }
+        launch { settingsRepository.customRecipes.collect { value = value.copy(customRecipes = it) } }
+
+        launch { settingsRepository.hiddenBrickIds.collect { value = value.copy(hiddenBrickIds = it) } }
+        launch { settingsRepository.hiddenIronIds.collect { value = value.copy(hiddenIronIds = it) } }
+        launch { settingsRepository.hiddenRecipeIds.collect { value = value.copy(hiddenRecipeIds = it) } }
+    }
+
     var settingsSection by remember { mutableStateOf(SettingsSection.MENU) }
 
-    // Leemos la preferencia
-    val userTheme by settingsRepository.themeMode.collectAsState(initial = ThemeMode.System)
-    val userContrast by settingsRepository.contrastMode.collectAsState(initial = ContrastMode.Standard)
-    val isOutdoorMode by settingsRepository.outdoorMode.collectAsState(initial = false)
-
     // Si Modo Exterior está activo, forzamos la configuración. Si no, usamos la del usuario.
-    val effectiveTheme = if (isOutdoorMode) ThemeMode.Light else userTheme
-    val effectiveContrast = if (isOutdoorMode) ContrastMode.HighContrast else userContrast
+    val effectiveTheme = if (appSettings.isOutdoorMode) ThemeMode.Light else appSettings.themeMode
+    val effectiveContrast = if (appSettings.isOutdoorMode) ContrastMode.HighContrast else appSettings.contrastMode
 
     // Brillo de la pantalla
     val brightnessManager = remember { getBrightnessManager() }
 
     // EFECTO REACTIVO:
     // Cada vez que 'isOutdoorMode' cambie, ejecutamos esto.
-    LaunchedEffect(isOutdoorMode) {
-        if (isOutdoorMode) {
+    LaunchedEffect(appSettings.isOutdoorMode) {
+        if (appSettings.isOutdoorMode) {
             brightnessManager.setBrightness(1.0f) // 100% Brillo
         } else {
             brightnessManager.setBrightness(null) // Restaurar brillo del sistema
@@ -87,7 +113,7 @@ fun App(
     // Scope para lanzar corrutinas de guardado
     val scope = rememberCoroutineScope()
 
-    AppTheme(effectiveTheme, effectiveContrast) {
+    AppTheme(effectiveTheme, effectiveContrast, appSettings.colorPalette) {
         // 1. Estado del Pager (Controla el deslizamiento)
         // Le decimos que tenemos tantos "pasos" como tabs haya en el enum (3)
         val pagerState = rememberPagerState(pageCount = { BottomTab.entries.size })
@@ -103,11 +129,7 @@ fun App(
 
         // Lógica para saber qué pantalla mostrar
         val topBarTitle = when (currentTab) {
-            BottomTab.CALCULATOR -> {
-                val screen = calculatorStack.lastOrNull() ?: Screen.Home
-                stringResource(screen.title) // <--- Aquí convertimos ID a Texto
-            }
-
+            BottomTab.CALCULATOR -> stringResource((calculatorStack.lastOrNull() ?: Screen.Home).title)
             BottomTab.SAVED -> stringResource(Screen.Saved.title)
             BottomTab.SETTINGS -> when (settingsSection) {
                 // Mapeamos el Enum de Settings directamente a recursos
@@ -155,11 +177,11 @@ fun App(
                     title = topBarTitle, // Usamos el título dinámico
                     showBackButton = showBackArrow, // Usamos la lógica combinada
                     onBack = navigateBack,
-                    isOutdoorMode = isOutdoorMode,
+                    isOutdoorMode = appSettings.isOutdoorMode,
                     onToggleOutdoorMode = {
                         // Guardamos el nuevo estado en Settings
                         scope.launch {
-                            settingsRepository.saveOutdoorMode(!isOutdoorMode)
+                            settingsRepository.saveOutdoorMode(!appSettings.isOutdoorMode)
                         }
                     }
                 )
@@ -215,7 +237,7 @@ fun App(
                             // Pestaña 1
                             CalculatorTabContent(
                                 currentScreen = calculatorStack.lastOrNull() ?: Screen.Home,
-                                settingsRepository = settingsRepository,
+                                appSettings = appSettings, // Pasamos el estado
                                 onNavigate = { newScreen -> calculatorStack.add(newScreen) }
                             )
                         }
@@ -228,14 +250,9 @@ fun App(
                         BottomTab.SETTINGS -> {
                             // Pestaña 3
                             SettingsScreen(
-                                repository = settingsRepository, // Pasamos el repo completo
-                                currentTheme = userTheme,
-                                currentContrast = userContrast,
-                                currentOutdoorMode = isOutdoorMode,
+                                repository = settingsRepository, // Pasamos el repo para guardar
+                                appSettings = appSettings, // Pasamos el estado
                                 currentSection = settingsSection, // Pasamos el estado de App
-                                onThemeChange = { scope.launch { settingsRepository.saveThemeMode(it) } },
-                                onContrastChange = { scope.launch { settingsRepository.saveContrastMode(it) } },
-                                onOutdoorModeChange = { scope.launch { settingsRepository.saveOutdoorMode(it) } },
                                 onSectionChange = { settingsSection = it } // Actualizamos el estado de App
                             )
                         }

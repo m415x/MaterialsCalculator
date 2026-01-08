@@ -37,10 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
-import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
 import org.m415x.materialcalc.domain.common.toPresentationUnit
-import org.m415x.materialcalc.domain.common.toShareText
 import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.domain.usecase.CalculateStructureUseCase
 import org.m415x.materialcalc.ui.common.*
@@ -48,24 +46,22 @@ import org.m415x.materialcalc.ui.common.*
 /**
  * Pantalla principal de la calculadora de estructuras.
  *
- * @param settingsRepository El repositorio de configuración.
+ * @param appSettings El estado global de la configuración.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StructureScreen(settingsRepository: SettingsRepository) {
+fun StructureScreen(appSettings: AppSettingsState) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val nombreApp = stringResource(Res.string.app_name)
     val repository = remember { StaticMaterialRepository() }
     val calcularEstructura = remember { CalculateStructureUseCase(repository) }
 
-    val pesoBolsaCemento by settingsRepository.bagCementKg.collectAsState(initial = 25)
-    val wConcrete by settingsRepository.wasteConcretePct.collectAsState(5.0)
-    val wIronMain by settingsRepository.wasteIronMainPct.collectAsState(10.0)
-    val wStirrup by settingsRepository.wasteIronStirrupPct.collectAsState(5.0)
-
-    // Observamos el valor por defecto para hormigón estructural
-    // Usamos `null` como valor inicial para indicar que está cargando
-    val defaultConcreteId by settingsRepository.defaultConcreteStrId.collectAsState(initial = null)
+    // Usamos los valores directamente desde appSettings
+    val pesoBolsaCemento = appSettings.bagCementKg
+    val wConcrete = appSettings.wasteConcretePct
+    val wIronMain = appSettings.wasteIronMainPct
+    val wStirrup = appSettings.wasteIronStirrupPct
+    val defaultConcreteId = appSettings.defaultConcreteStrId
 
     var selectedStructureType by remember { mutableStateOf(StructureType.BEAM) }
 
@@ -76,19 +72,21 @@ fun StructureScreen(settingsRepository: SettingsRepository) {
 
     // Estado para el selector de hormigón
     var selectedRecipeId by remember { mutableStateOf("") }
-    var selectedRecipe by remember { mutableStateOf<DosificacionHormigon?>(null) }
-    // Mantenemos selectedHormigon para compatibilidad con la lógica actual de cálculo
-    // que espera un TipoHormigon (enum).
-    // TODO: Refactorizar CalculateStructureUseCase para aceptar DosificacionHormigon genérica
-    var selectedHormigon by remember { mutableStateOf(TipoHormigon.H21) }
+    var selectedRecipe by remember { mutableStateOf<ConcreteDosing?>(null) }
 
+    // Efecto para actualizar la selección si el default cambia y el usuario no ha elegido nada
+    LaunchedEffect(defaultConcreteId) {
+        if (selectedRecipeId.isBlank() && defaultConcreteId.isNotBlank()) {
+            selectedRecipeId = defaultConcreteId
+        }
+    }
 
     var expandedHierroMain by remember { mutableStateOf(false) }
-    var selectedHierroMain by remember { mutableStateOf(DiametroHierro.HIERRO_10) }
+    var selectedHierroMain by remember { mutableStateOf(IronDiameter.HIERRO_10) }
     var cantidadVarillas by remember { mutableStateOf("4") }
 
     var expandedEstribo by remember { mutableStateOf(false) }
-    var selectedEstribo by remember { mutableStateOf(DiametroHierro.HIERRO_6) }
+    var selectedEstribo by remember { mutableStateOf(IronDiameter.HIERRO_6) }
     var separacionEstriboCm by remember { mutableStateOf("0.20") }
 
     var resultado by remember { mutableStateOf<ResultadoEstructura?>(null) }
@@ -129,9 +127,9 @@ fun StructureScreen(settingsRepository: SettingsRepository) {
                     if (areValidDimensions(l, a, b, cantVarillas, sepCm)) {
                         try {
                             val tipoParaCalculo = try {
-                                TipoHormigon.valueOf(selectedRecipeId)
+                                ConcreteType.valueOf(selectedRecipeId)
                             } catch (e: Exception) {
-                                TipoHormigon.H21 // Fallback seguro
+                                ConcreteType.H21 // Fallback seguro
                             }
 
                             resultado = calcularEstructura(
@@ -139,7 +137,7 @@ fun StructureScreen(settingsRepository: SettingsRepository) {
                                 ladoAMetros = a!!,
                                 ladoBMetros = if (isCircular) 0.0 else b!!,
                                 isCircular = isCircular,
-                                tipoHormigon = tipoParaCalculo,
+                                concreteType = tipoParaCalculo,
                                 diametroPrincipal = selectedHierroMain,
                                 cantidadVarillas = cantVarillas!!,
                                 diametroEstribo = selectedEstribo,
@@ -248,12 +246,9 @@ fun StructureScreen(settingsRepository: SettingsRepository) {
                             onRecipeSelected = { id, receta ->
                                 selectedRecipeId = id
                                 selectedRecipe = receta
-                                try {
-                                    selectedHormigon = TipoHormigon.valueOf(id)
-                                } catch (_: Exception) {
-                                }
                             },
-                            settingsRepository = settingsRepository,
+                            customRecipes = appSettings.customRecipes,
+                            hiddenIds = appSettings.hiddenRecipeIds,
                             modifier = Modifier.fillMaxWidth(),
                             defaultRecipeId = defaultConcreteId,
                             filterStructuralOnly = true
@@ -293,7 +288,7 @@ fun StructureScreen(settingsRepository: SettingsRepository) {
                                     expanded = expandedHierroMain,
                                     onDismissRequest = { expandedHierroMain = false }
                                 ) {
-                                    DiametroHierro.entries.forEach { hierro ->
+                                    IronDiameter.entries.forEach { hierro ->
                                         DropdownMenuItem(
                                             text = { Text("Ø ${hierro.mm} mm") },
                                             onClick = { selectedHierroMain = hierro; expandedHierroMain = false }
@@ -336,7 +331,7 @@ fun StructureScreen(settingsRepository: SettingsRepository) {
                                     expanded = expandedEstribo,
                                     onDismissRequest = { expandedEstribo = false }
                                 ) {
-                                    DiametroHierro.entries.forEach { hierro ->
+                                    IronDiameter.entries.forEach { hierro ->
                                         DropdownMenuItem(
                                             text = { Text("Ø ${hierro.mm} mm") },
                                             onClick = { selectedEstribo = hierro; expandedEstribo = false }
@@ -349,40 +344,33 @@ fun StructureScreen(settingsRepository: SettingsRepository) {
                 }
             }
 
-            if (errorMsg != null) {
-                Text(
-                    text = errorMsg!!,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
+            ErrorMessage(errorMsg)
 
             Spacer(modifier = Modifier.height(80.dp))
         }
     }
 
     if (showResultSheet && resultado != null) {
+        val shareText = rememberStructureShareText(
+            resultado = resultado!!,
+            largo = largo.toSafeDoubleOrNull() ?: 0.0,
+            ladoA = ladoA.toSafeDoubleOrNull() ?: 0.0,
+            ladoB = ladoB.toSafeDoubleOrNull() ?: 0.0,
+            isCircular = isCircular,
+            concreteType = try {
+                ConcreteType.valueOf(selectedRecipeId)
+            } catch (e: Exception) {
+                ConcreteType.H21
+            },
+            separacionEstribosCm = separacionEstriboCm.toSafeDoubleOrNull()?.times(100) ?: 20.0,
+            appName = nombreApp
+        )
+
         AppResultBottomSheet(
             onDismissRequest = { showResultSheet = false },
             onSave = { /* ... */ },
             onEdit = { showResultSheet = false },
-            onShare = {
-                val l = largo.toSafeDoubleOrNull() ?: 0.0
-                val a = ladoA.toSafeDoubleOrNull() ?: 0.0
-                val b = ladoB.toSafeDoubleOrNull() ?: 0.0
-                val sepM = separacionEstriboCm.toSafeDoubleOrNull() ?: 0.20
-                val sepRealCm = sepM * 100
-
-                val texto = resultado!!.toShareText(
-                    largo = l,
-                    ladoA = a,
-                    ladoB = b,
-                    isCircular = isCircular,
-                    tipoHormigon = selectedHormigon,
-                    separacionEstribosCm = sepRealCm,
-                    appName = nombreApp
-                )
-                shareManager.shareText(texto)
-            }
+            onShare = { shareManager.shareText(shareText) }
         ) {
             StructureResultContent(resultado!!)
         }

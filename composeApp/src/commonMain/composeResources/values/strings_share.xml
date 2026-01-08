@@ -21,17 +21,58 @@
     <string name="share_generated_by">Generado con %1$s</string>
     <string name="share_section_details">*DETALLE DE OBRA*</string>
     <string name="share_section_materials">*MATERIALES ESTIMADOS*</string>
+    <string name="share_common_dimensions">Dimensiones:</string>
+    <string name="share_common_cement">Cemento:</string>
+    <string name="share_common_lime">Cal:</string>
+    <string name="share_common_sand">Arena:</string>
+    <string name="share_common_water">Agua:</string>
+    <string name="share_common_around">aprox.</string>
+    <string name="share_common_proportion">Proporción estimada:</string>
 
     <!-- SHARE: CONCRETE -->
     <string name="share_concrete_title">*CÁLCULO DE HORMIGÓN*</string>
-    <string name="share_concrete_dimensions">Dimensiones:</string>
-    <string name="share_concrete_high">Espesor:</string>
+    <string name="share_concrete_thickness">Espesor:</string>
     <string name="share_concrete_quantity">Cantidad:</string>
     <string name="share_concrete_total_volume">Volumen Total:</string>
-    <string name="share_concrete_cement">Cemento:</string>
-    <string name="share_concrete_around">aprox.</string>
-    <string name="share_concrete_sand">Arena:</string>
     <string name="share_concrete_gravel">Piedra/Grava:</string>
-    <string name="share_concrete_water">Agua:</string>
-    <string name="share_concrete_proportion">Proporción estimada:</string>
+
+    <!-- SHARE: WALL -->
+    <string name="share_wall_title">*CÁLCULO DE MURO*</string>
+    <string name="share_wall_brick">Ladrillo:</string>
+    <string name="share_wall_surfaces">*Superficies:*</string>
+    <string name="share_wall_total_surface">● Total Muro:</string>
+    <string name="share_wall_openings_surface">● Aberturas:</string>
+    <string name="share_wall_net_surface">● Real a cubrir:</string>
+    <string name="share_wall_openings_title">*Aberturas:*</string>
+    <string name="share_wall_no_openings">(Sin aberturas)</string>
+    <string name="share_wall_bricks_qty">● *Ladrillos:*</string>
+    <string name="share_wall_mortar_qty">● *Mortero* (%1$s m³):</string>
+
+    <!-- SHARE: STRUCTURE -->
+    <string name="share_structure_title">*CÁLCULO DE ARMADURA*</string>
+    <string name="share_structure_length">Largo Total:</string>
+    <string name="share_structure_concrete_section">*1. HORMIGÓN (%1$s m³)*</string>
+    <string name="share_structure_type">Tipo:</string>
+    <string name="share_structure_iron_section">*2. ARMADURA (HIERROS)*</string>
+    <string name="share_structure_main_iron">*Principal (Longitudinal):*</string>
+    <string name="share_structure_stirrup_iron">*Estribos (Transversal):*</string>
+    <string name="share_structure_rods">Varillas:</string>
+    <string name="share_structure_total_weight">Total Peso:</string>
+    <string name="share_structure_buy">*Comprar:*</string>
+    <string name="share_structure_separation">Separación:</string>
+    <string name="share_structure_each">cada</string>
+    <string name="share_structure_bars_12m">barras de 12 m</string>
+
+    <!-- SHARE: PLASTER -->
+    <string name="share_plaster_title">*CÁLCULO DE REVOQUE*</string>
+    <string name="share_plaster_wall">Pared:</string>
+    <string name="share_plaster_total_surface">Superficie Total:</string>
+    <string name="share_plaster_thick_section">*1. REVOQUE GRUESO (Jaharro)*</string>
+    <string name="share_plaster_fine_section">*2. REVOQUE FINO (Enlucido)*</string>
+    <string name="share_plaster_option_a">*Opción A*</string>
+    <string name="share_plaster_option_b">*Opción B (Tradicional: A la cal)*</string>
+    <string name="share_plaster_premix">Premezcla:</string>
+    <string name="share_plaster_fine_sand">Arena Fina:</string>
+    <string name="share_plaster_aerial_lime">Cal Aérea:</string>
+    <string name="share_plaster_cement_min">Cemento: (Mínimo para ligar)</string>
 </resources>

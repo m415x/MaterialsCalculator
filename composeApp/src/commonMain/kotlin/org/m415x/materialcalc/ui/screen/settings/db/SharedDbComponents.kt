@@ -21,7 +21,9 @@ package org.m415x.materialcalc.ui.screen.settings.db
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,6 +34,7 @@ import materialscalculator.composeapp.generated.resources.Res
 import materialscalculator.composeapp.generated.resources.button_cancel
 import materialscalculator.composeapp.generated.resources.button_remove
 import org.jetbrains.compose.resources.stringResource
+import org.m415x.materialcalc.ui.common.AppDialog
 
 // --- MODELO GENÉRICO PARA LA LISTA ---
 // Usamos este modelo para que la LazyColumn sea igual para todos
@@ -83,7 +86,11 @@ fun UniversalMaterialItem(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(item.subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    item.subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             IconButton(onClick = onEdit) {
@@ -106,24 +113,25 @@ fun DeleteOrHideDialog(
     onDismiss: () -> Unit
 ) {
     val isStatic = !item.isCustom
-    AlertDialog(
+    
+    AppDialog(
         onDismissRequest = onDismiss,
-        icon = { Icon(Icons.Default.Delete, null) },
         title = { Text(if (isStatic) "Ocultar Material" else "Eliminar Material") },
-        text = {
+        content = {
             Text(
                 if (isStatic) "Este es un material de fábrica. Se ocultará de la lista pero podrás restaurarlo luego."
                 else "Se eliminará '${item.title}' permanentemente."
             )
         },
-        confirmButton = {
-            TextButton(
+        actions = {
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.button_cancel)) }
+            Spacer(Modifier.width(8.dp))
+            Button(
                 onClick = onConfirm,
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {
                 Text(if (isStatic) "Ocultar" else stringResource(Res.string.button_remove))
             }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.button_cancel)) } }
+        }
     )
 }

@@ -27,32 +27,32 @@ interface MaterialRepository {
     /**
      * Obtiene la dosificación del hormigón para el tipo especificado.
      *
-     * @param tipo Tipo de hormigón.
+     * @param type Tipo de hormigón.
      * @return Dosificación del hormigón.
      */
-    fun getDosificacionHormigon(tipo: TipoHormigon): DosificacionHormigon?
+    fun getConcreteDosing(type: ConcreteType): ConcreteDosing?
 
     /**
      * Obtiene las propiedades del ladrillo para el tipo especificado.
      *
-     * @param tipo Tipo de ladrillo.
+     * @param type Tipo de ladrillo.
      * @return Propiedades del ladrillo.
      */
-    fun getPropiedadesLadrillo(tipo: TipoLadrillo): PropiedadesLadrillo?
+    fun getBrickProps(type: BrickType): BrickProps?
 
     /**
      * Obtiene la dosificación del mortero para el tipo de ladrillo especificado.
      *
-     * @param tipo Tipo de ladrillo.
+     * @param type Tipo de ladrillo.
      * @return Dosificación del mortero.
      */
-    fun getDosificacionMortero(tipo: TipoLadrillo): DosificacionMortero?
+    fun getMortarDosing(type: BrickType): MortarDosing?
 
     /**
      * Obtiene el peso del hierro por metro para el diámetro especificado.
      *
-     * @param diametro Diámetro del hierro.
+     * @param diameter Diámetro del hierro.
      * @return Peso del hierro por metro.
      */
-    fun getPesoHierroPorMetro(diametro: DiametroHierro): Double
+    fun getIronWeightPerMeter(diameter: IronDiameter): Double
 }

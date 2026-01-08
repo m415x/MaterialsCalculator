@@ -20,470 +20,319 @@ package org.m415x.materialcalc.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
-/**
- * Color scheme para el tema claro.
- * 
- * @property primary Color principal.
- * @property onPrimary Contraste con el color principal.
- * @property primaryContainer Contenedor del color principal.
- * @property onPrimaryContainer Contraste con el contenedor del color principal.
- * @property secondary Color secundario.
- * @property onSecondary Contraste con el color secundario.
- * @property secondaryContainer Contenedor del color secundario.
- * @property onSecondaryContainer Contraste con el contenedor del color secundario.
- * @property tertiary Color terciario.
- * @property onTertiary Contraste con el color terciario.
- * @property tertiaryContainer Contenedor del color terciario.
- * @property onTertiaryContainer Contraste con el contenedor del color terciario.
- * @property error Color de error.
- * @property onError Contraste con el color de error.
- * @property errorContainer Contenedor del color de error.
- * @property onErrorContainer Contraste con el contenedor del color de error.
- * @property background Color de fondo.
- * @property onBackground Contraste con el color de fondo.
- * @property surface Color de superficie.
- * @property onSurface Contraste con el color de superficie.
- * @property surfaceVariant Color de superficie variante.
- * @property onSurfaceVariant Contraste con el color de superficie variante.
- * @property outline Color de contorno.
- * @property outlineVariant Contenedor del color de contorno.
- * @property scrim Color de escudo.
- * @property inverseSurface Color de superficie invertida.
- * @property inverseOnSurface Contraste con el color de superficie invertida.
- * @property inversePrimary Color primario invertido.
- * @property surfaceDim Color de superficie disminuido.
- * @property surfaceBright Color de superficie brillante.
- * @property surfaceContainerLowest Contenedor de superficie más bajo.
- * @property surfaceContainerLow Contenedor de superficie bajo.
- * @property surfaceContainer Contenedor de superficie.
- * @property surfaceContainerHigh Contenedor de superficie alto.
- * @property surfaceContainerHighest Contenedor de superficie más alto.
- */
-private val lightScheme = lightColorScheme(
-    primary = primaryLight,
-    onPrimary = onPrimaryLight,
-    primaryContainer = primaryContainerLight,
-    onPrimaryContainer = onPrimaryContainerLight,
-    secondary = secondaryLight,
-    onSecondary = onSecondaryLight,
-    secondaryContainer = secondaryContainerLight,
-    onSecondaryContainer = onSecondaryContainerLight,
-    tertiary = tertiaryLight,
-    onTertiary = onTertiaryLight,
-    tertiaryContainer = tertiaryContainerLight,
-    onTertiaryContainer = onTertiaryContainerLight,
-    error = errorLight,
-    onError = onErrorLight,
-    errorContainer = errorContainerLight,
-    onErrorContainer = onErrorContainerLight,
-    background = backgroundLight,
-    onBackground = onBackgroundLight,
-    surface = surfaceLight,
-    onSurface = onSurfaceLight,
-    surfaceVariant = surfaceVariantLight,
-    onSurfaceVariant = onSurfaceVariantLight,
-    outline = outlineLight,
-    outlineVariant = outlineVariantLight,
-    scrim = scrimLight,
-    inverseSurface = inverseSurfaceLight,
-    inverseOnSurface = inverseOnSurfaceLight,
-    inversePrimary = inversePrimaryLight,
-    surfaceDim = surfaceDimLight,
-    surfaceBright = surfaceBrightLight,
-    surfaceContainerLowest = surfaceContainerLowestLight,
-    surfaceContainerLow = surfaceContainerLowLight,
-    surfaceContainer = surfaceContainerLight,
-    surfaceContainerHigh = surfaceContainerHighLight,
-    surfaceContainerHighest = surfaceContainerHighestLight,
+enum class ColorPalette {
+    Default,
+    Industrial
+}
+
+// --- DEFAULT SCHEMES ---
+private val defaultLightScheme = lightColorScheme(
+    primary = ThemeDefaultColors.primaryLight,
+    onPrimary = ThemeDefaultColors.onPrimaryLight,
+    primaryContainer = ThemeDefaultColors.primaryContainerLight,
+    onPrimaryContainer = ThemeDefaultColors.onPrimaryContainerLight,
+    secondary = ThemeDefaultColors.secondaryLight,
+    onSecondary = ThemeDefaultColors.onSecondaryLight,
+    secondaryContainer = ThemeDefaultColors.secondaryContainerLight,
+    onSecondaryContainer = ThemeDefaultColors.onSecondaryContainerLight,
+    tertiary = ThemeDefaultColors.tertiaryLight,
+    onTertiary = ThemeDefaultColors.onTertiaryLight,
+    tertiaryContainer = ThemeDefaultColors.tertiaryContainerLight,
+    onTertiaryContainer = ThemeDefaultColors.onTertiaryContainerLight,
+    error = ThemeDefaultColors.errorLight,
+    onError = ThemeDefaultColors.onErrorLight,
+    errorContainer = ThemeDefaultColors.errorContainerLight,
+    onErrorContainer = ThemeDefaultColors.onErrorContainerLight,
+    background = ThemeDefaultColors.backgroundLight,
+    onBackground = ThemeDefaultColors.onBackgroundLight,
+    surface = ThemeDefaultColors.surfaceLight,
+    onSurface = ThemeDefaultColors.onSurfaceLight,
+    surfaceVariant = ThemeDefaultColors.surfaceVariantLight,
+    onSurfaceVariant = ThemeDefaultColors.onSurfaceVariantLight,
+    outline = ThemeDefaultColors.outlineLight,
+    outlineVariant = ThemeDefaultColors.outlineVariantLight,
+    scrim = ThemeDefaultColors.scrimLight,
+    inverseSurface = ThemeDefaultColors.inverseSurfaceLight,
+    inverseOnSurface = ThemeDefaultColors.inverseOnSurfaceLight,
+    inversePrimary = ThemeDefaultColors.inversePrimaryLight,
+    surfaceDim = ThemeDefaultColors.surfaceDimLight,
+    surfaceBright = ThemeDefaultColors.surfaceBrightLight,
+    surfaceContainerLowest = ThemeDefaultColors.surfaceContainerLowestLight,
+    surfaceContainerLow = ThemeDefaultColors.surfaceContainerLowLight,
+    surfaceContainer = ThemeDefaultColors.surfaceContainerLight,
+    surfaceContainerHigh = ThemeDefaultColors.surfaceContainerHighLight,
+    surfaceContainerHighest = ThemeDefaultColors.surfaceContainerHighestLight,
 )
 
-/**
- * Color scheme para el tema oscuro.
- * 
- * @property primary Color principal.
- * @property onPrimary Contraste con el color principal.
- * @property primaryContainer Contenedor del color principal.
- * @property onPrimaryContainer Contraste con el contenedor del color principal.
- * @property secondary Color secundario.
- * @property onSecondary Contraste con el color secundario.
- * @property secondaryContainer Contenedor del color secundario.
- * @property onSecondaryContainer Contraste con el contenedor del color secundario.
- * @property tertiary Color terciario.
- * @property onTertiary Contraste con el color terciario.
- * @property tertiaryContainer Contenedor del color terciario.
- * @property onTertiaryContainer Contraste con el contenedor del color terciario.
- * @property error Color de error.
- * @property onError Contraste con el color de error.
- * @property errorContainer Contenedor del color de error.
- * @property onErrorContainer Contraste con el contenedor del color de error.
- * @property background Color de fondo.
- * @property onBackground Contraste con el color de fondo.
- * @property surface Color de superficie.
- * @property onSurface Contraste con el color de superficie.
- * @property surfaceVariant Color de superficie variante.
- * @property onSurfaceVariant Contraste con el color de superficie variante.
- * @property outline Color de contorno.
- * @property outlineVariant Contenedor del color de contorno.
- * @property scrim Color de escudo.
- * @property inverseSurface Color de superficie invertida.
- * @property inverseOnSurface Contraste con el color de superficie invertida.
- * @property inversePrimary Color primario invertido.
- * @property surfaceDim Color de superficie disminuido.
- * @property surfaceBright Color de superficie brillante.
- * @property surfaceContainerLowest Contenedor de superficie más bajo.
- * @property surfaceContainerLow Contenedor de superficie bajo.
- * @property surfaceContainer Contenedor de superficie.
- * @property surfaceContainerHigh Contenedor de superficie alto.
- * @property surfaceContainerHighest Contenedor de superficie más alto.
- */
-private val darkScheme = darkColorScheme(
-    primary = primaryDark,
-    onPrimary = onPrimaryDark,
-    primaryContainer = primaryContainerDark,
-    onPrimaryContainer = onPrimaryContainerDark,
-    secondary = secondaryDark,
-    onSecondary = onSecondaryDark,
-    secondaryContainer = secondaryContainerDark,
-    onSecondaryContainer = onSecondaryContainerDark,
-    tertiary = tertiaryDark,
-    onTertiary = onTertiaryDark,
-    tertiaryContainer = tertiaryContainerDark,
-    onTertiaryContainer = onTertiaryContainerDark,
-    error = errorDark,
-    onError = onErrorDark,
-    errorContainer = errorContainerDark,
-    onErrorContainer = onErrorContainerDark,
-    background = backgroundDark,
-    onBackground = onBackgroundDark,
-    surface = surfaceDark,
-    onSurface = onSurfaceDark,
-    surfaceVariant = surfaceVariantDark,
-    onSurfaceVariant = onSurfaceVariantDark,
-    outline = outlineDark,
-    outlineVariant = outlineVariantDark,
-    scrim = scrimDark,
-    inverseSurface = inverseSurfaceDark,
-    inverseOnSurface = inverseOnSurfaceDark,
-    inversePrimary = inversePrimaryDark,
-    surfaceDim = surfaceDimDark,
-    surfaceBright = surfaceBrightDark,
-    surfaceContainerLowest = surfaceContainerLowestDark,
-    surfaceContainerLow = surfaceContainerLowDark,
-    surfaceContainer = surfaceContainerDark,
-    surfaceContainerHigh = surfaceContainerHighDark,
-    surfaceContainerHighest = surfaceContainerHighestDark,
+private val defaultDarkScheme = darkColorScheme(
+    primary = ThemeDefaultColors.primaryDark,
+    onPrimary = ThemeDefaultColors.onPrimaryDark,
+    primaryContainer = ThemeDefaultColors.primaryContainerDark,
+    onPrimaryContainer = ThemeDefaultColors.onPrimaryContainerDark,
+    secondary = ThemeDefaultColors.secondaryDark,
+    onSecondary = ThemeDefaultColors.onSecondaryDark,
+    secondaryContainer = ThemeDefaultColors.secondaryContainerDark,
+    onSecondaryContainer = ThemeDefaultColors.onSecondaryContainerDark,
+    tertiary = ThemeDefaultColors.tertiaryDark,
+    onTertiary = ThemeDefaultColors.onTertiaryDark,
+    tertiaryContainer = ThemeDefaultColors.tertiaryContainerDark,
+    onTertiaryContainer = ThemeDefaultColors.onTertiaryContainerDark,
+    error = ThemeDefaultColors.errorDark,
+    onError = ThemeDefaultColors.onErrorDark,
+    errorContainer = ThemeDefaultColors.errorContainerDark,
+    onErrorContainer = ThemeDefaultColors.onErrorContainerDark,
+    background = ThemeDefaultColors.backgroundDark,
+    onBackground = ThemeDefaultColors.onBackgroundDark,
+    surface = ThemeDefaultColors.surfaceDark,
+    onSurface = ThemeDefaultColors.onSurfaceDark,
+    surfaceVariant = ThemeDefaultColors.surfaceVariantDark,
+    onSurfaceVariant = ThemeDefaultColors.onSurfaceVariantDark,
+    outline = ThemeDefaultColors.outlineDark,
+    outlineVariant = ThemeDefaultColors.outlineVariantDark,
+    scrim = ThemeDefaultColors.scrimDark,
+    inverseSurface = ThemeDefaultColors.inverseSurfaceDark,
+    inverseOnSurface = ThemeDefaultColors.inverseOnSurfaceDark,
+    inversePrimary = ThemeDefaultColors.inversePrimaryDark,
+    surfaceDim = ThemeDefaultColors.surfaceDimDark,
+    surfaceBright = ThemeDefaultColors.surfaceBrightDark,
+    surfaceContainerLowest = ThemeDefaultColors.surfaceContainerLowestDark,
+    surfaceContainerLow = ThemeDefaultColors.surfaceContainerLowDark,
+    surfaceContainer = ThemeDefaultColors.surfaceContainerDark,
+    surfaceContainerHigh = ThemeDefaultColors.surfaceContainerHighDark,
+    surfaceContainerHighest = ThemeDefaultColors.surfaceContainerHighestDark,
 )
 
-/**
- * Color scheme para el tema claro con contraste medio.
- * 
- * @property primary Color principal.
- * @property onPrimary Contraste con el color principal.
- * @property primaryContainer Contenedor del color principal.
- * @property onPrimaryContainer Contraste con el contenedor del color principal.
- * @property secondary Color secundario.
- * @property onSecondary Contraste con el color secundario.
- * @property secondaryContainer Contenedor del color secundario.
- * @property onSecondaryContainer Contraste con el contenedor del color secundario.
- * @property tertiary Color terciario.
- * @property onTertiary Contraste con el color terciario.
- * @property tertiaryContainer Contenedor del color terciario.
- * @property onTertiaryContainer Contraste con el contenedor del color terciario.
- * @property error Color de error.
- * @property onError Contraste con el color de error.
- * @property errorContainer Contenedor del color de error.
- * @property onErrorContainer Contraste con el contenedor del color de error.
- * @property background Color de fondo.
- * @property onBackground Contraste con el color de fondo.
- * @property surface Color de superficie.
- * @property onSurface Contraste con el color de superficie.
- * @property surfaceVariant Color de superficie variante.
- * @property onSurfaceVariant Contraste con el color de superficie variante.
- * @property outline Color de contorno.
- * @property outlineVariant Contenedor del color de contorno.
- * @property scrim Color de escudo.
- * @property inverseSurface Color de superficie invertida.
- * @property inverseOnSurface Contraste con el color de superficie invertida.
- * @property inversePrimary Color primario invertido.
- * @property surfaceDim Color de superficie disminuido.
- * @property surfaceBright Color de superficie brillante.
- * @property surfaceContainerLowest Contenedor de superficie más bajo.
- * @property surfaceContainerLow Contenedor de superficie bajo.
- * @property surfaceContainer Contenedor de superficie.
- * @property surfaceContainerHigh Contenedor de superficie alto.
- * @property surfaceContainerHighest Contenedor de superficie más alto.
- */
-private val mediumContrastLightColorScheme = lightColorScheme(
-    primary = primaryLightMediumContrast,
-    onPrimary = onPrimaryLightMediumContrast,
-    primaryContainer = primaryContainerLightMediumContrast,
-    onPrimaryContainer = onPrimaryContainerLightMediumContrast,
-    secondary = secondaryLightMediumContrast,
-    onSecondary = onSecondaryLightMediumContrast,
-    secondaryContainer = secondaryContainerLightMediumContrast,
-    onSecondaryContainer = onSecondaryContainerLightMediumContrast,
-    tertiary = tertiaryLightMediumContrast,
-    onTertiary = onTertiaryLightMediumContrast,
-    tertiaryContainer = tertiaryContainerLightMediumContrast,
-    onTertiaryContainer = onTertiaryContainerLightMediumContrast,
-    error = errorLightMediumContrast,
-    onError = onErrorLightMediumContrast,
-    errorContainer = errorContainerLightMediumContrast,
-    onErrorContainer = onErrorContainerLightMediumContrast,
-    background = backgroundLightMediumContrast,
-    onBackground = onBackgroundLightMediumContrast,
-    surface = surfaceLightMediumContrast,
-    onSurface = onSurfaceLightMediumContrast,
-    surfaceVariant = surfaceVariantLightMediumContrast,
-    onSurfaceVariant = onSurfaceVariantLightMediumContrast,
-    outline = outlineLightMediumContrast,
-    outlineVariant = outlineVariantLightMediumContrast,
-    scrim = scrimLightMediumContrast,
-    inverseSurface = inverseSurfaceLightMediumContrast,
-    inverseOnSurface = inverseOnSurfaceLightMediumContrast,
-    inversePrimary = inversePrimaryLightMediumContrast,
-    surfaceDim = surfaceDimLightMediumContrast,
-    surfaceBright = surfaceBrightLightMediumContrast,
-    surfaceContainerLowest = surfaceContainerLowestLightMediumContrast,
-    surfaceContainerLow = surfaceContainerLowLightMediumContrast,
-    surfaceContainer = surfaceContainerLightMediumContrast,
-    surfaceContainerHigh = surfaceContainerHighLightMediumContrast,
-    surfaceContainerHighest = surfaceContainerHighestLightMediumContrast,
+private val defaultLightHighContrastScheme = lightColorScheme(
+    primary = ThemeDefaultColors.primaryLightHighContrast,
+    onPrimary = ThemeDefaultColors.onPrimaryLightHighContrast,
+    primaryContainer = ThemeDefaultColors.primaryContainerLightHighContrast,
+    onPrimaryContainer = ThemeDefaultColors.onPrimaryContainerLightHighContrast,
+    secondary = ThemeDefaultColors.secondaryLightHighContrast,
+    onSecondary = ThemeDefaultColors.onSecondaryLightHighContrast,
+    secondaryContainer = ThemeDefaultColors.secondaryContainerLightHighContrast,
+    onSecondaryContainer = ThemeDefaultColors.onSecondaryContainerLightHighContrast,
+    tertiary = ThemeDefaultColors.tertiaryLightHighContrast,
+    onTertiary = ThemeDefaultColors.onTertiaryLightHighContrast,
+    tertiaryContainer = ThemeDefaultColors.tertiaryContainerLightHighContrast,
+    onTertiaryContainer = ThemeDefaultColors.onTertiaryContainerLightHighContrast,
+    error = ThemeDefaultColors.errorLightHighContrast,
+    onError = ThemeDefaultColors.onErrorLightHighContrast,
+    errorContainer = ThemeDefaultColors.errorContainerLightHighContrast,
+    onErrorContainer = ThemeDefaultColors.onErrorContainerLightHighContrast,
+    background = ThemeDefaultColors.backgroundLightHighContrast,
+    onBackground = ThemeDefaultColors.onBackgroundLightHighContrast,
+    surface = ThemeDefaultColors.surfaceLightHighContrast,
+    onSurface = ThemeDefaultColors.onSurfaceLightHighContrast,
+    surfaceVariant = ThemeDefaultColors.surfaceVariantLightHighContrast,
+    onSurfaceVariant = ThemeDefaultColors.onSurfaceVariantLightHighContrast,
+    outline = ThemeDefaultColors.outlineLightHighContrast,
+    outlineVariant = ThemeDefaultColors.outlineVariantLightHighContrast,
+    scrim = ThemeDefaultColors.scrimLightHighContrast,
+    inverseSurface = ThemeDefaultColors.inverseSurfaceLightHighContrast,
+    inverseOnSurface = ThemeDefaultColors.inverseOnSurfaceLightHighContrast,
+    inversePrimary = ThemeDefaultColors.inversePrimaryLightHighContrast,
+    surfaceDim = ThemeDefaultColors.surfaceDimLightHighContrast,
+    surfaceBright = ThemeDefaultColors.surfaceBrightLightHighContrast,
+    surfaceContainerLowest = ThemeDefaultColors.surfaceContainerLowestLightHighContrast,
+    surfaceContainerLow = ThemeDefaultColors.surfaceContainerLowLightHighContrast,
+    surfaceContainer = ThemeDefaultColors.surfaceContainerLightHighContrast,
+    surfaceContainerHigh = ThemeDefaultColors.surfaceContainerHighLightHighContrast,
+    surfaceContainerHighest = ThemeDefaultColors.surfaceContainerHighestLightHighContrast,
 )
 
-/**
- * Color scheme para el tema claro con contraste alto.
- * 
- * @property primary Color principal.
- * @property onPrimary Contraste con el color principal.
- * @property primaryContainer Contenedor del color principal.
- * @property onPrimaryContainer Contraste con el contenedor del color principal.
- * @property secondary Color secundario.
- * @property onSecondary Contraste con el color secundario.
- * @property secondaryContainer Contenedor del color secundario.
- * @property onSecondaryContainer Contraste con el contenedor del color secundario.
- * @property tertiary Color terciario.
- * @property onTertiary Contraste con el color terciario.
- * @property tertiaryContainer Contenedor del color terciario.
- * @property onTertiaryContainer Contraste con el contenedor del color terciario.
- * @property error Color de error.
- * @property onError Contraste con el color de error.
- * @property errorContainer Contenedor del color de error.
- * @property onErrorContainer Contraste con el contenedor del color de error.
- * @property background Color de fondo.
- * @property onBackground Contraste con el color de fondo.
- * @property surface Color de superficie.
- * @property onSurface Contraste con el color de superficie.
- * @property surfaceVariant Color de superficie variante.
- * @property onSurfaceVariant Contraste con el color de superficie variante.
- * @property outline Color de contorno.
- * @property outlineVariant Contenedor del color de contorno.
- * @property scrim Color de escudo.
- * @property inverseSurface Color de superficie invertida.
- * @property inverseOnSurface Contraste con el color de superficie invertida.
- * @property inversePrimary Color primario invertido.
- * @property surfaceDim Color de superficie disminuido.
- * @property surfaceBright Color de superficie brillante.
- * @property surfaceContainerLowest Contenedor de superficie más bajo.
- * @property surfaceContainerLow Contenedor de superficie bajo.
- * @property surfaceContainer Contenedor de superficie.
- * @property surfaceContainerHigh Contenedor de superficie alto.
- * @property surfaceContainerHighest Contenedor de superficie más alto.
- */
-private val highContrastLightColorScheme = lightColorScheme(
-    primary = primaryLightHighContrast,
-    onPrimary = onPrimaryLightHighContrast,
-    primaryContainer = primaryContainerLightHighContrast,
-    onPrimaryContainer = onPrimaryContainerLightHighContrast,
-    secondary = secondaryLightHighContrast,
-    onSecondary = onSecondaryLightHighContrast,
-    secondaryContainer = secondaryContainerLightHighContrast,
-    onSecondaryContainer = onSecondaryContainerLightHighContrast,
-    tertiary = tertiaryLightHighContrast,
-    onTertiary = onTertiaryLightHighContrast,
-    tertiaryContainer = tertiaryContainerLightHighContrast,
-    onTertiaryContainer = onTertiaryContainerLightHighContrast,
-    error = errorLightHighContrast,
-    onError = onErrorLightHighContrast,
-    errorContainer = errorContainerLightHighContrast,
-    onErrorContainer = onErrorContainerLightHighContrast,
-    background = backgroundLightHighContrast,
-    onBackground = onBackgroundLightHighContrast,
-    surface = surfaceLightHighContrast,
-    onSurface = onSurfaceLightHighContrast,
-    surfaceVariant = surfaceVariantLightHighContrast,
-    onSurfaceVariant = onSurfaceVariantLightHighContrast,
-    outline = outlineLightHighContrast,
-    outlineVariant = outlineVariantLightHighContrast,
-    scrim = scrimLightHighContrast,
-    inverseSurface = inverseSurfaceLightHighContrast,
-    inverseOnSurface = inverseOnSurfaceLightHighContrast,
-    inversePrimary = inversePrimaryLightHighContrast,
-    surfaceDim = surfaceDimLightHighContrast,
-    surfaceBright = surfaceBrightLightHighContrast,
-    surfaceContainerLowest = surfaceContainerLowestLightHighContrast,
-    surfaceContainerLow = surfaceContainerLowLightHighContrast,
-    surfaceContainer = surfaceContainerLightHighContrast,
-    surfaceContainerHigh = surfaceContainerHighLightHighContrast,
-    surfaceContainerHighest = surfaceContainerHighestLightHighContrast,
+private val defaultDarkHighContrastScheme = darkColorScheme(
+    primary = ThemeDefaultColors.primaryDarkHighContrast,
+    onPrimary = ThemeDefaultColors.onPrimaryDarkHighContrast,
+    primaryContainer = ThemeDefaultColors.primaryContainerDarkHighContrast,
+    onPrimaryContainer = ThemeDefaultColors.onPrimaryContainerDarkHighContrast,
+    secondary = ThemeDefaultColors.secondaryDarkHighContrast,
+    onSecondary = ThemeDefaultColors.onSecondaryDarkHighContrast,
+    secondaryContainer = ThemeDefaultColors.secondaryContainerDarkHighContrast,
+    onSecondaryContainer = ThemeDefaultColors.onSecondaryContainerDarkHighContrast,
+    tertiary = ThemeDefaultColors.tertiaryDarkHighContrast,
+    onTertiary = ThemeDefaultColors.onTertiaryDarkHighContrast,
+    tertiaryContainer = ThemeDefaultColors.tertiaryContainerDarkHighContrast,
+    onTertiaryContainer = ThemeDefaultColors.onTertiaryContainerDarkHighContrast,
+    error = ThemeDefaultColors.errorDarkHighContrast,
+    onError = ThemeDefaultColors.onErrorDarkHighContrast,
+    errorContainer = ThemeDefaultColors.errorContainerDarkHighContrast,
+    onErrorContainer = ThemeDefaultColors.onErrorContainerDarkHighContrast,
+    background = ThemeDefaultColors.backgroundDarkHighContrast,
+    onBackground = ThemeDefaultColors.onBackgroundDarkHighContrast,
+    surface = ThemeDefaultColors.surfaceDarkHighContrast,
+    onSurface = ThemeDefaultColors.onSurfaceDarkHighContrast,
+    surfaceVariant = ThemeDefaultColors.surfaceVariantDarkHighContrast,
+    onSurfaceVariant = ThemeDefaultColors.onSurfaceVariantDarkHighContrast,
+    outline = ThemeDefaultColors.outlineDarkHighContrast,
+    outlineVariant = ThemeDefaultColors.outlineVariantDarkHighContrast,
+    scrim = ThemeDefaultColors.scrimDarkHighContrast,
+    inverseSurface = ThemeDefaultColors.inverseSurfaceDarkHighContrast,
+    inverseOnSurface = ThemeDefaultColors.inverseOnSurfaceDarkHighContrast,
+    inversePrimary = ThemeDefaultColors.inversePrimaryDarkHighContrast,
+    surfaceDim = ThemeDefaultColors.surfaceDimDarkHighContrast,
+    surfaceBright = ThemeDefaultColors.surfaceBrightDarkHighContrast,
+    surfaceContainerLowest = ThemeDefaultColors.surfaceContainerLowestDarkHighContrast,
+    surfaceContainerLow = ThemeDefaultColors.surfaceContainerLowDarkHighContrast,
+    surfaceContainer = ThemeDefaultColors.surfaceContainerDarkHighContrast,
+    surfaceContainerHigh = ThemeDefaultColors.surfaceContainerHighDarkHighContrast,
+    surfaceContainerHighest = ThemeDefaultColors.surfaceContainerHighestDarkHighContrast,
 )
 
-/**
- * Color scheme para el tema oscuro con contraste medio.
- * 
- * @property primary Color principal.
- * @property onPrimary Contraste con el color principal.
- * @property primaryContainer Contenedor del color principal.
- * @property onPrimaryContainer Contraste con el contenedor del color principal.
- * @property secondary Color secundario.
- * @property onSecondary Contraste con el color secundario.
- * @property secondaryContainer Contenedor del color secundario.
- * @property onSecondaryContainer Contraste con el contenedor del color secundario.
- * @property tertiary Color terciario.
- * @property onTertiary Contraste con el color terciario.
- * @property tertiaryContainer Contenedor del color terciario.
- * @property onTertiaryContainer Contraste con el contenedor del color terciario.
- * @property error Color de error.
- * @property onError Contraste con el color de error.
- * @property errorContainer Contenedor del color de error.
- * @property onErrorContainer Contraste con el contenedor del color de error.
- * @property background Color de fondo.
- * @property onBackground Contraste con el color de fondo.
- * @property surface Color de superficie.
- * @property onSurface Contraste con el color de superficie.
- * @property surfaceVariant Color de superficie variante.
- * @property onSurfaceVariant Contraste con el color de superficie variante.
- * @property outline Color de contorno.
- * @property outlineVariant Contenedor del color de contorno.
- * @property scrim Color de escudo.
- * @property inverseSurface Color de superficie invertida.
- * @property inverseOnSurface Contraste con el color de superficie invertida.
- * @property inversePrimary Color primario invertido.
- * @property surfaceDim Color de superficie disminuido.
- * @property surfaceBright Color de superficie brillante.
- * @property surfaceContainerLowest Contenedor de superficie más bajo.
- * @property surfaceContainerLow Contenedor de superficie bajo.
- * @property surfaceContainer Contenedor de superficie.
- * @property surfaceContainerHigh Contenedor de superficie alto.
- * @property surfaceContainerHighest Contenedor de superficie más alto.
- */
-private val mediumContrastDarkColorScheme = darkColorScheme(
-    primary = primaryDarkMediumContrast,
-    onPrimary = onPrimaryDarkMediumContrast,
-    primaryContainer = primaryContainerDarkMediumContrast,
-    onPrimaryContainer = onPrimaryContainerDarkMediumContrast,
-    secondary = secondaryDarkMediumContrast,
-    onSecondary = onSecondaryDarkMediumContrast,
-    secondaryContainer = secondaryContainerDarkMediumContrast,
-    onSecondaryContainer = onSecondaryContainerDarkMediumContrast,
-    tertiary = tertiaryDarkMediumContrast,
-    onTertiary = onTertiaryDarkMediumContrast,
-    tertiaryContainer = tertiaryContainerDarkMediumContrast,
-    onTertiaryContainer = onTertiaryContainerDarkMediumContrast,
-    error = errorDarkMediumContrast,
-    onError = onErrorDarkMediumContrast,
-    errorContainer = errorContainerDarkMediumContrast,
-    onErrorContainer = onErrorContainerDarkMediumContrast,
-    background = backgroundDarkMediumContrast,
-    onBackground = onBackgroundDarkMediumContrast,
-    surface = surfaceDarkMediumContrast,
-    onSurface = onSurfaceDarkMediumContrast,
-    surfaceVariant = surfaceVariantDarkMediumContrast,
-    onSurfaceVariant = onSurfaceVariantDarkMediumContrast,
-    outline = outlineDarkMediumContrast,
-    outlineVariant = outlineVariantDarkMediumContrast,
-    scrim = scrimDarkMediumContrast,
-    inverseSurface = inverseSurfaceDarkMediumContrast,
-    inverseOnSurface = inverseOnSurfaceDarkMediumContrast,
-    inversePrimary = inversePrimaryDarkMediumContrast,
-    surfaceDim = surfaceDimDarkMediumContrast,
-    surfaceBright = surfaceBrightDarkMediumContrast,
-    surfaceContainerLowest = surfaceContainerLowestDarkMediumContrast,
-    surfaceContainerLow = surfaceContainerLowDarkMediumContrast,
-    surfaceContainer = surfaceContainerDarkMediumContrast,
-    surfaceContainerHigh = surfaceContainerHighDarkMediumContrast,
-    surfaceContainerHighest = surfaceContainerHighestDarkMediumContrast,
+// --- INDUSTRIAL SCHEMES ---
+private val industrialLightScheme = lightColorScheme(
+    primary = ThemeIndustrialColors.primaryLight,
+    onPrimary = ThemeIndustrialColors.onPrimaryLight,
+    primaryContainer = ThemeIndustrialColors.primaryContainerLight,
+    onPrimaryContainer = ThemeIndustrialColors.onPrimaryContainerLight,
+    secondary = ThemeIndustrialColors.secondaryLight,
+    onSecondary = ThemeIndustrialColors.onSecondaryLight,
+    secondaryContainer = ThemeIndustrialColors.secondaryContainerLight,
+    onSecondaryContainer = ThemeIndustrialColors.onSecondaryContainerLight,
+    tertiary = ThemeIndustrialColors.tertiaryLight,
+    onTertiary = ThemeIndustrialColors.onTertiaryLight,
+    tertiaryContainer = ThemeIndustrialColors.tertiaryContainerLight,
+    onTertiaryContainer = ThemeIndustrialColors.onTertiaryContainerLight,
+    error = ThemeIndustrialColors.errorLight,
+    onError = ThemeIndustrialColors.onErrorLight,
+    errorContainer = ThemeIndustrialColors.errorContainerLight,
+    onErrorContainer = ThemeIndustrialColors.onErrorContainerLight,
+    background = ThemeIndustrialColors.backgroundLight,
+    onBackground = ThemeIndustrialColors.onBackgroundLight,
+    surface = ThemeIndustrialColors.surfaceLight,
+    onSurface = ThemeIndustrialColors.onSurfaceLight,
+    surfaceVariant = ThemeIndustrialColors.surfaceVariantLight,
+    onSurfaceVariant = ThemeIndustrialColors.onSurfaceVariantLight,
+    outline = ThemeIndustrialColors.outlineLight,
+    outlineVariant = ThemeIndustrialColors.outlineVariantLight,
+    scrim = ThemeIndustrialColors.scrimLight,
+    inverseSurface = ThemeIndustrialColors.inverseSurfaceLight,
+    inverseOnSurface = ThemeIndustrialColors.inverseOnSurfaceLight,
+    inversePrimary = ThemeIndustrialColors.inversePrimaryLight,
+    surfaceDim = ThemeIndustrialColors.surfaceDimLight,
+    surfaceBright = ThemeIndustrialColors.surfaceBrightLight,
+    surfaceContainerLowest = ThemeIndustrialColors.surfaceContainerLowestLight,
+    surfaceContainerLow = ThemeIndustrialColors.surfaceContainerLowLight,
+    surfaceContainer = ThemeIndustrialColors.surfaceContainerLight,
+    surfaceContainerHigh = ThemeIndustrialColors.surfaceContainerHighLight,
+    surfaceContainerHighest = ThemeIndustrialColors.surfaceContainerHighestLight,
 )
 
-/**
- * Color scheme para el tema oscuro con contraste alto.
- * 
- * @property primary Color principal.
- * @property onPrimary Contraste con el color principal.
- * @property primaryContainer Contenedor del color principal.
- * @property onPrimaryContainer Contraste con el contenedor del color principal.
- * @property secondary Color secundario.
- * @property onSecondary Contraste con el color secundario.
- * @property secondaryContainer Contenedor del color secundario.
- * @property onSecondaryContainer Contraste con el contenedor del color secundario.
- * @property tertiary Color terciario.
- * @property onTertiary Contraste con el color terciario.
- * @property tertiaryContainer Contenedor del color terciario.
- * @property onTertiaryContainer Contraste con el contenedor del color terciario.
- * @property error Color de error.
- * @property onError Contraste con el color de error.
- * @property errorContainer Contenedor del color de error.
- * @property onErrorContainer Contraste con el contenedor del color de error.
- * @property background Color de fondo.
- * @property onBackground Contraste con el color de fondo.
- * @property surface Color de superficie.
- * @property onSurface Contraste con el color de superficie.
- * @property surfaceVariant Color de superficie variante.
- * @property onSurfaceVariant Contraste con el color de superficie variante.
- * @property outline Color de contorno.
- * @property outlineVariant Contenedor del color de contorno.
- * @property scrim Color de escudo.
- * @property inverseSurface Color de superficie invertida.
- * @property inverseOnSurface Contraste con el color de superficie invertida.
- * @property inversePrimary Color primario invertido.
- * @property surfaceDim Color de superficie disminuido.
- * @property surfaceBright Color de superficie brillante.
- * @property surfaceContainerLowest Contenedor de superficie más bajo.
- * @property surfaceContainerLow Contenedor de superficie bajo.
- * @property surfaceContainer Contenedor de superficie.
- * @property surfaceContainerHigh Contenedor de superficie alto.
- * @property surfaceContainerHighest Contenedor de superficie más alto.
- */
-private val highContrastDarkColorScheme = darkColorScheme(
-    primary = primaryDarkHighContrast,
-    onPrimary = onPrimaryDarkHighContrast,
-    primaryContainer = primaryContainerDarkHighContrast,
-    onPrimaryContainer = onPrimaryContainerDarkHighContrast,
-    secondary = secondaryDarkHighContrast,
-    onSecondary = onSecondaryDarkHighContrast,
-    secondaryContainer = secondaryContainerDarkHighContrast,
-    onSecondaryContainer = onSecondaryContainerDarkHighContrast,
-    tertiary = tertiaryDarkHighContrast,
-    onTertiary = onTertiaryDarkHighContrast,
-    tertiaryContainer = tertiaryContainerDarkHighContrast,
-    onTertiaryContainer = onTertiaryContainerDarkHighContrast,
-    error = errorDarkHighContrast,
-    onError = onErrorDarkHighContrast,
-    errorContainer = errorContainerDarkHighContrast,
-    onErrorContainer = onErrorContainerDarkHighContrast,
-    background = backgroundDarkHighContrast,
-    onBackground = onBackgroundDarkHighContrast,
-    surface = surfaceDarkHighContrast,
-    onSurface = onSurfaceDarkHighContrast,
-    surfaceVariant = surfaceVariantDarkHighContrast,
-    onSurfaceVariant = onSurfaceVariantDarkHighContrast,
-    outline = outlineDarkHighContrast,
-    outlineVariant = outlineVariantDarkHighContrast,
-    scrim = scrimDarkHighContrast,
-    inverseSurface = inverseSurfaceDarkHighContrast,
-    inverseOnSurface = inverseOnSurfaceDarkHighContrast,
-    inversePrimary = inversePrimaryDarkHighContrast,
-    surfaceDim = surfaceDimDarkHighContrast,
-    surfaceBright = surfaceBrightDarkHighContrast,
-    surfaceContainerLowest = surfaceContainerLowestDarkHighContrast,
-    surfaceContainerLow = surfaceContainerLowDarkHighContrast,
-    surfaceContainer = surfaceContainerDarkHighContrast,
-    surfaceContainerHigh = surfaceContainerHighDarkHighContrast,
-    surfaceContainerHighest = surfaceContainerHighestDarkHighContrast,
+private val industrialDarkScheme = darkColorScheme(
+    primary = ThemeIndustrialColors.primaryDark,
+    onPrimary = ThemeIndustrialColors.onPrimaryDark,
+    primaryContainer = ThemeIndustrialColors.primaryContainerDark,
+    onPrimaryContainer = ThemeIndustrialColors.onPrimaryContainerDark,
+    secondary = ThemeIndustrialColors.secondaryDark,
+    onSecondary = ThemeIndustrialColors.onSecondaryDark,
+    secondaryContainer = ThemeIndustrialColors.secondaryContainerDark,
+    onSecondaryContainer = ThemeIndustrialColors.onSecondaryContainerDark,
+    tertiary = ThemeIndustrialColors.tertiaryDark,
+    onTertiary = ThemeIndustrialColors.onTertiaryDark,
+    tertiaryContainer = ThemeIndustrialColors.tertiaryContainerDark,
+    onTertiaryContainer = ThemeIndustrialColors.onTertiaryContainerDark,
+    error = ThemeIndustrialColors.errorDark,
+    onError = ThemeIndustrialColors.onErrorDark,
+    errorContainer = ThemeIndustrialColors.errorContainerDark,
+    onErrorContainer = ThemeIndustrialColors.onErrorContainerDark,
+    background = ThemeIndustrialColors.backgroundDark,
+    onBackground = ThemeIndustrialColors.onBackgroundDark,
+    surface = ThemeIndustrialColors.surfaceDark,
+    onSurface = ThemeIndustrialColors.onSurfaceDark,
+    surfaceVariant = ThemeIndustrialColors.surfaceVariantDark,
+    onSurfaceVariant = ThemeIndustrialColors.onSurfaceVariantDark,
+    outline = ThemeIndustrialColors.outlineDark,
+    outlineVariant = ThemeIndustrialColors.outlineVariantDark,
+    scrim = ThemeIndustrialColors.scrimDark,
+    inverseSurface = ThemeIndustrialColors.inverseSurfaceDark,
+    inverseOnSurface = ThemeIndustrialColors.inverseOnSurfaceDark,
+    inversePrimary = ThemeIndustrialColors.inversePrimaryDark,
+    surfaceDim = ThemeIndustrialColors.surfaceDimDark,
+    surfaceBright = ThemeIndustrialColors.surfaceBrightDark,
+    surfaceContainerLowest = ThemeIndustrialColors.surfaceContainerLowestDark,
+    surfaceContainerLow = ThemeIndustrialColors.surfaceContainerLowDark,
+    surfaceContainer = ThemeIndustrialColors.surfaceContainerDark,
+    surfaceContainerHigh = ThemeIndustrialColors.surfaceContainerHighDark,
+    surfaceContainerHighest = ThemeIndustrialColors.surfaceContainerHighestDark,
+)
+
+private val industrialLightHighContrastScheme = lightColorScheme(
+    primary = ThemeIndustrialColors.primaryLightHighContrast,
+    onPrimary = ThemeIndustrialColors.onPrimaryLightHighContrast,
+    primaryContainer = ThemeIndustrialColors.primaryContainerLightHighContrast,
+    onPrimaryContainer = ThemeIndustrialColors.onPrimaryContainerLightHighContrast,
+    secondary = ThemeIndustrialColors.secondaryLightHighContrast,
+    onSecondary = ThemeIndustrialColors.onSecondaryLightHighContrast,
+    secondaryContainer = ThemeIndustrialColors.secondaryContainerLightHighContrast,
+    onSecondaryContainer = ThemeIndustrialColors.onSecondaryContainerLightHighContrast,
+    tertiary = ThemeIndustrialColors.tertiaryLightHighContrast,
+    onTertiary = ThemeIndustrialColors.onTertiaryLightHighContrast,
+    tertiaryContainer = ThemeIndustrialColors.tertiaryContainerLightHighContrast,
+    onTertiaryContainer = ThemeIndustrialColors.onTertiaryContainerLightHighContrast,
+    error = ThemeIndustrialColors.errorLightHighContrast,
+    onError = ThemeIndustrialColors.onErrorLightHighContrast,
+    errorContainer = ThemeIndustrialColors.errorContainerLightHighContrast,
+    onErrorContainer = ThemeIndustrialColors.onErrorContainerLightHighContrast,
+    background = ThemeIndustrialColors.backgroundLightHighContrast,
+    onBackground = ThemeIndustrialColors.onBackgroundLightHighContrast,
+    surface = ThemeIndustrialColors.surfaceLightHighContrast,
+    onSurface = ThemeIndustrialColors.onSurfaceLightHighContrast,
+    surfaceVariant = ThemeIndustrialColors.surfaceVariantLightHighContrast,
+    onSurfaceVariant = ThemeIndustrialColors.onSurfaceVariantLightHighContrast,
+    outline = ThemeIndustrialColors.outlineLightHighContrast,
+    outlineVariant = ThemeIndustrialColors.outlineVariantLightHighContrast,
+    scrim = ThemeIndustrialColors.scrimLightHighContrast,
+    inverseSurface = ThemeIndustrialColors.inverseSurfaceLightHighContrast,
+    inverseOnSurface = ThemeIndustrialColors.inverseOnSurfaceLightHighContrast,
+    inversePrimary = ThemeIndustrialColors.inversePrimaryLightHighContrast,
+    surfaceDim = ThemeIndustrialColors.surfaceDimLightHighContrast,
+    surfaceBright = ThemeIndustrialColors.surfaceBrightLightHighContrast,
+    surfaceContainerLowest = ThemeIndustrialColors.surfaceContainerLowestLightHighContrast,
+    surfaceContainerLow = ThemeIndustrialColors.surfaceContainerLowLightHighContrast,
+    surfaceContainer = ThemeIndustrialColors.surfaceContainerLightHighContrast,
+    surfaceContainerHigh = ThemeIndustrialColors.surfaceContainerHighLightHighContrast,
+    surfaceContainerHighest = ThemeIndustrialColors.surfaceContainerHighestLightHighContrast,
+)
+
+private val industrialDarkHighContrastScheme = darkColorScheme(
+    primary = ThemeIndustrialColors.primaryDarkHighContrast,
+    onPrimary = ThemeIndustrialColors.onPrimaryDarkHighContrast,
+    primaryContainer = ThemeIndustrialColors.primaryContainerDarkHighContrast,
+    onPrimaryContainer = ThemeIndustrialColors.onPrimaryContainerDarkHighContrast,
+    secondary = ThemeIndustrialColors.secondaryDarkHighContrast,
+    onSecondary = ThemeIndustrialColors.onSecondaryDarkHighContrast,
+    secondaryContainer = ThemeIndustrialColors.secondaryContainerDarkHighContrast,
+    onSecondaryContainer = ThemeIndustrialColors.onSecondaryContainerDarkHighContrast,
+    tertiary = ThemeIndustrialColors.tertiaryDarkHighContrast,
+    onTertiary = ThemeIndustrialColors.onTertiaryDarkHighContrast,
+    tertiaryContainer = ThemeIndustrialColors.tertiaryContainerDarkHighContrast,
+    onTertiaryContainer = ThemeIndustrialColors.onTertiaryContainerDarkHighContrast,
+    error = ThemeIndustrialColors.errorDarkHighContrast,
+    onError = ThemeIndustrialColors.onErrorDarkHighContrast,
+    errorContainer = ThemeIndustrialColors.errorContainerDarkHighContrast,
+    onErrorContainer = ThemeIndustrialColors.onErrorContainerDarkHighContrast,
+    background = ThemeIndustrialColors.backgroundDarkHighContrast,
+    onBackground = ThemeIndustrialColors.onBackgroundDarkHighContrast,
+    surface = ThemeIndustrialColors.surfaceDarkHighContrast,
+    onSurface = ThemeIndustrialColors.onSurfaceDarkHighContrast,
+    surfaceVariant = ThemeIndustrialColors.surfaceVariantDarkHighContrast,
+    onSurfaceVariant = ThemeIndustrialColors.onSurfaceVariantDarkHighContrast,
+    outline = ThemeIndustrialColors.outlineDarkHighContrast,
+    outlineVariant = ThemeIndustrialColors.outlineVariantDarkHighContrast,
+    scrim = ThemeIndustrialColors.scrimDarkHighContrast,
+    inverseSurface = ThemeIndustrialColors.inverseSurfaceDarkHighContrast,
+    inverseOnSurface = ThemeIndustrialColors.inverseOnSurfaceDarkHighContrast,
+    inversePrimary = ThemeIndustrialColors.inversePrimaryDarkHighContrast,
+    surfaceDim = ThemeIndustrialColors.surfaceDimDarkHighContrast,
+    surfaceBright = ThemeIndustrialColors.surfaceBrightDarkHighContrast,
+    surfaceContainerLowest = ThemeIndustrialColors.surfaceContainerLowestDarkHighContrast,
+    surfaceContainerLow = ThemeIndustrialColors.surfaceContainerLowDarkHighContrast,
+    surfaceContainer = ThemeIndustrialColors.surfaceContainerDarkHighContrast,
+    surfaceContainerHigh = ThemeIndustrialColors.surfaceContainerHighDarkHighContrast,
+    surfaceContainerHighest = ThemeIndustrialColors.surfaceContainerHighestDarkHighContrast,
 )
 
 /**
@@ -491,12 +340,14 @@ private val highContrastDarkColorScheme = darkColorScheme(
  * 
  * @param themeMode Cómo se debe comportar
  * @param contrastMode Contraste
+ * @param colorPalette Paleta de colores
  * @param content Contenido
  */
 @Composable
 fun AppTheme(
     themeMode: ThemeMode = ThemeMode.System, // Cómo se debe comportar
     contrastMode: ContrastMode = ContrastMode.Standard, // Contraste
+    colorPalette: ColorPalette = ColorPalette.Default, // Nuevo parámetro
     content: @Composable () -> Unit
 ) {
     // 1. Determinar el estado Dark/Light REAL
@@ -506,16 +357,23 @@ fun AppTheme(
         ThemeMode.Dark -> true
     }
 
-    // 2. Seleccionar el esquema de colores basado en el modo y el contraste
+    // 2. Seleccionar el esquema de colores basado en el modo, contraste y paleta
     val colorScheme = when {
-        // Modo Oscuro y Alto Contraste (para máxima legibilidad nocturna)
-        actualDarkTheme && contrastMode == ContrastMode.HighContrast -> highContrastDarkColorScheme
-        // Modo Oscuro estándar
-        actualDarkTheme -> darkScheme
-        // Modo Claro y Alto Contraste (ideal para exteriores y glare)
-        !actualDarkTheme && contrastMode == ContrastMode.HighContrast -> highContrastLightColorScheme
-        // Modo Claro estándar
-        else -> lightScheme
+        // Prioridad: Alto Contraste
+        contrastMode == ContrastMode.HighContrast -> {
+            when (colorPalette) {
+                ColorPalette.Default -> if (actualDarkTheme) defaultDarkHighContrastScheme else defaultLightHighContrastScheme
+                ColorPalette.Industrial -> if (actualDarkTheme) industrialDarkHighContrastScheme else industrialLightHighContrastScheme
+            }
+        }
+        // Luego: Paleta de Colores
+        colorPalette == ColorPalette.Industrial -> {
+            if (actualDarkTheme) industrialDarkScheme else industrialLightScheme
+        }
+        // Por defecto: Paleta Default
+        else -> {
+            if (actualDarkTheme) defaultDarkScheme else defaultLightScheme
+        }
     }
 
     MaterialTheme(
@@ -524,4 +382,3 @@ fun AppTheme(
         content = content
     )
 }
-

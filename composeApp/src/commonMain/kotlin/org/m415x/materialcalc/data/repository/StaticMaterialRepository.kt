@@ -21,84 +21,89 @@ package org.m415x.materialcalc.data.repository
 import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.domain.repository.MaterialRepository
 
+/**
+ * Repositorio de datos estáticos.
+ * Este repositorio proporciona acceso a datos estáticos de materiales de construcción, como dosificaciones de hormigón,
+ * propiedades de ladrillos, pesos de hierro y recetas de mortero.
+ */
 class StaticMaterialRepository : MaterialRepository {
 
     /**
      * Base de datos interna de dosificaciones de hormigones.
      * Aquí es donde "guardamos" las tablas que buscamos.
      *
-     * @property hormigonDB Base de datos de dosificaciones de hormigones.
+     * @property concreteDB Base de datos de dosificaciones de hormigones.
      */
-    private val hormigonDB = mapOf(
+    private val concreteDB = mapOf(
 
         // H8: Hormigón de limpieza (pobre). Poco cemento.
         // Usos: Contrapisos, carpetas, nivelación.
-        TipoHormigon.H8 to DosificacionHormigon(
-            nombre = "H8",
-            descripcionProporcion = "1:3:5 (Cem:Arena:Piedra)",
-            cementoKg = 180.0,
-            arenaM3 = 0.55,
-            piedraM3 = 0.9,
-            aguaLitros = 180.0 * 0.6,
-            relacionAgua = 0.6
+        ConcreteType.H8 to ConcreteDosing(
+            name = "H8",
+            descriptionProportion = "1:4:8 (Cem:Arena:Piedra)",
+            cementKg = 182.0,
+            sandM3 = 0.52,
+            gravelM3 = 1.04,
+            waterLiters = 109.0,
+            waterCementRatio = 0.6
         ),
 
         // H13: Hormigón simple (no estructural o estructuras muy livianas).
-        TipoHormigon.H13 to DosificacionHormigon(
-            nombre = "H13",
-            descripcionProporcion = "1:3:4 (Cem:Arena:Piedra)",
-            cementoKg = 260.0,
-            arenaM3 = 0.63,
-            piedraM3 = 0.84,
-            aguaLitros = 260.0 * 0.5,
-            relacionAgua = 0.5
+        ConcreteType.H13 to ConcreteDosing(
+            name = "H13",
+            descriptionProportion = "1:3:5 (Cem:Arena:Piedra)",
+            cementKg = 258.0,
+            sandM3 = 0.55,
+            gravelM3 = 0.92,
+            waterLiters = 129.0,
+            waterCementRatio = 0.5
         ),
 
         // H17: Hormigón estándar para viviendas pequeñas (bases, encadenados).
-        TipoHormigon.H17 to DosificacionHormigon(
-            nombre = "H17",
-            descripcionProporcion = "1:3:3 (Cem:Arena:Piedra)",
-            cementoKg = 300.0,
-            arenaM3 = 0.67,
-            piedraM3 = 0.67,
-            aguaLitros = 300.0 * 0.5,
-            relacionAgua = 0.5
+        ConcreteType.H17 to ConcreteDosing(
+            name = "H17",
+            descriptionProportion = "1:2.5:4 (Cem:Arena:Piedra)",
+            cementKg = 305.0,
+            sandM3 = 0.54,
+            gravelM3 = 0.87,
+            waterLiters = 152.0,
+            waterCementRatio = 0.5
         ),
 
         // H21: Hormigón ESTRUCTURAL estándar (Losas, vigas, columnas).
         // Es el más utilizado en construcción tradicional.
-        TipoHormigon.H21 to DosificacionHormigon(
-            nombre = "H21",
-            descripcionProporcion = "1:2:3 (Cem:Arena:Piedra)",
-            cementoKg = 350.0,
-            arenaM3 = 0.55,
-            piedraM3 = 0.75,
-            aguaLitros = 350.0 * 0.45,
-            relacionAgua = 0.45
+        ConcreteType.H21 to ConcreteDosing(
+            name = "H21",
+            descriptionProportion = "1:2:3 (Cem:Arena:Piedra)",
+            cementKg = 377.0, // Un H21 de obra suele ser rico (>350kg)
+            sandM3 = 0.54,
+            gravelM3 = 0.81,
+            waterLiters = 170.0,
+            waterCementRatio = 0.45
         ),
 
         // H25: Hormigón de alta resistencia.
         // Usos: Columnas muy cargadas, estructuras importantes.
-        TipoHormigon.H25 to DosificacionHormigon(
-            nombre = "H25",
-            descripcionProporcion = "1:2:2 (Cem:Arena:Piedra)",
-            cementoKg = 380.0,
-            arenaM3 = 0.5,
-            piedraM3 = 0.75,
-            aguaLitros = 380.0 * 0.42,
-            relacionAgua = 0.42
+        ConcreteType.H25 to ConcreteDosing(
+            name = "H25",
+            descriptionProportion = "1:1.5:2.5 (Cem:Arena:Piedra)",
+            cementKg = 450.0,
+            sandM3 = 0.48,
+            gravelM3 = 0.81,
+            waterLiters = 189.0,
+            waterCementRatio = 0.42
         ),
 
         // H30: Hormigón de muy alta resistencia.
         // NOTA: Difícil de lograr a mano sin aditivos fluidificantes por la poca agua.
-        TipoHormigon.H30 to DosificacionHormigon(
-            nombre = "H30",
-            descripcionProporcion = "1:1:2 (Cem:Arena:Piedra)",
-            cementoKg = 430.0,
-            arenaM3 = 0.45,
-            piedraM3 = 0.70,
-            aguaLitros = 430.0 * 0.40,
-            relacionAgua = 0.40
+        ConcreteType.H30 to ConcreteDosing(
+            name = "H30",
+            descriptionProportion = "1:1:2 (Cem:Arena:Piedra)",
+            cementKg = 554.0,
+            sandM3 = 0.40,
+            gravelM3 = 0.79,
+            waterLiters = 221.0,
+            waterCementRatio = 0.40
         )
     )
 
@@ -106,198 +111,197 @@ class StaticMaterialRepository : MaterialRepository {
      * Mapeo de dimensiones y juntas sugeridas.
      * Se asume colocación estándar (no panderete/canto, salvo especificación).
      *
-     * @property ladrilloDB Mapeo de dimensiones y juntas sugeridas.
+     * @property brickDB Mapeo de dimensiones y juntas sugeridas.
      */
-    private val ladrilloDB = mapOf(
+    private val brickDB = mapOf(
         // // --- Ladrillos Macizos ---
         // Junta más gruesa (1.5 cm a 2.0 cm)
-        TipoLadrillo.COMUN to PropiedadesLadrillo(
-            anchoMuro = 0.12,
-            altoUnidad = 0.05,
-            largoUnidad = 0.25,
-            espesorJunta = 0.015
+        BrickType.COMUN to BrickProps(
+            width = 0.12,
+            height = 0.05,
+            length = 0.25,
+            gasketThickness = 0.015
         ),
-        TipoLadrillo.LADRILLON to PropiedadesLadrillo(
-            anchoMuro = 0.18,
-            altoUnidad = 0.05,
-            largoUnidad = 0.25,
-            espesorJunta = 0.015
+        BrickType.LADRILLON to BrickProps(
+            width = 0.18,
+            height = 0.05,
+            length = 0.25,
+            gasketThickness = 0.015
         ),
 
         // --- Cerámicos HUECOS (No Portantes) ---
         // Altura 18 cm. Junta suele ser 1.5 cm aprox.
-        TipoLadrillo.HUECO_8 to PropiedadesLadrillo(
-            anchoMuro = 0.08,
-            altoUnidad = 0.18,
-            largoUnidad = 0.33,
-            espesorJunta = 0.015
+        BrickType.HUECO_8 to BrickProps(
+            width = 0.08,
+            height = 0.18,
+            length = 0.33,
+            gasketThickness = 0.015
         ),
-        TipoLadrillo.HUECO_12 to PropiedadesLadrillo(
-            anchoMuro = 0.12,
-            altoUnidad = 0.18,
-            largoUnidad = 0.33,
-            espesorJunta = 0.015
+        BrickType.HUECO_12 to BrickProps(
+            width = 0.12,
+            height = 0.18,
+            length = 0.33,
+            gasketThickness = 0.015
         ),
-        TipoLadrillo.HUECO_18 to PropiedadesLadrillo(
-            anchoMuro = 0.18,
-            altoUnidad = 0.18,
-            largoUnidad = 0.33,
-            espesorJunta = 0.015
+        BrickType.HUECO_18 to BrickProps(
+            width = 0.18,
+            height = 0.18,
+            length = 0.33,
+            gasketThickness = 0.015
         ),
 
         // --- Cerámicos PORTANTES ---
         // Altura 19 cm. Se usan con menos mezcla (1 cm) para modulación perfecta de 20cm.
-        TipoLadrillo.PORTANTE_12 to PropiedadesLadrillo(
-            anchoMuro = 0.12,
-            altoUnidad = 0.19,
-            largoUnidad = 0.33,
-            espesorJunta = 0.012
+        BrickType.PORTANTE_12 to BrickProps(
+            width = 0.12,
+            height = 0.19,
+            length = 0.33,
+            gasketThickness = 0.012
         ),
-        TipoLadrillo.PORTANTE_18 to PropiedadesLadrillo(
-            anchoMuro = 0.18,
-            altoUnidad = 0.19,
-            largoUnidad = 0.33,
-            espesorJunta = 0.012
+        BrickType.PORTANTE_18 to BrickProps(
+            width = 0.18,
+            height = 0.19,
+            length = 0.33,
+            gasketThickness = 0.012
         ),
 
         // --- Bloques de Hormigón ---
         // Medidas estándar Argentina: Largo 39, Alto 19.
         // Bloques de Hormigón: Junta fina (1.0 cm)
-        TipoLadrillo.BLOQUE_10 to PropiedadesLadrillo(
-            anchoMuro = 0.1,
-            altoUnidad = 0.19,
-            largoUnidad = 0.39,
-            espesorJunta = 0.01
+        BrickType.BLOQUE_10 to BrickProps(
+            width = 0.1,
+            height = 0.19,
+            length = 0.39,
+            gasketThickness = 0.01
         ),
-        TipoLadrillo.BLOQUE_13 to PropiedadesLadrillo(
-            anchoMuro = 0.13,
-            altoUnidad = 0.19,
-            largoUnidad = 0.39,
-            espesorJunta = 0.01
+        BrickType.BLOQUE_13 to BrickProps(
+            width = 0.13,
+            height = 0.19,
+            length = 0.39,
+            gasketThickness = 0.01
         ),
-        TipoLadrillo.BLOQUE_15 to PropiedadesLadrillo(
-            anchoMuro = 0.15,
-            altoUnidad = 0.19,
-            largoUnidad = 0.39,
-            espesorJunta = 0.01
+        BrickType.BLOQUE_15 to BrickProps(
+            width = 0.15,
+            height = 0.19,
+            length = 0.39,
+            gasketThickness = 0.01
         ),
-        TipoLadrillo.BLOQUE_20 to PropiedadesLadrillo(
-            anchoMuro = 0.2,
-            altoUnidad = 0.19,
-            largoUnidad = 0.39,
-            espesorJunta = 0.01
+        BrickType.BLOQUE_20 to BrickProps(
+            width = 0.2,
+            height = 0.19,
+            length = 0.39,
+            gasketThickness = 0.01
         )
     )
 
     /**
-     * Peso en Kg por metro lineal según tabla estándar.
+     * Dosificación para 1 m3 de Revoque Reforzado
      *
-     * @property pesosHierro Peso en Kg por metro lineal según tabla estándar.
+     * @property reinforcedLimeMixture Dosificación para 1 m3 de Revoque Reforzado
      */
-    private val pesosHierro = mapOf(
-        DiametroHierro.HIERRO_6 to 0.222,
-        DiametroHierro.HIERRO_8 to 0.395,
-        DiametroHierro.HIERRO_10 to 0.617,
-        DiametroHierro.HIERRO_12 to 0.888,
-        DiametroHierro.HIERRO_16 to 1.580
+    private val reinforcedLimeMixture = MortarDosing(
+        mixingRatio = "1/4:1:3 (Cem:Cal:Arena)",
+        cementKg = 210.0,
+        limeKg = 150.0,
+        sandM3 = 1.05,
+        waterLiters = 210.0 * 0.6,
+        waterCementRatio = 0.6
     )
 
     /**
-     * Base de datos de mezclas (Valores estándar por m3 de mortero).
+     * Dosificación para 1 m3 de Mezcla Cemento-Arena (sin cal)
      *
-     * @property mezclaCalReforzada Base de datos de mezclas (Valores estándar por m3 de mortero).
+     * @property cementSandMixture Dosificación para 1 m3 de Mezcla Cemento-Arena (sin cal)
      */
-    private val mezclaCalReforzada = DosificacionMortero(
-        proporcionMezcla = "1/4:1:3 (Cem:Cal:Arena)",
-        cementoKg = 210.0,
-        calKg = 150.0,
-        arenaM3 = 1.05,
-        aguaLitros = 210.0 * 0.6,
-        relacionAgua = 0.6
+    private val cementSandMixture = MortarDosing(
+        mixingRatio = "1:3 (Cem:Arena)",
+        cementKg = 350.0,
+        limeKg = 0.0,
+        sandM3 = 1.1,
+        waterLiters = 350.0 * 0.5,
+        waterCementRatio = 0.5
     )
 
     /**
-     * Dosificación para 1 m3 de Revoque Grueso (1/4 Cemento : 1 Cal : 3 Arena).
+     * Dosificación para 1 m3 de Revoque Reforzado Tradicional (1/4 Cemento : 1 Área : 3 Arena)
      *
-     * @property recetaGrueso Dosificación para 1 m3 de Revoque Grueso (1/4 Cemento : 1 Cal : 3 Arena).
+     * @property thickPlasterRecipe Dosificación para 1 m3 de Revoque Reforzado
      */
-    private val mezclaCementoArena = DosificacionMortero(
-        proporcionMezcla = "1:3 (Cem:Arena)",
-        cementoKg = 350.0,
-        calKg = 0.0,
-        arenaM3 = 1.1,
-        aguaLitros = 350.0 * 0.5,
-        relacionAgua = 0.5
-    )
-
-    /**
-     * Dosificación para 1 m3 de Revoque Grueso (1/4 Cemento : 1 Cal : 3 Arena).
-     *
-     * @property recetaGrueso Dosificación para 1 m3 de Revoque Grueso (1/4 Cemento : 1 Cal : 3 Arena).
-     */
-    private val recetaGrueso = DosificacionMortero(
-        proporcionMezcla = "1/4:1:3 (Cem:Cal:Arena)",
-        cementoKg = 75.0,  // Aprox 3 bolsas por m3 (es una mezcla "bastarda", lleva menos cemento que un concreto)
-        calKg = 160.0,     // Mucha cal para plasticidad
-        arenaM3 = 1.1,      // Arena común
-        aguaLitros = 75.0 * 0.6,
-        relacionAgua = 0.6
+    private val thickPlasterRecipe = MortarDosing(
+        mixingRatio = "1/4:1:3 (Cem:Cal:Arena)",
+        cementKg = 75.0,  // Aprox 3 bolsas por m3 (es una mezcla "bastarda", lleva menos cemento que un concreto)
+        limeKg = 160.0,     // Mucha cal para plasticidad
+        sandM3 = 1.1,      // Arena común
+        waterLiters = 75.0 * 0.6,
+        waterCementRatio = 0.6
     )
 
     /**
      * Dosificación para 1 m3 de Revoque Fino Tradicional (1/8 Cemento : 1 Aérea : 2 Arena Fina).
      *
-     * @property recetaFino Dosificación para 1 m3 de Revoque Fino Tradicional (1/8 Cemento : 1 Aérea : 2 Arena Fina).
+     * @property finePlasterRecipe Dosificación para 1 m3 de Revoque Fino Tradicional (1/8 Cemento : 1 Aérea : 2 Arena Fina).
      */
-    private val recetaFino = DosificacionMortero(
-        proporcionMezcla = "1/8:1:2 (Cem:Cal:Arena)",
-        cementoKg = 30.0,  // Muy poco, solo para ligar
-        calKg = 250.0,     // Pura cal aérea
-        arenaM3 = 1.0,      // Arena fina (voladora)
-        aguaLitros = 30.0 * 0.5,
-        relacionAgua = 0.5
+    private val finePlasterRecipe = MortarDosing(
+        mixingRatio = "1/8:1:2 (Cem:Cal:Arena)",
+        cementKg = 30.0,  // Muy poco, solo para ligar
+        limeKg = 250.0,     // Pura cal aérea
+        sandM3 = 1.0,      // Arena fina (voladora)
+        waterLiters = 30.0 * 0.5,
+        waterCementRatio = 0.5
     )
 
     /**
      * Dosificación para 1 m3 de hormigón.
      *
-     * @property getDosificacionHormigon Dosificación para 1 m3 de hormigón.
+     * @property getConcreteDosing Dosificación para 1 m3 de hormigón.
      */
-    override fun getDosificacionHormigon(tipo: TipoHormigon) = hormigonDB[tipo]
+    override fun getConcreteDosing(type: ConcreteType) = concreteDB[type]
 
     /**
      * Propiedades de un ladrillo.
      *
-     * @property getPropiedadesLadrillo Propiedades de un ladrillo.
+     * @property getBrickProps Propiedades de un ladrillo.
      */
-    override fun getPropiedadesLadrillo(tipo: TipoLadrillo) = ladrilloDB[tipo]
+    override fun getBrickProps(type: BrickType) = brickDB[type]
 
     /**
      * Dosificación para 1 m3 de mortero.
      *
-     * @property getDosificacionMortero Dosificación para 1 m3 de mortero.
+     * @property getMortarDosing Dosificación para 1 m3 de mortero.
      */
-    override fun getDosificacionMortero(tipo: TipoLadrillo): DosificacionMortero {
-        return when (tipo) {
-            TipoLadrillo.BLOQUE_10,
-            TipoLadrillo.BLOQUE_13,
-            TipoLadrillo.BLOQUE_15,
-            TipoLadrillo.BLOQUE_20 -> mezclaCementoArena
-            else -> mezclaCalReforzada
+    override fun getMortarDosing(type: BrickType): MortarDosing {
+        return when (type) {
+            BrickType.BLOQUE_10,
+            BrickType.BLOQUE_13,
+            BrickType.BLOQUE_15,
+            BrickType.BLOQUE_20 -> cementSandMixture
+
+            else -> reinforcedLimeMixture
         }
     }
 
     /**
-     * Peso en Kg por metro lineal según tabla estándar.
+     * Peso por metro de varilla según diámetro.
      *
-     * @property getPesoHierroPorMetro Peso en Kg por metro lineal según tabla estándar.
+     * @property getIronWeightPerMeter Peso por metro de varilla según diámetro.
      */
-    override fun getPesoHierroPorMetro(diametro: DiametroHierro): Double {
-        return pesosHierro[diametro] ?: 0.0
+    override fun getIronWeightPerMeter(diameter: IronDiameter): Double {
+        return diameter.pesoLinealKgM
     }
 
-    fun getRecetaGrueso() = recetaGrueso
-    fun getRecetaFino() = recetaFino
+    /**
+     * Mezcla recomendada para revoque reforzado.
+     *
+     * @property getThickPlasterRecipe Mezcla recomendada para revoque reforzado.
+     */
+    fun getThickPlasterRecipe() = thickPlasterRecipe
+
+    /**
+     * Mezcla recomendada para revoque fino.
+     *
+     * @property getFinePlasterRecipe Mezcla recomendada para revoque fino.
+     */
+    fun getFinePlasterRecipe() = finePlasterRecipe
 
     /**
      * Función auxiliar para obtener TODOS los ladrillos (Sistema + Usuario)
@@ -305,11 +309,11 @@ class StaticMaterialRepository : MaterialRepository {
      */
     fun getAllBricks(customBricks: List<CustomBrick>): List<BrickOption> {
         // 1. Convertimos los del sistema (Enum) a una estructura común
-        val systemOptions = TipoLadrillo.entries.map { type ->
-            val props = getPropiedadesLadrillo(type)!!
+        val systemOptions = BrickType.entries.map { type ->
+            val props = getBrickProps(type)!!
             BrickOption(
                 id = type.name,
-                name = type.nombre,
+                name = type.nameBrick,
                 props = props,
                 isCustom = false
             )
@@ -333,6 +337,6 @@ class StaticMaterialRepository : MaterialRepository {
 data class BrickOption(
     val id: String,
     val name: String,
-    val props: PropiedadesLadrillo,
+    val props: BrickProps,
     val isCustom: Boolean // Para saber si mostrar el botón de "Borrar"
 )

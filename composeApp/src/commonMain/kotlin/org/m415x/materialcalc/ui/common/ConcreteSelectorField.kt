@@ -23,9 +23,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -33,33 +34,34 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
-import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
-import org.m415x.materialcalc.domain.model.DosificacionHormigon
-import org.m415x.materialcalc.domain.model.TipoHormigon
+import org.m415x.materialcalc.domain.model.ConcreteDosing
+import org.m415x.materialcalc.domain.model.ConcreteType
+import org.m415x.materialcalc.domain.model.CustomRecipe
 import org.m415x.materialcalc.domain.utils.ConstructionConstants.formatPart
 import org.m415x.materialcalc.domain.utils.estimarProporcionTexto
 
 @Composable
 fun ConcreteSelectorField(
     selectedRecipeId: String,
-    onRecipeSelected: (String, DosificacionHormigon) -> Unit,
-    settingsRepository: SettingsRepository,
+    onRecipeSelected: (String, ConcreteDosing) -> Unit,
+    customRecipes: List<CustomRecipe>, // Recibimos la lista directamente
+    hiddenIds: Set<String>,            // Recibimos los IDs ocultos directamente
     modifier: Modifier = Modifier,
-    defaultRecipeId: String? = null, // Acepta nulo para saber si está "cargando"
-    filterStructuralOnly: Boolean = false
+    defaultRecipeId: String? = null,
+    filterStructuralOnly: Boolean = false,
+    label: String = stringResource(Res.string.concrete_label_type)
 ) {
     val staticRepo = remember { StaticMaterialRepository() }
     
-    val customRecipes by settingsRepository.customRecipes.collectAsState(initial = emptyList())
-    val hiddenIds by settingsRepository.hiddenRecipeIds.collectAsState(initial = emptySet())
-
     // Resolvemos los strings comunes
     val resistanceLabel = stringResource(Res.string.recipe_section_resistance)
     val resistanceUnit = stringResource(Res.string.recipe_unit_kilogram_per_square_centimeters)
+    val resultProportion = stringResource(Res.string.concrete_result_proportion)
+    val resultTechnical =
+        stringResource(Res.string.concrete_result_technical, stringResource(Res.string.unit_kilograms))
 
     // Construimos la lista en cada composición para poder usar stringResource
-    // Esto es necesario porque stringResource es @Composable y no puede ir dentro de remember
     val factoryOptions = mutableListOf<Pair<Int, ConcreteOption>>()
     val customOptions = mutableListOf<ConcreteOption>()
 
@@ -69,23 +71,25 @@ fun ConcreteSelectorField(
         resistencia: String,
         usos: String,
         isEstructural: Boolean,
-        receta: DosificacionHormigon
+        isCustom: Boolean,
+        receta: ConcreteDosing
     ): ConcreteOption {
         val proporcion = receta.estimarProporcionTexto()
-        val tecnico = "${receta.cementoKg.toInt()}kg Cem | A/C:${receta.relacionAgua}"
+        val tecnico = "${receta.cementKg.toInt()} $resultTechnical ${receta.waterCementRatio}"
         val descripcionFinal = "$proporcion\n$tecnico"
 
-        return ConcreteOption(id, label, descripcionFinal, resistencia, usos, isEstructural, receta)
+        return ConcreteOption(id, label, descripcionFinal, resistencia, usos, isEstructural, isCustom, receta)
     }
 
     // 1. Procesar hormigones de fábrica
-    TipoHormigon.entries.forEach { type ->
+    ConcreteType.entries.forEach { type ->
         if (type.name !in hiddenIds && (!filterStructuralOnly || type.isStructural)) {
-            val receta = staticRepo.getDosificacionHormigon(type)!!
+            val receta = staticRepo.getConcreteDosing(type)!!
             val resistanceText = "$resistanceLabel ${type.resistanceKgCm2} $resistanceUnit"
             val usesText = stringResource(type.usesRes)
-            
-            val option = crearOpcionHormigon(type.name, type.name, resistanceText, usesText, type.isStructural, receta)
+
+            val option =
+                crearOpcionHormigon(type.name, type.name, resistanceText, usesText, type.isStructural, false, receta)
             factoryOptions.add(type.ordinal to option)
         }
     }
@@ -99,27 +103,28 @@ fun ConcreteSelectorField(
                     append(formatPart(custom.partCemento))
                     append(":${formatPart(custom.partArena)}")
                     append(":${formatPart(custom.partPiedra)}")
-                    append(" (Cem:Arena:Piedra)")
+                    append(" $resultProportion")
                 }
             } else null
 
-            val receta = DosificacionHormigon(
-                nombre = "${custom.nombre} (Pers.)",
-                descripcionProporcion = partesTexto ?: "",
-                cementoKg = custom.cementoKg,
-                arenaM3 = custom.arenaM3,
-                piedraM3 = custom.piedraM3,
-                aguaLitros = custom.cementoKg * custom.relacionAgua, // CORREGIDO
-                relacionAgua = custom.relacionAgua
+            val receta = ConcreteDosing(
+                name = custom.nombre,
+                descriptionProportion = partesTexto ?: "",
+                cementKg = custom.cementKg,
+                sandM3 = custom.sandM3,
+                gravelM3 = custom.gravelM3,
+                waterLiters = custom.cementKg * custom.waterCementRatio,
+                waterCementRatio = custom.waterCementRatio
             )
             // Pasamos cadena vacía para resistencia y usos si está en blanco
             customOptions.add(
                 crearOpcionHormigon(
                     custom.id,
-                    "${custom.nombre} (C)",
+                    custom.nombre,
                     "", // Resistencia vacía para custom
                     custom.usos, // Usos tal cual viene (puede estar vacío)
-                    custom.isEstructural, 
+                    custom.isEstructural,
+                    custom.isCustom,
                     receta
                 )
             )
@@ -131,30 +136,27 @@ fun ConcreteSelectorField(
     
     val opcionesHormigon = sortedFactory + sortedCustom
 
-    // El estado interno ahora puede ser nulo mientras se decide
-    var selectedOption by remember { mutableStateOf<ConcreteOption?>(null) }
-    var isInitialSelectionDone by remember { mutableStateOf(false) }
+    // Lógica de selección simplificada y reactiva (Single Source of Truth)
+    val selectedOption = remember(opcionesHormigon, selectedRecipeId, defaultRecipeId) {
+        opcionesHormigon.find { it.id == selectedRecipeId }
+            ?: opcionesHormigon.find { it.id == defaultRecipeId }
+            ?: opcionesHormigon.firstOrNull()
+    }
 
-    // Efecto para la selección inicial
-    LaunchedEffect(opcionesHormigon, defaultRecipeId) {
-        if (opcionesHormigon.isNotEmpty() && defaultRecipeId != null && !isInitialSelectionDone) {
-            val optionToSelect = 
-                opcionesHormigon.find { it.id == selectedRecipeId } // 1. Respetar si el padre ya tiene algo
-                ?: opcionesHormigon.find { it.id == defaultRecipeId } // 2. Usar el default
-                ?: opcionesHormigon.first() // 3. Fallback al primero
-
-            selectedOption = optionToSelect
-            onRecipeSelected(optionToSelect.id, optionToSelect.receta)
-            isInitialSelectionDone = true
+    // Notificar al padre si la opción calculada es diferente a la que él tiene.
+    LaunchedEffect(selectedOption) {
+        selectedOption?.let {
+            if (it.id != selectedRecipeId) {
+                onRecipeSelected(it.id, it.receta)
+            }
         }
     }
 
     AppDropdown(
-        label = stringResource(Res.string.concrete_label_type),
-        selectedText = selectedOption?.label ?: "Cargando...", // Muestra "Cargando..."
+        label = label,
+        selectedText = selectedOption?.label ?: "",
         options = opcionesHormigon,
         onSelect = { 
-            selectedOption = it
             onRecipeSelected(it.id, it.receta)
         },
         modifier = modifier
@@ -162,25 +164,20 @@ fun ConcreteSelectorField(
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(option.label, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.width(8.dp))
-                if (option.isEstructural) {
-                    Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = MaterialTheme.shapes.extraSmall) {
-                        Text(stringResource(Res.string.concrete_label_type_structural), style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 4.dp), color = MaterialTheme.colorScheme.onPrimaryContainer)
-                    }
-                } else {
-                    Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.extraSmall) {
-                        Text(stringResource(Res.string.concrete_label_type_non_structural), style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 4.dp))
-                    }
-                }
+                if (option.isCustom) PrimaryBadge(stringResource(Res.string.label_custom))
+                if (option.isEstructural) TertiaryBadge(stringResource(Res.string.concrete_label_type_structural))
             }
-            
-            // Renderizado condicional
+
             if (option.resistencia.isNotBlank()) {
                 Text(option.resistencia, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
             }
             
             if (option.usos.isNotBlank()) {
-                Text("Usos: ${option.usos}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    "${stringResource(Res.string.label_uses)} ${option.usos}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -199,7 +196,8 @@ private data class ConcreteOption(
     val resistencia: String,
     val usos: String,
     val isEstructural: Boolean,
-    val receta: DosificacionHormigon
+    val isCustom: Boolean,
+    val receta: ConcreteDosing
 ) {
     override fun toString(): String = label
 }

@@ -25,12 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -42,30 +37,29 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import materialscalculator.composeapp.generated.resources.Res
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
-
-import org.m415x.materialcalc.domain.model.DosificacionMortero
-import org.m415x.materialcalc.domain.model.PropiedadesLadrillo
+import org.m415x.materialcalc.domain.model.BrickProps
+import org.m415x.materialcalc.domain.model.MortarDosing
 import org.m415x.materialcalc.domain.utils.PlatformInfo
 
 // Modelo auxiliar para el Dropdown (Mantenlo privado o dentro del archivo)
-data class LadrilloOption(
+data class BrickOption(
     val id: String,
     val label: String,
-    val isPortante: Boolean,
-    val descripcion: String,
-    val props: PropiedadesLadrillo,
-    val receta: DosificacionMortero // Receta asociada/sugerida
+    val isBearing: Boolean, // Portante
+    val isCustom: Boolean,
+    val description: String,
+    val props: BrickProps,
+    val recipe: MortarDosing // Receta asociada/sugerida
 )
 
 // Modelo auxiliar para la lista de mezclas
-data class MezclaOption(
+data class MortarOption(
     val id: String,
-    val nombre: String,
-    val descripcion: String, // Ej: "1:3 (Cem:Arena)"
-    val data: DosificacionMortero
+    val name: String,
+    val description: String, // Ej: "1:3 (Cem:Arena)"
+    val data: MortarDosing
 )
 
 /**

@@ -19,7 +19,10 @@
 package org.m415x.materialcalc.domain.usecase
 
 import org.m415x.materialcalc.domain.common.calculateWetMaterials
-import org.m415x.materialcalc.domain.model.*
+import org.m415x.materialcalc.domain.model.Aperture
+import org.m415x.materialcalc.domain.model.BrickProps
+import org.m415x.materialcalc.domain.model.MortarDosing
+import org.m415x.materialcalc.domain.model.WallResult
 import org.m415x.materialcalc.domain.utils.calculateNetSurface
 import kotlin.math.ceil
 
@@ -44,14 +47,14 @@ class CalculateWallUseCase {
     operator fun invoke(
         largoMuroMetros: Double,
         altoMuroMetros: Double,
-        props: PropiedadesLadrillo,
-        dosis: DosificacionMortero,
-        aberturas: List<Abertura>,
+        props: BrickProps,
+        dosis: MortarDosing,
+        aberturas: List<Aperture>,
         bolsaCementoKg: Int,
         bolsaCalKg: Int,
         desperdicioLadrillos: Double,
         desperdicioMortero: Double
-    ): ResultadoMuro {
+    ): WallResult {
 
         // ============================================================
         // 1. GEOMETRÍA (ÁREA NETA)
@@ -67,7 +70,7 @@ class CalculateWallUseCase {
         // 2. CÁLCULO DE LADRILLOS (Unidades Físicas)
         // ============================================================
         // Fórmula: 1 / ((Largo + Junta) * (Alto + Junta))
-        val supLadrilloConJunta = (props.largoUnidad + props.espesorJunta) * (props.altoUnidad + props.espesorJunta)
+        val supLadrilloConJunta = (props.length + props.gasketThickness) * (props.height + props.gasketThickness)
         val ladrillosPorM2 = 1.0 / supLadrilloConJunta
 
         // Cantidad Teórica
@@ -81,45 +84,45 @@ class CalculateWallUseCase {
         // ============================================================
 
         // A. Volumen Geométrico del Muro (Área * Espesor)
-        val volumenParedM3 = areaNeta * props.anchoMuro
+        val volumenParedM3 = areaNeta * props.width
 
         // B. Volumen ocupado por Ladrillos (Sin desperdicio, ocupación física real)
-        val volumenLadrillosSolidos = totalLadrillosTeorico * (props.largoUnidad * props.altoUnidad * props.anchoMuro)
+        val volumenLadrillosSolidos = totalLadrillosTeorico * (props.length * props.height * props.width)
 
         // C. Volumen Geométrico de la Mezcla (Diferencia)
         val volumenMorteroGeo = (volumenParedM3 - volumenLadrillosSolidos).coerceAtLeast(0.0)
 
         // D. ¡MOTOR DE CÁLCULO! (Aplica desperdicio 15% y calcula materiales)
         val matsMortero = calculateWetMaterials(
-            volumenM3 = volumenMorteroGeo,
-            receta = dosis,
-            desperdicio = desperdicioMortero,
-            pesoBolsaCemento = bolsaCementoKg,
-            pesoBolsaCal = bolsaCalKg
+            volumeM3 = volumenMorteroGeo,
+            recipe = dosis,
+            waste = desperdicioMortero,
+            cementBagWeight = bolsaCementoKg,
+            limeBagWeight = bolsaCalKg
         )
 
         // ============================================================
         // 4. RESULTADO FINAL
         // ============================================================
-        return ResultadoMuro(
-            areaNetaM2 = areaNeta,
+        return WallResult(
+            netAreaM2 = areaNeta,
 
             // Ladrillos
-            cantidadLadrillos = cantidadRealLadrillos,
-            porcentajeDesperdicioLadrillos = desperdicioLadrillos,
+            quantityBricks = cantidadRealLadrillos,
+            percentageBrickWaste = desperdicioLadrillos,
 
             // Mortero (Viene del motor)
-            morteroM3 = volumenMorteroGeo * (1 + desperdicioMortero),
-            cementoKg = matsMortero.cementoKg,
-            calKg = matsMortero.calKg,
-            arenaTotalM3 = matsMortero.arenaM3,
-            aguaLitros = matsMortero.aguaLitros,
-            porcentajeDesperdicioMortero = desperdicioMortero,
+            mortarM3 = volumenMorteroGeo * (1 + desperdicioMortero),
+            cementKg = matsMortero.cementoKg,
+            limeKg = matsMortero.calKg,
+            sandM3 = matsMortero.arenaM3,
+            waterLiters = matsMortero.aguaLitros,
+            percentageMortarWaste = desperdicioMortero,
 
             // Configuración
-            proporcionMezcla = dosis.proporcionMezcla,
-            bolsaCementoKg = bolsaCementoKg,
-            bolsaCalKg = bolsaCalKg
+            mixingRatio = dosis.mixingRatio,
+            cementBagKg = bolsaCementoKg,
+            limeBagKg = bolsaCalKg
         )
     }
 }

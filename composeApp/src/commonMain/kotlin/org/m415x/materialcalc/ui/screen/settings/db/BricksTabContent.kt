@@ -19,67 +19,32 @@
 package org.m415x.materialcalc.ui.screen.settings.db
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Restore
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 import kotlinx.coroutines.launch
 import materialscalculator.composeapp.generated.resources.Res
 import materialscalculator.composeapp.generated.resources.button_cancel
 import materialscalculator.composeapp.generated.resources.button_close
 import materialscalculator.composeapp.generated.resources.button_save
 import org.jetbrains.compose.resources.stringResource
-
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
+import org.m415x.materialcalc.domain.model.BrickType
 import org.m415x.materialcalc.domain.model.CustomBrick
-import org.m415x.materialcalc.domain.model.TipoLadrillo
-import org.m415x.materialcalc.ui.common.AppInput
-import org.m415x.materialcalc.ui.common.NumericInput
-import org.m415x.materialcalc.ui.common.RequestFocusOnStart
-import org.m415x.materialcalc.ui.common.toSafeDoubleOrNull
+import org.m415x.materialcalc.ui.common.*
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 // Definimos el modelo UI aquí para uso local
 data class BrickUiModel(
@@ -125,28 +90,28 @@ fun BricksTabContent(repository: SettingsRepository) {
         })
 
         // B. Agregamos los ESTÁTICOS (Si no están ocultos)
-        TipoLadrillo.entries.forEach { type ->
+        BrickType.entries.forEach { type ->
             if (type.name !in hiddenIds) { // Usamos type.name como ID único
-                val props = staticRepo.getPropiedadesLadrillo(type)!!
-                val w = (props.anchoMuro * 100).toInt()
-                val h = (props.altoUnidad * 100).toInt()
-                val l = (props.largoUnidad * 100).toInt()
+                val props = staticRepo.getBrickProps(type)!!
+                val w = (props.width * 100).toInt()
+                val h = (props.height * 100).toInt()
+                val l = (props.length * 100).toInt()
 
                 list.add(MaterialUiModel(
                     id = type.name,
-                    title = type.nombre,
+                    title = type.nameBrick,
                     subtitle = "${w}x${h}x${l} cm",
                     isCustom = false,
                     // Creamos un CustomBrick temporal para facilitar la copia en el editor
                     originalData = CustomBrick(
                         id = "", // ID vacío para que al guardar se genere uno nuevo
-                        nombre = type.nombre,
-                        ancho = props.anchoMuro,
-                        alto = props.altoUnidad,
-                        largo = props.largoUnidad,
-                        junta = props.espesorJunta,
-                        isPortante = type.isPortante,
-                        descripcion = type.descripcion
+                        nombre = type.nameBrick,
+                        ancho = props.width,
+                        alto = props.height,
+                        largo = props.length,
+                        junta = props.gasketThickness,
+                        isPortante = type.isBearing,
+                        descripcion = type.description
                     )
                 ))
             }
@@ -273,16 +238,20 @@ fun RestoreBricksDialog(
     onRestore: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    AppDialog(
         onDismissRequest = onDismiss,
         title = { Text("Restaurar Ladrillos") },
-        text = {
+        content = {
             LazyColumn(
                 modifier = Modifier.heightIn(max = 300.dp) // Limitar altura
             ) {
                 items(hiddenIds.toList()) { id ->
                     // Buscamos el nombre legible usando el Enum
-                    val nombre = try { TipoLadrillo.valueOf(id).nombre } catch (e: Exception) { id }
+                    val nombre = try {
+                        BrickType.valueOf(id).nameBrick
+                    } catch (e: Exception) {
+                        id
+                    }
 
                     Row(
                         modifier = Modifier
@@ -299,7 +268,7 @@ fun RestoreBricksDialog(
                 }
             }
         },
-        confirmButton = {
+        actions = {
             TextButton(onClick = onDismiss) { Text(stringResource(Res.string.button_close)) }
         }
     )
@@ -345,132 +314,115 @@ fun BrickEditorDialog(
     // Auto-Foco al abrir
     RequestFocusOnStart(focusNombreLadrillo)
 
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.extraLarge
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(24.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+    AppDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (brickToEdit == null) "Nuevo Ladrillo" else "Editar Ladrillo") },
+        content = {
+            AppInput(
+                value = name,
+                onValueChange = { name = it },
+                label = "Nombre del ladrillo",
+                focusRequester = focusNombreLadrillo,
+                nextFocusRequester = focusAnchoLadrillo
+            )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().clickable { isPortante = !isPortante }
             ) {
-                Text(
-                    if (brickToEdit == null) "Nuevo Ladrillo" else "Editar Ladrillo",
-                    style = MaterialTheme.typography.headlineSmall
+                Checkbox(
+                    checked = isPortante,
+                    onCheckedChange = { isPortante = it },
+                    Modifier.focusRequester(focusIsPortante)
                 )
+                Text("Es Portante", style = MaterialTheme.typography.labelMedium)
+                Text(" (Estructural)", style = MaterialTheme.typography.labelSmall)
+            }
 
-                AppInput(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = "Nombre del ladrillo",
-                    focusRequester = focusNombreLadrillo,
-                    nextFocusRequester = focusAnchoLadrillo
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                NumericInput(
+                    value = anchoCm,
+                    onValueChange = { anchoCm = it },
+                    label = "Ancho",
+                    suffix = { Text("cm") },
+                    modifier = Modifier.weight(1f),
+                    focusRequester = focusAnchoLadrillo,
+                    nextFocusRequester = focusAltoLadrillo
                 )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth().clickable { isPortante = !isPortante }
-                ) {
-                    Checkbox(
-                        checked = isPortante,
-                        onCheckedChange = { isPortante = it },
-                        Modifier.focusRequester(focusIsPortante)
-                    )
-                    Text("Es Portante", style = MaterialTheme.typography.labelMedium)
-                    Text(" (Estructural)", style = MaterialTheme.typography.labelSmall)
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NumericInput(
-                        value = anchoCm,
-                        onValueChange = { anchoCm = it },
-                        label = "Ancho",
-                        suffix = { Text("cm") },
-                        modifier = Modifier.weight(1f),
-                        focusRequester = focusAnchoLadrillo,
-                        nextFocusRequester = focusAltoLadrillo
-                    )
-                    NumericInput(
-                        value = altoCm,
-                        onValueChange = { altoCm = it },
-                        label = "Alto",
-                        suffix = { Text("cm") },
-                        modifier = Modifier.weight(1f),
-                        focusRequester = focusAltoLadrillo,
-                        nextFocusRequester = focusLargoLadrillo
-                    )
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NumericInput(
-                        value = largoCm,
-                        onValueChange = { largoCm = it },
-                        label = "Largo",
-                        suffix = { Text("cm") },
-                        modifier = Modifier.weight(1f),
-                        focusRequester = focusLargoLadrillo,
-                        nextFocusRequester = focusJuntaLadrillo
-                    )
-                    NumericInput(
-                        value = juntaCm,
-                        onValueChange = { juntaCm = it },
-                        label = "Junta",
-                        suffix = { Text("cm") },
-                        modifier = Modifier.weight(1f),
-                        focusRequester = focusJuntaLadrillo,
-                        nextFocusRequester = focusDescripcionLadrillo
-                    )
-                }
-
-                AppInput(
-                    value = descripcion,
-                    onValueChange = { descripcion = it },
-                    label = "Descripción / Uso",
-                    focusRequester = focusDescripcionLadrillo,
-                    onDone = {}
+                NumericInput(
+                    value = altoCm,
+                    onValueChange = { altoCm = it },
+                    label = "Alto",
+                    suffix = { Text("cm") },
+                    modifier = Modifier.weight(1f),
+                    focusRequester = focusAltoLadrillo,
+                    nextFocusRequester = focusLargoLadrillo
                 )
+            }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.button_cancel)) }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        enabled = isFormValid,
-                        onClick = {
-                            // Convertir Inputs CM -> Metros Storage
-                            val w = (anchoCm.toSafeDoubleOrNull() ?: 0.0) / 100.0
-                            val h = (altoCm.toSafeDoubleOrNull() ?: 0.0) / 100.0
-                            val l = (largoCm.toSafeDoubleOrNull() ?: 0.0) / 100.0
-                            val j = (juntaCm.toSafeDoubleOrNull() ?: 0.0) / 100.0
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                NumericInput(
+                    value = largoCm,
+                    onValueChange = { largoCm = it },
+                    label = "Largo",
+                    suffix = { Text("cm") },
+                    modifier = Modifier.weight(1f),
+                    focusRequester = focusLargoLadrillo,
+                    nextFocusRequester = focusJuntaLadrillo
+                )
+                NumericInput(
+                    value = juntaCm,
+                    onValueChange = { juntaCm = it },
+                    label = "Junta",
+                    suffix = { Text("cm") },
+                    modifier = Modifier.weight(1f),
+                    focusRequester = focusJuntaLadrillo,
+                    nextFocusRequester = focusDescripcionLadrillo
+                )
+            }
 
-                            // Verificamos si es nulo O ESTÁ VACÍO.
-                            val finalId = if (brickToEdit?.id.isNullOrBlank()) {
-                                Uuid.random().toString() // Generar ID nuevo si es copia o nuevo
-                            } else {
-                                brickToEdit.id // Mantener ID si es edición de uno existente
-                            }
+            AppInput(
+                value = descripcion,
+                onValueChange = { descripcion = it },
+                label = "Descripción / Uso",
+                focusRequester = focusDescripcionLadrillo,
+                onDone = {}
+            )
+        },
+        actions = {
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.button_cancel)) }
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(
+                enabled = isFormValid,
+                onClick = {
+                    // Convertir Inputs CM -> Metros Storage
+                    val w = (anchoCm.toSafeDoubleOrNull() ?: 0.0) / 100.0
+                    val h = (altoCm.toSafeDoubleOrNull() ?: 0.0) / 100.0
+                    val l = (largoCm.toSafeDoubleOrNull() ?: 0.0) / 100.0
+                    val j = (juntaCm.toSafeDoubleOrNull() ?: 0.0) / 100.0
 
-                            val newBrick = CustomBrick(
-                                id = finalId,
-                                nombre = name,
-                                ancho = w,
-                                alto = h,
-                                largo = l,
-                                junta = j,
-                                isPortante = isPortante,
-                                descripcion = descripcion
-                            )
-                            onSave(newBrick)
-                        }
-                    ) {
-                        Text(stringResource(Res.string.button_save))
+                    // Verificamos si es nulo O ESTÁ VACÍO.
+                    val finalId = if (brickToEdit?.id.isNullOrBlank()) {
+                        Uuid.random().toString() // Generar ID nuevo si es copia o nuevo
+                    } else {
+                        brickToEdit.id // Mantener ID si es edición de uno existente
                     }
+
+                    val newBrick = CustomBrick(
+                        id = finalId,
+                        nombre = name,
+                        ancho = w,
+                        alto = h,
+                        largo = l,
+                        junta = j,
+                        isPortante = isPortante,
+                        descripcion = descripcion
+                    )
+                    onSave(newBrick)
                 }
+            ) {
+                Text(stringResource(Res.string.button_save))
             }
         }
-    }
+    )
 }

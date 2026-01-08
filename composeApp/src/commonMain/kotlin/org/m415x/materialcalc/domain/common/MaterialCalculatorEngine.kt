@@ -45,35 +45,35 @@ data class MaterialQuantities(
 /**
  * Función pura que calcula materiales base.
  *
- * @param volumenM3 Volumen geométrico real.
- * @param receta La dosificación a usar (Hormigón o Mortero).
- * @param desperdicio Porcentaje extra (ej: 0.10 para 10%).
- * @param pesoBolsaCemento Peso de una bolsa de cemento.
- * @param pesoBolsaCal Peso de una bolsa de cal.
+ * @param volumeM3 Volumen geométrico real.
+ * @param recipe La dosificación a usar (Hormigón o Mortero).
+ * @param waste Porcentaje extra (ej: 0.10 para 10%).
+ * @param cementBagWeight Peso de una bolsa de cemento.
+ * @param limeBagWeight Peso de una bolsa de cal.
  *
  * @return MaterialQuantities
  */
 fun calculateWetMaterials(
-    volumenM3: Double,
-    receta: MaterialRecipe,
-    desperdicio: Double,
-    pesoBolsaCemento: Int,
-    pesoBolsaCal: Int
+    volumeM3: Double,
+    recipe: MaterialRecipe,
+    waste: Double,
+    cementBagWeight: Int,
+    limeBagWeight: Int
 ): MaterialQuantities {
 
     // 1. Aplicamos desperdicio al volumen
-    val volumenReal = volumenM3 * (1.0 + desperdicio)
+    val volumenReal = volumeM3 * (1.0 + waste)
 
     // 2. Calculamos brutos
-    val cemKg = volumenReal * receta.cementoKg
-    val calKg = volumenReal * receta.calKg
-    val arena = volumenReal * receta.arenaM3
-    val piedra = volumenReal * receta.piedraM3
+    val cemKg = volumenReal * recipe.cementKg
+    val calKg = volumenReal * recipe.limeKg
+    val arena = volumenReal * recipe.sandM3
+    val piedra = volumenReal * recipe.gravelM3
 
     // El agua suele calcularse sobre el cemento (Relación A/C)
     // O sobre el total de secos, depende tu fórmula original.
     // Usaremos la lógica de tu código: KgCemento * Relacion
-    val agua = cemKg * receta.relacionAgua
+    val agua = cemKg * recipe.waterCementRatio
 
     return MaterialQuantities(
         cementoKg = cemKg,
@@ -81,7 +81,7 @@ fun calculateWetMaterials(
         arenaM3 = arena,
         piedraM3 = piedra,
         aguaLitros = agua,
-        cementoBolsas = ceil(cemKg / pesoBolsaCemento).toInt(),
-        calBolsas = ceil(calKg / pesoBolsaCal).toInt()
+        cementoBolsas = ceil(cemKg / cementBagWeight).toInt(),
+        calBolsas = ceil(calKg / limeBagWeight).toInt()
     )
 }

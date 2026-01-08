@@ -18,8 +18,8 @@
 
 package org.m415x.materialcalc.domain.model
 
-import org.jetbrains.compose.resources.StringResource
 import materialscalculator.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * Enumeración que representa los tipos de hormigón.
@@ -28,7 +28,7 @@ import materialscalculator.composeapp.generated.resources.*
  * @property usesRes Recurso de string que describe los usos comunes.
  * @property isStructural Indica si es apto para uso estructural.
  */
-enum class TipoHormigon(val resistanceKgCm2: Int, val usesRes: StringResource, val isStructural: Boolean) {
+enum class ConcreteType(val resistanceKgCm2: Int, val usesRes: StringResource, val isStructural: Boolean) {
     H8(80, Res.string.recipe_uses_h8, false),
     H13(130, Res.string.recipe_uses_h13, false),
     H17(170, Res.string.recipe_uses_h17, true),
@@ -40,21 +40,22 @@ enum class TipoHormigon(val resistanceKgCm2: Int, val usesRes: StringResource, v
 /**
  * Representa el resultado del cálculo de hormigón.
  *
- * @property volumenTotalM3 Volumen total de hormigón en m³.
- * @property porcentajeDesperdicioHormigon Porcentaje de desperdicio.
- * @property cementoKg Cantidad de cemento en kg.
- * @property bolsaCementoKg Peso de la bolsa de cemento.
- * @property arenaM3 Cantidad de arena en m³.
- * @property piedraM3 Cantidad de piedra en m³.
- * @property aguaLitros Cantidad de agua en litros.
+ * @property totalVolumeM3 Volumen total de hormigón en m³.
+ * @property percentageConcreteWaste Porcentaje de desperdicio.
+ * @property cementKg Cantidad de cemento en kg.
+ * @property cementBagKg Peso de la bolsa de cemento.
+ * @property sandM3 Cantidad de arena en m³.
+ * @property gravelM3 Cantidad de piedra en m³.
+ * @property waterLiters Cantidad de agua en litros.
+ * @property mixingRatio Razón de mezcla.
  */
-data class ResultadoHormigon(
-    val volumenTotalM3: Double,
-    val porcentajeDesperdicioHormigon: Double,
-    val cementoKg: Double,
-    val bolsaCementoKg: Int,
-    val arenaM3: Double,
-    val piedraM3: Double,
-    val aguaLitros: Double,
-    val proporcionMezcla: String
+data class ConcreteResult(
+    val totalVolumeM3: Double,
+    val percentageConcreteWaste: Double,
+    val cementKg: Double,
+    val cementBagKg: Int,
+    val sandM3: Double,
+    val gravelM3: Double,
+    val waterLiters: Double,
+    val mixingRatio: String
 )

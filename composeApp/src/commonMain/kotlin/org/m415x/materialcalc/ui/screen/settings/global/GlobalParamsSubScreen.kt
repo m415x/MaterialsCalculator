@@ -23,7 +23,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -33,9 +35,10 @@ import kotlinx.coroutines.launch
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.SettingsRepository.Defaults
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
-import org.m415x.materialcalc.domain.model.TipoHormigon
-import org.m415x.materialcalc.domain.model.TipoLadrillo
+import org.m415x.materialcalc.domain.model.AppSettingsState
+import org.m415x.materialcalc.domain.model.BrickType
 import org.m415x.materialcalc.ui.common.AppDropdown
+import org.m415x.materialcalc.ui.common.ConcreteSelectorField
 import org.m415x.materialcalc.ui.screen.settings.EditDoubleSetting
 import org.m415x.materialcalc.ui.screen.settings.EditIntegerSetting
 import org.m415x.materialcalc.ui.screen.settings.EditPercentSetting
@@ -65,28 +68,29 @@ private data class RecipeDisplayOption(
  * Pantalla de parámetros globales.
  *
  * @param repository El repositorio de configuración.
+ * @param appSettings El estado global de la configuración.
  */
 @Composable
-fun GlobalParamsSubScreen(repository: SettingsRepository) {
+fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettingsState) {
     val scope = rememberCoroutineScope()
     val staticRepo = remember { StaticMaterialRepository() }
 
     // --- DATOS PARA LAS LISTAS (Fusión) ---
-    val customBricks by repository.customBricks.collectAsState(initial = emptyList())
-    val customRecipes by repository.customRecipes.collectAsState(initial = emptyList())
-    val hiddenBricks by repository.hiddenBrickIds.collectAsState(initial = emptySet())
-    val hiddenRecipes by repository.hiddenRecipeIds.collectAsState(initial = emptySet())
+    val customBricks = appSettings.customBricks
+    val customRecipes = appSettings.customRecipes
+    val hiddenBricks = appSettings.hiddenBrickIds
+    val hiddenRecipes = appSettings.hiddenRecipeIds
 
     // --- LADRILLOS ---
     val brickOptions = remember(customBricks, hiddenBricks) {
         val list = mutableListOf<BrickDisplayOption>()
 
         // A. Fábrica
-        TipoLadrillo.entries.filter { it.name !in hiddenBricks }.forEach { t ->
-            val p = staticRepo.getPropiedadesLadrillo(t)!!
+        BrickType.entries.filter { it.name !in hiddenBricks }.forEach { t ->
+            val p = staticRepo.getBrickProps(t)!!
             val medidas =
-                "${(p.anchoMuro * 100).toInt()}x${(p.altoUnidad * 100).toInt()}x${(p.largoUnidad * 100).toInt()} cm"
-            list.add(BrickDisplayOption(t.name, t.nombre, medidas, t.isPortante, false))
+                "${(p.width * 100).toInt()}x${(p.height * 100).toInt()}x${(p.length * 100).toInt()} cm"
+            list.add(BrickDisplayOption(t.name, t.nameBrick, medidas, t.isBearing, false))
         }
 
         // B. Custom
@@ -98,51 +102,17 @@ fun GlobalParamsSubScreen(repository: SettingsRepository) {
         list.sortedBy { it.name }
     }
 
-    // --- HORMIGONES ---
-    val concreteOptions = remember(customRecipes, hiddenRecipes) {
-        val list = mutableListOf<RecipeDisplayOption>()
-
-        // A. Fábrica
-        TipoHormigon.entries.filter { it.name !in hiddenRecipes }.forEach { t ->
-            val d = staticRepo.getDosificacionHormigon(t)!!
-            // Usamos la descripción oficial (Ej: 1:3:3)
-            list.add(
-                RecipeDisplayOption(
-                    id = t.name,
-                    name = t.name,
-                    proporcionMezcla = d.descripcionProporcion,
-                    isCustom = false
-                )
-            )
-        }
-
-        // B. Custom (Solo Hormigones)
-        customRecipes.filter { it.tipo == "CONCRETE" }.forEach { c ->
-            // Para custom, armamos un resumen de la receta
-            val desc = "${c.cementoKg.toInt()}kg Cem | A/C: ${c.relacionAgua}"
-            list.add(
-                RecipeDisplayOption(
-                    id = c.id,
-                    name = "${c.nombre} (C)",
-                    proporcionMezcla = desc,
-                    isCustom = true
-                )
-            )
-        }
-        list.sortedBy { it.name }
-    }
-
     // --- REVOQUE ---
     val plasterOptions = remember(customRecipes) {
         val list = mutableListOf<RecipeDisplayOption>()
 
         // 1. Estándar
-        val jaharro = staticRepo.getRecetaGrueso()
+        val jaharro = staticRepo.getThickPlasterRecipe()
         list.add(
             RecipeDisplayOption(
                 id = "STD_JAHARRO",
                 name = "Jaharro (Estándar)",
-                proporcionMezcla = jaharro.proporcionMezcla,
+                proporcionMezcla = jaharro.mixingRatio,
                 isCustom = false
             )
         )
@@ -162,29 +132,28 @@ fun GlobalParamsSubScreen(repository: SettingsRepository) {
     }
 
     // Lectura de valores (con valores por defecto mientras carga)
-    val cementWeight by repository.bagCementKg.collectAsState(Defaults.DEFAULT_BAG_CEMENT)
-    val limeWeight by repository.bagLimeKg.collectAsState(Defaults.DEFAULT_BAG_LIME)
-    val premixWeight by repository.bagPremixKg.collectAsState(Defaults.DEFAULT_BAG_PREMIX)
-    val bucketVol by repository.bucketCapacityLiters.collectAsState(Defaults.DEFAULT_BUCKET_VOL)
-    val barrowVol by repository.barrowCapacityLiters.collectAsState(Defaults.DEFAULT_BARROW_VOL)
-    val fineThick by repository.fineThicknessMm.collectAsState(Defaults.DEFAULT_THICKNESS_FINE)
-    val wConcrete by repository.wasteConcretePct.collectAsState(Defaults.DEFAULT_WASTE_CONCRETE)
-    val wMortar by repository.wasteMortarPct.collectAsState(Defaults.DEFAULT_WASTE_MORTAR)
-    val wBrick by repository.wasteBricksPct.collectAsState(Defaults.DEFAULT_WASTE_BRICK)
-    val wIronMain by repository.wasteIronMainPct.collectAsState(Defaults.DEFAULT_WASTE_IRON_MAIN)
-    val wIronStirrup by repository.wasteIronStirrupPct.collectAsState(Defaults.DEFAULT_WASTE_IRON_STIRRUP)
-    val wPlaster by repository.wastePlasterPct.collectAsState(Defaults.DEFAULT_WASTE_PLASTER)
+    val cementWeight = appSettings.bagCementKg
+    val limeWeight = appSettings.bagLimeKg
+    val premixWeight = appSettings.bagPremixKg
+    val bucketVol = appSettings.bucketVolL
+    val barrowVol = appSettings.barrowVolL
+    val mixerVol = appSettings.mixerVolL
+    val fineThick = appSettings.fineThicknessMm
+    val wConcrete = appSettings.wasteConcretePct
+    val wMortar = appSettings.wasteMortarPct
+    val wBrick = appSettings.wasteBrickPct
+    val wIronMain = appSettings.wasteIronMainPct
+    val wIronStirrup = appSettings.wasteIronStirrupPct
+    val wPlaster = appSettings.wastePlasterPct
 
     // Defaults Seleccionados
-    val defBrickId by repository.defaultBrickId.collectAsState("LADRILLON")
-    val defConcGenId by repository.defaultConcreteGenId.collectAsState("H13")
-    val defConcStrId by repository.defaultConcreteStrId.collectAsState("H17")
-    val defPlasterId by repository.defaultPlasterRoughId.collectAsState("STD_JAHARRO")
+    val defBrickId = appSettings.defaultBrickId
+    val defConcGenId = appSettings.defaultConcreteGenId
+    val defConcStrId = appSettings.defaultConcreteStrId
+    val defPlasterId = appSettings.defaultPlasterId
 
     // Helpers para encontrar el objeto seleccionado completo
     val selectedBrick = brickOptions.find { it.id == defBrickId }
-    val selectedConcGen = concreteOptions.find { it.id == defConcGenId }
-    val selectedConcStr = concreteOptions.find { it.id == defConcStrId }
     val selectedPlasterMix = plasterOptions.find { it.id == defPlasterId }
 
     // Definimos los FocusRequesters necesarios
@@ -193,6 +162,7 @@ fun GlobalParamsSubScreen(repository: SettingsRepository) {
     val focusPremezclado = remember { FocusRequester() }
     val focusBalde = remember { FocusRequester() }
     val focusCarretilla = remember { FocusRequester() }
+    val focusMixer = remember { FocusRequester() }
     val focusFino = remember { FocusRequester() }
     val focusHormigon = remember { FocusRequester() }
     val focusMortero = remember { FocusRequester() }
@@ -216,7 +186,7 @@ fun GlobalParamsSubScreen(repository: SettingsRepository) {
         )
 
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-            Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 // Selector Ladrillo
                 AppDropdown(
                     label = "Ladrillo para Muros",
@@ -250,25 +220,24 @@ fun GlobalParamsSubScreen(repository: SettingsRepository) {
                     }
                 }
 
-                // Selector Hormigón General
-                AppDropdown(
-                    label = "Hormigón General (Pisos/Losas)",
-                    selectedText = selectedConcGen?.name ?: "Seleccionar...",
-                    options = concreteOptions,
-                    onSelect = { opt -> scope.launch { repository.saveDefaultConcreteGen(opt.id) } }
-                ) { option ->
-                    RecipeItemRow(option)
-                }
+                ConcreteSelectorField(
+                    selectedRecipeId = defConcGenId,
+                    onRecipeSelected = { id, _ -> scope.launch { repository.saveDefaultConcreteGen(id) } },
+                    customRecipes = customRecipes,
+                    hiddenIds = hiddenRecipes,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = "Hormigón General (Pisos/Losas)"
+                )
 
-                // Selector Hormigón Estructura
-                AppDropdown(
-                    label = "Hormigón Estructural (Vigas/Columnas)",
-                    selectedText = selectedConcStr?.name ?: "Seleccionar...",
-                    options = concreteOptions,
-                    onSelect = { opt -> scope.launch { repository.saveDefaultConcreteStr(opt.id) } }
-                ) { option ->
-                    RecipeItemRow(option)
-                }
+                ConcreteSelectorField(
+                    selectedRecipeId = defConcStrId,
+                    onRecipeSelected = { id, _ -> scope.launch { repository.saveDefaultConcreteStr(id) } },
+                    customRecipes = customRecipes,
+                    hiddenIds = hiddenRecipes,
+                    modifier = Modifier.fillMaxWidth(),
+                    filterStructuralOnly = true,
+                    label = "Hormigón Estructural (Vigas/Columnas)"
+                )
 
                 AppDropdown(
                     label = "Mezcla Revoque Grueso",
@@ -284,7 +253,7 @@ fun GlobalParamsSubScreen(repository: SettingsRepository) {
         Text("Presentación de Materiales", style = MaterialTheme.typography.titleMedium)
 
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-            Column(modifier = Modifier.padding(8.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 EditIntegerSetting(
                     label = "Cemento",
                     value = cementWeight,
@@ -320,7 +289,7 @@ fun GlobalParamsSubScreen(repository: SettingsRepository) {
         Text("Equivalencias de Obra", style = MaterialTheme.typography.titleMedium)
 
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-            Column(modifier = Modifier.padding(8.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 EditDoubleSetting(
                     label = "Balde",
                     value = bucketVol,
@@ -337,16 +306,24 @@ fun GlobalParamsSubScreen(repository: SettingsRepository) {
                     suffix = "Lt",
                     onSave = { scope.launch { repository.saveVolumeCapacity("barrow", it) } },
                     focusRequester = focusCarretilla,
+                    nextFocusRequester = focusMixer
+                )
+                EditDoubleSetting(
+                    label = "Hormigonera",
+                    value = mixerVol,
+                    defaultValue = Defaults.DEFAULT_MIXER_VOL,
+                    suffix = "Lt",
+                    onSave = { scope.launch { repository.saveVolumeCapacity("mixer", it) } },
+                    focusRequester = focusMixer,
                     nextFocusRequester = focusFino
                 )
-
             }
         }
 
         Text("Configuración Técnica", style = MaterialTheme.typography.titleMedium)
 
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-            Column(modifier = Modifier.padding(8.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 EditDoubleSetting(
                     label = "Espesor Revoque Fino",
                     value = fineThick,
@@ -368,7 +345,7 @@ fun GlobalParamsSubScreen(repository: SettingsRepository) {
         )
 
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-            Column(modifier = Modifier.padding(8.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 EditPercentSetting(
                     label = "Hormigón",
                     value = wConcrete,

@@ -46,4 +46,14 @@
     <string name="unit_square_centimeters">cm²</string>
     <string name="unit_cubic_centimeters">cm³</string>
     <string name="unit_millimeters">mm</string>
+
+    <!-- LABELS -->
+    <string name="label_width">Ancho (%1$s)</string>
+    <string name="label_length">Largo (%1$s)</string>
+    <string name="label_height">Alto (%1$s)</string>
+    <string name="label_thickness">Espesor (%1$s)</string>
+    <string name="label_quantity">Cantidad</string>
+    <string name="label_custom">CUSTOM</string>
+    <string name="label_uses">Usos:</string><!-- Ver usos -->
+    <string name="label_error">Error</string>
 </resources>

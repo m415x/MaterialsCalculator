@@ -18,8 +18,8 @@
 
 package org.m415x.materialcalc.domain.utils
 
-import org.m415x.materialcalc.domain.model.DosificacionHormigon
-import org.m415x.materialcalc.domain.model.DosificacionMortero
+import org.m415x.materialcalc.domain.model.ConcreteDosing
+import org.m415x.materialcalc.domain.model.MortarDosing
 import org.m415x.materialcalc.domain.utils.ConstructionConstants.DENSIDAD_CAL_SUELTA
 import org.m415x.materialcalc.domain.utils.ConstructionConstants.DENSIDAD_CEMENTO_SUELTO
 import org.m415x.materialcalc.domain.utils.ConstructionConstants.formatPart
@@ -27,19 +27,19 @@ import org.m415x.materialcalc.domain.utils.ConstructionConstants.formatPart
 /**
  * Convierte la dosificación técnica de hormigón a proporción volumétrica (1:3:3).
  */
-fun DosificacionHormigon.estimarProporcionTexto(): String {
+fun ConcreteDosing.estimarProporcionTexto(): String {
     // 1. SI TENEMOS EL DATO ORIGINAL, LO USAMOS (Prioridad Absoluta)
-    if (descripcionProporcion.isNotBlank()) return descripcionProporcion
+    if (descriptionProportion.isNotBlank()) return descriptionProportion
 
     // 2. Calcular volumen aparente del cemento (el "1" de la fórmula)
-    val volCemento = this.cementoKg / DENSIDAD_CEMENTO_SUELTO
+    val volCemento = this.cementKg / DENSIDAD_CEMENTO_SUELTO
 
     if (volCemento <= 0.001) return "Sin Cemento"
 
     // 3. Calcular partes relativas
     // Como arenaM3 y piedraM3 ya son volumen, solo dividimos por el volumen del cemento
-    val parteArena = this.arenaM3 / volCemento
-    val partePiedra = this.piedraM3 / volCemento
+    val parteArena = this.sandM3 / volCemento
+    val partePiedra = this.gravelM3 / volCemento
 
     return buildString {
         append("1") // Cemento
@@ -52,20 +52,20 @@ fun DosificacionHormigon.estimarProporcionTexto(): String {
 /**
  * Intenta convertir la dosificación técnica (kg) a una proporción volumétrica legible (1:3).
  */
-fun DosificacionMortero.estimarProporcionTexto(): String {
+fun MortarDosing.estimarProporcionTexto(): String {
     // 1. SI TENEMOS EL DATO ORIGINAL, LO USAMOS (Prioridad Absoluta)
-    if (!partes.isNullOrBlank()) return partes
+    if (!parts.isNullOrBlank()) return parts
 
     // 2. Si no (ej: receta vieja o manual), usamos la estimación matemática
-    val volCemento = this.cementoKg / DENSIDAD_CEMENTO_SUELTO
+    val volCemento = this.cementKg / DENSIDAD_CEMENTO_SUELTO
 
     // Si no hay cemento, es raro, devolvemos vacío o manejo especial
     if (volCemento <= 0.001) return "Sin Cemento"
 
     // 3. Normalizamos dividiendo todo por el volumen del cemento (El cemento es el "1")
     val parteCemento = 1.0
-    val parteCal = if (this.calKg > 0) (this.calKg / DENSIDAD_CAL_SUELTA) / volCemento else 0.0
-    val parteArena = this.arenaM3 / volCemento // La arena ya está en m3
+    val parteCal = if (this.limeKg > 0) (this.limeKg / DENSIDAD_CAL_SUELTA) / volCemento else 0.0
+    val parteArena = this.sandM3 / volCemento // La arena ya está en m3
     // val parteAgua = ... (Generalmente no se pone en el 1:3:3, es a ojo)
 
     return buildString {

@@ -18,7 +18,7 @@
 
 package org.m415x.materialcalc.domain.utils
 
-import org.m415x.materialcalc.domain.model.Abertura
+import org.m415x.materialcalc.domain.model.Aperture
 import org.m415x.materialcalc.ui.common.roundToDecimals // Asegúrate de tener acceso a esta extensión o muévela a domain/common
 
 /**
@@ -28,10 +28,10 @@ import org.m415x.materialcalc.ui.common.roundToDecimals // Asegúrate de tener a
 fun calculateNetSurface(
     largo: Double,
     alto: Double,
-    aberturas: List<Abertura>
+    aberturas: List<Aperture>
 ): Double {
     val areaBruta = largo * alto
-    val areaAberturas = aberturas.sumOf { it.anchoMetros * it.altoMetros * it.cantidad }
+    val areaAberturas = aberturas.sumOf { it.widthMeters * it.heightMeters * it.quantity }
 
     // VALIDACIONES CENTRALIZADAS
     if (areaAberturas > areaBruta) {

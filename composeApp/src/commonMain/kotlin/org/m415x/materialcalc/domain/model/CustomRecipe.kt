@@ -25,14 +25,15 @@ data class CustomRecipe(
     val id: String,
     val nombre: String,
     val tipo: String, // "MORTAR" o "CONCRETE"
-    override val cementoKg: Double,
-    override val calKg: Double,
-    override val arenaM3: Double,
-    override val piedraM3: Double,
-    override val relacionAgua: Double,
-    override val aguaLitros: Double = 0.0, // Añadido para persistencia directa si se desea, aunque se puede calcular
+    override val cementKg: Double,
+    override val limeKg: Double,
+    override val sandM3: Double,
+    override val gravelM3: Double,
+    override val waterCementRatio: Double,
+    override val waterLiters: Double = 0.0, // Añadido para persistencia directa si se desea, aunque se puede calcular
     val usos: String = "",
     val isEstructural: Boolean = false,
+    val isCustom: Boolean = true,
     val isProportion: Boolean = false,
     val partCemento: Double = 0.0,
     val partCal: Double = 0.0,

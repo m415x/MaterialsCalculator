@@ -19,8 +19,8 @@
 package org.m415x.materialcalc.domain.usecase
 
 import org.m415x.materialcalc.domain.common.calculateWetMaterials
-import org.m415x.materialcalc.domain.model.DosificacionHormigon
-import org.m415x.materialcalc.domain.model.ResultadoHormigon
+import org.m415x.materialcalc.domain.model.ConcreteDosing
+import org.m415x.materialcalc.domain.model.ConcreteResult
 
 /**
  * Calcula los materiales para un volumen de hormigón.
@@ -30,46 +30,49 @@ class CalculateConcreteUseCase {
     /**
      * Calcula los materiales para un volumen de hormigón.
      *
-     * @param anchoMetros Ancho en metros.
-     * @param largoMetros Largo en metros.
-     * @param espesorMetros Espesor en metros.
-     * @param tipo Tipo de hormigón.
-     * @param pesoBolsaCementoKg Peso de la bolsa de cemento en kg.
+     * @param widthMeters Ancho en metros.
+     * @param lengthMeters Largo en metros.
+     * @param thicknessMeters Espesor en metros.
+     * @param quantityUnits Cantidad de unidades.
+     * @param recipe Receta de hormigón.
+     * @param cementBagWeightKg Peso de la bolsa de cemento en kg.
+     * @param limeBagWeightKg Peso de la bolsa de cal en kg.
+     * @param wastePercentage Porcentaje de desperdicio.
      * @return Resultado del cálculo.
      */
     operator fun invoke(
-        anchoMetros: Double,
-        largoMetros: Double,
-        espesorMetros: Double,
-        quantityUnits: Int,
-        receta: DosificacionHormigon,
-        pesoBolsaCementoKg: Int,
-        pesoBolsaCalKg: Int,
-        porcentajeDesperdicio: Double
-    ): ResultadoHormigon {
+        widthMeters: Double,
+        lengthMeters: Double,
+        thicknessMeters: Double,
+        quantityUnits: Int = 1,
+        recipe: ConcreteDosing,
+        cementBagWeightKg: Int,
+        limeBagWeightKg: Int,
+        wastePercentage: Double
+    ): ConcreteResult {
 
         // 1. Geometría (Esta es la única responsabilidad única de este UseCase)
-        val volumenGeometrico = anchoMetros * largoMetros * espesorMetros * quantityUnits
+        val geometricVolume = widthMeters * lengthMeters * thicknessMeters * quantityUnits
 
         // 2. El motor hace el cálculo
         val mats = calculateWetMaterials(
-            volumenM3 = volumenGeometrico,
-            receta = receta,
-            desperdicio = porcentajeDesperdicio,
-            pesoBolsaCemento = pesoBolsaCementoKg,
-            pesoBolsaCal = pesoBolsaCalKg
+            volumeM3 = geometricVolume,
+            recipe = recipe,
+            waste = wastePercentage,
+            cementBagWeight = cementBagWeightKg,
+            limeBagWeight = limeBagWeightKg
         )
 
         // 4. Mapeo al resultado final
-        return ResultadoHormigon(
-            volumenTotalM3 = volumenGeometrico,
-            cementoKg = mats.cementoKg,
-            arenaM3 = mats.arenaM3,
-            piedraM3 = mats.piedraM3,
-            aguaLitros = mats.aguaLitros,
-            bolsaCementoKg = pesoBolsaCementoKg,
-            porcentajeDesperdicioHormigon = porcentajeDesperdicio,
-            proporcionMezcla = receta.descripcionProporcion
+        return ConcreteResult(
+            totalVolumeM3 = geometricVolume,
+            cementKg = mats.cementoKg,
+            sandM3 = mats.arenaM3,
+            gravelM3 = mats.piedraM3,
+            waterLiters = mats.aguaLitros,
+            cementBagKg = cementBagWeightKg,
+            percentageConcreteWaste = wastePercentage,
+            mixingRatio = recipe.descriptionProportion
         )
     }
 }

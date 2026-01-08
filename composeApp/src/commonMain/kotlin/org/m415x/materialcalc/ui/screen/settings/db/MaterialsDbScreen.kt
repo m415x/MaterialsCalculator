@@ -19,25 +19,28 @@
 package org.m415x.materialcalc.ui.screen.settings.db
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Grid3x3
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-
 import org.m415x.materialcalc.data.repository.SettingsRepository
+import org.m415x.materialcalc.domain.model.AppSettingsState
 
 // Enum para las pestañas
 enum class MaterialTab(val title: String, val icon: ImageVector) {
-    BRICKS("Ladrillos", Icons.Default.GridView),
-    IRONS("Hierros", Icons.Default.Menu), // O Icons.Default.LinearScale
+    BRICKS("Ladrillos", Icons.Default.Dashboard),
+    IRONS("Hierros", Icons.Default.Grid3x3),
     RECIPES("Mezclas", Icons.Default.Science)
 }
 
 @Composable
-fun MaterialsDbScreen(repository: SettingsRepository) {
+fun MaterialsDbScreen(repository: SettingsRepository, appSettings: AppSettingsState) {
     var currentTab by remember { mutableStateOf(MaterialTab.BRICKS) }
 
     Scaffold(

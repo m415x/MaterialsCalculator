@@ -20,54 +20,49 @@ package org.m415x.materialcalc.ui.common
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import org.m415x.materialcalc.data.repository.SettingsRepository
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.label_custom
+import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
-import org.m415x.materialcalc.domain.model.TipoLadrillo
+import org.m415x.materialcalc.domain.model.BrickType
+import org.m415x.materialcalc.domain.model.CustomBrick
 import org.m415x.materialcalc.domain.model.toProperties
 
 @Composable
 fun BrickSelectorField(
     selectedBrickId: String,
-    onBrickSelected: (LadrilloOption) -> Unit,
-    settingsRepository: SettingsRepository,
-    modifier: Modifier = Modifier
+    onBrickSelected: (BrickOption) -> Unit,
+    customBricks: List<CustomBrick>,
+    hiddenIds: Set<String>,
+    modifier: Modifier = Modifier,
+    defaultBrickId: String? = null
 ) {
     val staticRepo = remember { StaticMaterialRepository() }
-    val customBricks by settingsRepository.customBricks.collectAsState(initial = emptyList())
-    val hiddenIds by settingsRepository.hiddenBrickIds.collectAsState(initial = emptySet())
-    val defaultBrickId by settingsRepository.defaultBrickId.collectAsState(initial = null)
 
     val opcionesLadrillo = remember(customBricks, hiddenIds) {
-        val list = mutableListOf<LadrilloOption>()
+        val factoryOptions = mutableListOf<Pair<Int, BrickOption>>()
+        val customOptions = mutableListOf<BrickOption>()
 
         // A. Estáticos (Si no están ocultos)
-        TipoLadrillo.entries.forEach { type ->
+        BrickType.entries.forEach { type ->
             if (type.name !in hiddenIds) {
-                list.add(
-                    LadrilloOption(
+                factoryOptions.add(
+                    type.ordinal to BrickOption(
                         id = type.name,
-                        label = type.nombre,
-                        isPortante = type.isPortante,
-                        descripcion = type.descripcion,
-                        props = staticRepo.getPropiedadesLadrillo(type)!!,
-                        receta = staticRepo.getDosificacionMortero(type)
+                        label = type.nameBrick,
+                        isBearing = type.isBearing,
+                        isCustom = false,
+                        description = type.description,
+                        props = staticRepo.getBrickProps(type)!!,
+                        recipe = staticRepo.getMortarDosing(type)
                     )
                 )
             }
@@ -75,34 +70,39 @@ fun BrickSelectorField(
 
         // B. Custom
         customBricks.forEach { custom ->
-            val recetaDefault = staticRepo.getDosificacionMortero(TipoLadrillo.COMUN)
-            list.add(
-                LadrilloOption(
+            val recetaDefault = staticRepo.getMortarDosing(BrickType.COMUN)
+            customOptions.add(
+                BrickOption(
                     id = custom.id,
                     label = "${custom.nombre} (C)",
-                    isPortante = custom.isPortante,
-                    descripcion = custom.descripcion,
+                    isBearing = custom.isPortante,
+                    isCustom = true,
+                    description = custom.descripcion,
                     props = custom.toProperties(),
-                    receta = recetaDefault
+                    recipe = recetaDefault
                 )
             )
         }
-        list.sortedBy { it.label }
+
+        val sortedFactory = factoryOptions.sortedBy { it.first }.map { it.second }
+        val sortedCustom = customOptions.sortedBy { it.label }
+
+        sortedFactory + sortedCustom
     }
 
-    var selectedOption by remember { mutableStateOf<LadrilloOption?>(null) }
-    var isInitialSelectionDone by remember { mutableStateOf(false) }
+    // Lógica de selección simplificada y reactiva
+    val selectedOption = remember(opcionesLadrillo, selectedBrickId, defaultBrickId) {
+        opcionesLadrillo.find { it.id == selectedBrickId }
+            ?: opcionesLadrillo.find { it.id == defaultBrickId }
+            ?: opcionesLadrillo.firstOrNull()
+    }
 
-    LaunchedEffect(opcionesLadrillo, defaultBrickId) {
-        if (opcionesLadrillo.isNotEmpty() && defaultBrickId != null && !isInitialSelectionDone) {
-            val optionToSelect =
-                opcionesLadrillo.find { it.id == selectedBrickId }
-                ?: opcionesLadrillo.find { it.id == defaultBrickId }
-                ?: opcionesLadrillo.first()
-            
-            selectedOption = optionToSelect
-            onBrickSelected(optionToSelect)
-            isInitialSelectionDone = true
+    // Notificar al padre
+    LaunchedEffect(selectedOption) {
+        selectedOption?.let {
+            if (it.id != selectedBrickId) {
+                onBrickSelected(it)
+            }
         }
     }
 
@@ -111,7 +111,6 @@ fun BrickSelectorField(
         selectedText = selectedOption?.label ?: "Cargando...",
         options = opcionesLadrillo,
         onSelect = { opcion ->
-            selectedOption = opcion
             onBrickSelected(opcion)
         },
         modifier = modifier
@@ -119,27 +118,19 @@ fun BrickSelectorField(
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(opcion.label, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                if (opcion.isPortante) {
-                    Spacer(Modifier.width(8.dp))
-                    Surface(
-                        color = MaterialTheme.colorScheme.tertiaryContainer,
-                        shape = MaterialTheme.shapes.extraSmall
-                    ) {
-                        Text(
-                            "PORTANTE",
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                    }
-                }
+                if (opcion.isCustom) PrimaryBadge(stringResource(Res.string.label_custom))
+                if (opcion.isBearing) TertiaryBadge("PORTANTE")
             }
-            if (opcion.descripcion.isNotBlank()) {
-                Text(opcion.descripcion, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (opcion.description.isNotBlank()) {
+                Text(
+                    opcion.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             val p = opcion.props
             Text(
-                "Medidas: ${(p.anchoMuro * 100).toInt()}x${(p.altoUnidad * 100).toInt()}x${(p.largoUnidad * 100).toInt()} cm",
+                "Medidas: ${(p.width * 100).toInt()}x${(p.height * 100).toInt()}x${(p.length * 100).toInt()} cm",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.secondary
             )

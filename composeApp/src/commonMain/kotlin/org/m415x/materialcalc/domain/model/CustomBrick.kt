@@ -37,9 +37,9 @@ data class CustomBrick(
 )
 
 // Extensión útil para convertir este ladrillo a las propiedades que usa el cálculo
-fun CustomBrick.toProperties() = PropiedadesLadrillo(
-    anchoMuro = this.ancho,
-    altoUnidad = this.alto,
-    largoUnidad = this.largo,
-    espesorJunta = this.junta
+fun CustomBrick.toProperties() = BrickProps(
+    width = this.ancho,
+    height = this.alto,
+    length = this.largo,
+    gasketThickness = this.junta
 )

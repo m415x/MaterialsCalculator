@@ -21,7 +21,7 @@ package org.m415x.materialcalc.ui.screen.calculator
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
-import org.m415x.materialcalc.data.repository.SettingsRepository
+import org.m415x.materialcalc.domain.model.AppSettingsState
 import org.m415x.materialcalc.ui.navigation.Screen
 import org.m415x.materialcalc.ui.screen.concrete.ConcreteScreen
 import org.m415x.materialcalc.ui.screen.plaster.PlasterScreen
@@ -32,13 +32,13 @@ import org.m415x.materialcalc.ui.screen.wall.WallScreen
  * Componente principal de la pantalla de cálculo.
  *
  * @param currentScreen La pantalla actual.
- * @param settingsRepository El repositorio de configuración.
+ * @param appSettings El estado global de la configuración.
  * @param onNavigate La función de navegación.
  */
 @Composable
 fun CalculatorTabContent(
     currentScreen: Screen,
-    settingsRepository: SettingsRepository,
+    appSettings: AppSettingsState,
     onNavigate: (Screen) -> Unit
 ) {
     AnimatedContent(
@@ -78,10 +78,10 @@ fun CalculatorTabContent(
                 onPlasterClick = { onNavigate(Screen.Plaster) }
             )
 
-            is Screen.Concrete -> ConcreteScreen(settingsRepository)
-            is Screen.Wall -> WallScreen(settingsRepository)
-            is Screen.Structure -> StructureScreen(settingsRepository)
-            is Screen.Plaster -> PlasterScreen(settingsRepository)
+            is Screen.Concrete -> ConcreteScreen(appSettings)
+            is Screen.Wall -> WallScreen(appSettings)
+            is Screen.Structure -> StructureScreen(appSettings)
+            is Screen.Plaster -> PlasterScreen(appSettings)
             else -> {}
         }
     }

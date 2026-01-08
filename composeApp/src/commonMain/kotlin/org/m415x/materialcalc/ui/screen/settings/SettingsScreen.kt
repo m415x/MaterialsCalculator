@@ -27,40 +27,37 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 
 import org.m415x.materialcalc.data.repository.SettingsRepository
+import org.m415x.materialcalc.domain.model.AppSettingsState
 import org.m415x.materialcalc.ui.screen.settings.appearance.AppearanceSubScreen
 import org.m415x.materialcalc.ui.screen.settings.db.MaterialsDbScreen
 import org.m415x.materialcalc.ui.screen.settings.global.GlobalParamsSubScreen
+import org.m415x.materialcalc.ui.theme.ColorPalette
 import org.m415x.materialcalc.ui.theme.ContrastMode
 import org.m415x.materialcalc.ui.theme.ThemeMode
+import kotlinx.coroutines.launch
 
 /**
  * Pantalla principal de configuración.
  *
  * @param repository El repositorio de configuración.
- * @param currentTheme El tema actual.
- * @param currentContrast El contraste actual.
- * @param onThemeChange La función de cambio de tema.
- * @param onContrastChange La función de cambio de contraste.
+ * @param appSettings El estado global de la configuración.
  * @param currentSection La sección actual.
  * @param onSectionChange La función de cambio de sección.
  */
 @Composable
 fun SettingsScreen(
     repository: SettingsRepository, // Inyectamos el repo directo para leer/guardar
-    // Estos params siguen viniendo de App.kt para el tema en tiempo real
-    currentTheme: ThemeMode,
-    currentContrast: ContrastMode,
-    currentOutdoorMode: Boolean,
+    appSettings: AppSettingsState,
     currentSection: SettingsSection,
-    onThemeChange: (ThemeMode) -> Unit,
-    onContrastChange: (ContrastMode) -> Unit,
-    onOutdoorModeChange: (Boolean) -> Unit,
     // Callback para informar a la App el cambio de título/estado
     onSectionChange: (SettingsSection) -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+
     // Cada vez que cambia la sección, avisamos a App.kt
     LaunchedEffect(currentSection) {
         onSectionChange(currentSection)
@@ -84,21 +81,23 @@ fun SettingsScreen(
 
             SettingsSection.APPEARANCE -> {
                 AppearanceSubScreen(
-                    currentTheme,
-                    currentContrast,
-                    currentOutdoorMode,
-                    onThemeChange,
-                    onContrastChange,
-                    onOutdoorModeChange
+                    currentTheme = appSettings.themeMode,
+                    currentContrast = appSettings.contrastMode,
+                    currentColorPalette = appSettings.colorPalette,
+                    currentOutdoorMode = appSettings.isOutdoorMode,
+                    onThemeChange = { scope.launch { repository.saveThemeMode(it) } },
+                    onContrastChange = { scope.launch { repository.saveContrastMode(it) } },
+                    onColorPaletteChange = { scope.launch { repository.saveColorPalette(it) } },
+                    onOutdoorModeChange = { scope.launch { repository.saveOutdoorMode(it) } }
                 )
             }
 
             SettingsSection.GLOBAL_PARAMS -> {
-                GlobalParamsSubScreen(repository)
+                GlobalParamsSubScreen(repository, appSettings)
             }
 
             SettingsSection.MATERIALS_DB -> {
-                MaterialsDbScreen(repository)
+                MaterialsDbScreen(repository, appSettings)
             }
 
 
@@ -107,6 +106,7 @@ fun SettingsScreen(
                     Text("Próximamente: Precios")
                 }
             }
+            else -> {}
         }
     }
 }
@@ -131,7 +131,8 @@ fun SettingsMenuItem(
         supportingContent = { Text(subtitle) },
         leadingContent = { Icon(icon, null) },
         trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) },
-        modifier = Modifier.clickable { onClick() }
+        modifier = Modifier.clickable { onClick() },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent) // Fondo transparente
     )
     HorizontalDivider()
 }

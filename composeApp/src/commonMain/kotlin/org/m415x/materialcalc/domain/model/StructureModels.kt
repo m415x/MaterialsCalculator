@@ -35,7 +35,7 @@ enum class StructureType(val label: String) {
  * @property mm Diámetro en milímetros.
  * @property pesoLinealKgM Peso lineal en kg/m.
  */
-enum class DiametroHierro(val mm: Double, val pesoLinealKgM: Double) {
+enum class IronDiameter(val mm: Double, val pesoLinealKgM: Double) {
     HIERRO_4_2(4.2, 0.109),
     HIERRO_6(6.0, 0.222),
     HIERRO_8(8.0, 0.395),
@@ -77,13 +77,13 @@ data class ResultadoEstructura(
     val piedraM3: Double,
     val aguaLitros: Double,
     // Hierro Principal
-    val diametroPrincipal: DiametroHierro,
+    val diametroPrincipal: IronDiameter,
     val hierroPrincipalMetros: Double,
     val hierroPrincipalKg: Double,
     val cantidadHierroPrincipal: Int,
     val porcentajeDesperdicioHierroPrincipal: Double,
     // Estribos
-    val diametroEstribo: DiametroHierro,
+    val diametroEstribo: IronDiameter,
     val hierroEstribosMetros: Double,
     val hierroEstribosKg: Double,
     val cantidadHierroEstribos: Int,

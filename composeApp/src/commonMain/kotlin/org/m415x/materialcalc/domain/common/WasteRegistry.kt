@@ -18,7 +18,7 @@
 
 package org.m415x.materialcalc.domain.common
 
-import org.m415x.materialcalc.domain.model.TipoHormigon
+import org.m415x.materialcalc.domain.model.ConcreteType
 
 /**
  * Registro único de porcentajes de desperdicio.
@@ -35,10 +35,10 @@ object WasteRegistry {
      * @param tipo Tipo de hormigón.
      * @return Porcentaje de desperdicio.
      */
-    fun getForConcrete(tipo: TipoHormigon): Double = when (tipo) {
-        TipoHormigon.H8 -> 0.10  // 10% (Suelo irregular)
-        TipoHormigon.H13 -> 0.08
-        TipoHormigon.H17 -> 0.07
+    fun getForConcrete(tipo: ConcreteType): Double = when (tipo) {
+        ConcreteType.H8 -> 0.10  // 10% (Suelo irregular)
+        ConcreteType.H13 -> 0.08
+        ConcreteType.H17 -> 0.07
         else -> 0.05             // 5% (Estructurales H21, H25, H30 suelen tener buen encofrado)
     }
 

@@ -43,6 +43,7 @@ data class PresentationUnit(
  * @param quantityContainer Tamaño de la unidad (ej: 50 para bolsa de cemento).
  * @param singularRes Recurso para el nombre en singular.
  * @param pluralRes Recurso para el nombre en plural.
+ * @return Objeto PresentationUnit.
  */
 fun Double.toPresentationUnit(
     quantityContainer: Number = 1,
@@ -56,6 +57,9 @@ fun Double.toPresentationUnit(
 
 /**
  * Composable que toma un PresentationUnit y lo muestra como un string formateado.
+ *
+ * @param unit Objeto PresentationUnit.
+ * @return String formateado.
  */
 @Composable
 fun DisplayUnit(unit: PresentationUnit): String {
@@ -64,18 +68,27 @@ fun DisplayUnit(unit: PresentationUnit): String {
 
 /**
  * Genera un texto para compartir el resultado de un cálculo de muro.
+ *
+ * @param largo Largo del muro.
+ * @param alto Alto del muro.
+ * @param tipoLadrillo Tipo de ladrillo.
+ * @param detalleLadrillo Detalle del tipo de ladrillo.
+ * @param aberturas Listado de aberturas.
+ * @param detalleMezcla Detalle de la mezcla.
+ * @param appName Nombre de la app.
+ * @return Texto para compartir.
  */
-fun ResultadoMuro.toShareText(
+fun WallResult.toShareText(
     largo: Double,
     alto: Double,
     tipoLadrillo: String,
     detalleLadrillo: String,
-    aberturas: List<Abertura>,
+    aberturas: List<Aperture>,
     detalleMezcla: String,
     appName: String
 ): String {
     val superficieBruta = largo * alto
-    val superficieAberturas = aberturas.sumOf { it.anchoMetros * it.altoMetros * it.cantidad }
+    val superficieAberturas = aberturas.sumOf { it.widthMeters * it.heightMeters * it.quantity }
 
     val sb = StringBuilder()
 
@@ -83,7 +96,7 @@ fun ResultadoMuro.toShareText(
         if (aberturas.isEmpty()) {
             "    (Sin aberturas)"
         } else aberturas.joinToString("\n") {
-            "    ‣ ${it.cantidad} x ${it.nombre}: ${it.anchoMetros} x ${it.altoMetros} m"
+            "    ‣ ${it.quantity} x ${it.name}: ${it.widthMeters} x ${it.heightMeters} m"
         }
 
     sb.append("*CÁLCULO DE MURO*\n")
@@ -96,37 +109,37 @@ fun ResultadoMuro.toShareText(
     sb.append("*Superficies:*\n")
     sb.append("● Total Muro: ${superficieBruta.roundToDecimals(2)} m²\n")
     sb.append("● Aberturas:  ${superficieAberturas.roundToDecimals(2)} m²\n")
-    sb.append("● Real a cubrir: ${areaNetaM2.roundToDecimals(2)} m²\n\n")
+    sb.append("● Real a cubrir: ${netAreaM2.roundToDecimals(2)} m²\n\n")
     sb.append("*Aberturas:*\n")
     sb.append("$detalleAberturas\n\n")
     sb.append("*MATERIALES ESTIMADOS*\n")
     sb.append("-------------------------\n")
-    sb.append("● *Ladrillos:* $cantidadLadrillos U\n")
-    sb.append("● *Mortero* (${morteroM3.roundToDecimals(2)} m³):\n")
-    sb.append("    ‣ Cemento: ${cementoKg.roundToDecimals(1)} kg\n")
+    sb.append("● *Ladrillos:* $quantityBricks U\n")
+    sb.append("● *Mortero* (${mortarM3.roundToDecimals(2)} m³):\n")
+    sb.append("    ‣ Cemento: ${cementKg.roundToDecimals(1)} kg\n")
     sb.append(
         "    └ aprox. ${
-            cementoKg.toPresentationUnit(
-                bolsaCementoKg,
+            cementKg.toPresentationUnit(
+                cementBagKg,
                 Res.string.unit_bag,
                 Res.string.unit_bags
             )
         }\n"
     )
-    if (calKg > 0) {
-        sb.append("    ‣ Cal: ${calKg.roundToDecimals(1)} kg\n")
+    if (limeKg > 0) {
+        sb.append("    ‣ Cal: ${limeKg.roundToDecimals(1)} kg\n")
         sb.append(
             "        └ aprox. ${
-                calKg.toPresentationUnit(
-                    bolsaCalKg,
+                limeKg.toPresentationUnit(
+                    limeBagKg,
                     Res.string.unit_bag,
                     Res.string.unit_bags
                 )
             }\n"
         )
     }
-    sb.append("    ‣ Arena: ${arenaTotalM3.roundToDecimals(2)} m³\n")
-    sb.append("    ‣ Agua: ${aguaLitros.roundToDecimals(1)} Lt\n\n")
+    sb.append("    ‣ Arena: ${sandM3.roundToDecimals(2)} m³\n")
+    sb.append("    ‣ Agua: ${waterLiters.roundToDecimals(1)} Lt\n\n")
     sb.append("*Proporción estimada:* \n")
     sb.append("$detalleMezcla\n\n")
     sb.append("_________________________\n")
@@ -143,7 +156,7 @@ fun ResultadoEstructura.toShareText(
     ladoA: Double,
     ladoB: Double,
     isCircular: Boolean,
-    tipoHormigon: TipoHormigon,
+    concreteType: ConcreteType,
     separacionEstribosCm: Double,
     appName: String
 ): String {
@@ -158,7 +171,7 @@ fun ResultadoEstructura.toShareText(
     sb.append("$detalleGeometria\n\n")
     sb.append("*1. HORMIGÓN (${volumenHormigonM3.roundToDecimals(2)} m³)*\n")
     sb.append("-------------------------\n")
-    sb.append("Tipo: ${tipoHormigon.name} (${tipoHormigon.resistanceKgCm2})\n\n")
+    sb.append("Tipo: ${concreteType.name} (${concreteType.resistanceKgCm2})\n\n")
     sb.append("• Cemento: ${cementoKg.roundToDecimals(1)} kg\n")
     sb.append(
         "    └ aprox. ${

@@ -17,5 +17,15 @@
   -->
 
 <resources>
+    <!-- CATEGORY: WALL -->
+    <string name="wall_title">Muro</string>
+
+    <!-- SECTIONS -->
+    <string name="wall_section_dimensions">Dimensiones del Muro</string>
+    <string name="wall_section_brick_mortar">Ladrillo y Mortero</string>
+
+    <!-- LABELS -->
+    <string name="wall_label_seat_mortar">Mortero de Asiento</string>
+
 
 </resources>

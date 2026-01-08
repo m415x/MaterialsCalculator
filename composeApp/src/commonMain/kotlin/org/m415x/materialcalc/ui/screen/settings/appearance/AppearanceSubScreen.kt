@@ -30,6 +30,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Contrast
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -50,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 import org.m415x.materialcalc.ui.common.AppInput
+import org.m415x.materialcalc.ui.theme.ColorPalette
 import org.m415x.materialcalc.ui.theme.ContrastMode
 import org.m415x.materialcalc.ui.theme.ThemeMode
 
@@ -65,9 +67,11 @@ import org.m415x.materialcalc.ui.theme.ThemeMode
 fun AppearanceSubScreen(
     currentTheme: ThemeMode,
     currentContrast: ContrastMode,
+    currentColorPalette: ColorPalette,
     currentOutdoorMode: Boolean,
     onThemeChange: (ThemeMode) -> Unit,
     onContrastChange: (ContrastMode) -> Unit,
+    onColorPaletteChange: (ColorPalette) -> Unit,
     onOutdoorModeChange: (Boolean) -> Unit
 ) {
     Column(
@@ -82,6 +86,11 @@ fun AppearanceSubScreen(
         Column {
             // Selector de Tema (Claro / Oscuro / Sistema)
             ThemeModeSelector(currentTheme, onThemeChange)
+
+            Spacer(Modifier.height(16.dp))
+
+            // Selector de Paleta de Colores
+            ColorPaletteSelector(currentColorPalette, onColorPaletteChange)
 
             Spacer(Modifier.height(16.dp))
 
@@ -123,7 +132,7 @@ fun ThemeModeSelector(currentTheme: ThemeMode, onThemeChange: (ThemeMode) -> Uni
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded },
-                modifier = Modifier.width(120.dp)
+                modifier = Modifier.width(140.dp)
             ) {
                 AppInput(
                     value = currentTheme.name,
@@ -145,6 +154,53 @@ fun ThemeModeSelector(currentTheme: ThemeMode, onThemeChange: (ThemeMode) -> Uni
                             text = { Text(mode.name) },
                             onClick = {
                                 onThemeChange(mode) // Llama al callback de App.kt
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    )
+}
+
+/**
+ * Selector de paleta de colores.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ColorPaletteSelector(currentPalette: ColorPalette, onPaletteChange: (ColorPalette) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ListItem(
+        headlineContent = { Text("Paleta de Colores") },
+        supportingContent = {
+            Text("Elige el estilo visual de la aplicación.", style = MaterialTheme.typography.labelSmall)
+        },
+        leadingContent = { Icon(Icons.Default.Palette, null) },
+        trailingContent = {
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded },
+                modifier = Modifier.width(140.dp)
+            ) {
+                AppInput(
+                    value = currentPalette.name,
+                    onValueChange = { },
+                    label = "",
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                    modifier = Modifier
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    ColorPalette.entries.forEach { palette ->
+                        DropdownMenuItem(
+                            text = { Text(palette.name) },
+                            onClick = {
+                                onPaletteChange(palette)
                                 expanded = false
                             }
                         )

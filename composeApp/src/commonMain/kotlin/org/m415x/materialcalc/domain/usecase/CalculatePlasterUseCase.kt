@@ -21,11 +21,10 @@ package org.m415x.materialcalc.domain.usecase
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
 import org.m415x.materialcalc.domain.common.WasteRegistry
 import org.m415x.materialcalc.domain.common.calculateWetMaterials
-import org.m415x.materialcalc.domain.model.Abertura
-import org.m415x.materialcalc.domain.model.DosificacionMortero
+import org.m415x.materialcalc.domain.model.Aperture
+import org.m415x.materialcalc.domain.model.MortarDosing
 import org.m415x.materialcalc.domain.model.ResultadoRevoque
 import org.m415x.materialcalc.domain.utils.calculateNetSurface
-import kotlin.Double
 
 /**
  * Calcula los materiales para un volumen de hormigón.
@@ -53,8 +52,8 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
         espesorGruesoMetros: Double,
         espesorFinoMetros: Double,
         isAmbasCaras: Boolean,
-        aberturas: List<Abertura>,
-        recetaGrueso: DosificacionMortero,
+        aberturas: List<Aperture>,
+        recetaGrueso: MortarDosing,
         bolsaCementoKg: Int = 25,
         bolsaCalKg: Int = 25,
         bolsaFinoPremezclaKg: Int = 25,
@@ -82,11 +81,11 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
         val volumenGruesoGeo = superficieTotalCalculo * espesorGruesoMetros
 
         val matsGrueso = calculateWetMaterials(
-            volumenM3 = volumenGruesoGeo,
-            receta = recetaGrueso,
-            desperdicio = porcentajeDesperdicio,
-            pesoBolsaCemento = bolsaCementoKg,
-            pesoBolsaCal = bolsaCalKg
+            volumeM3 = volumenGruesoGeo,
+            recipe = recetaGrueso,
+            waste = porcentajeDesperdicio,
+            cementBagWeight = bolsaCementoKg,
+            limeBagWeight = bolsaCalKg
         )
 
         // ----------------------------------------------------
@@ -100,13 +99,13 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
         val finoPremezclaTotal = consumoBasePremezcla * (1 + desperdicioFino)
 
         // Opción 2: Tradicional
-        val recetaFino = repository.getRecetaFino()
+        val recetaFino = repository.getFinePlasterRecipe()
         val matsFino = calculateWetMaterials(
-            volumenM3 = volumenFinoGeo,
-            receta = recetaFino,
-            desperdicio = desperdicioFino,
-            pesoBolsaCal = bolsaCalKg,
-            pesoBolsaCemento = 25
+            volumeM3 = volumenFinoGeo,
+            recipe = recetaFino,
+            waste = desperdicioFino,
+            limeBagWeight = bolsaCalKg,
+            cementBagWeight = 25
         )
 
         return ResultadoRevoque(
@@ -121,13 +120,13 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
             gruesoCalKg = matsGrueso.calKg,
             gruesoArenaM3 = matsGrueso.arenaM3,
             porcentajeDesperdicioGrueso = porcentajeDesperdicio,
-            dosificacionGrueso = recetaGrueso.proporcionMezcla,
+            dosificacionGrueso = recetaGrueso.mixingRatio,
 
             finoPremezclaKg = finoPremezclaTotal,
             finoCalKg = matsFino.calKg,
             finoArenaM3 = matsFino.arenaM3,
             porcentajeDesperdicioFino = desperdicioFino,
-            dosificacionFino = recetaFino.proporcionMezcla
+            dosificacionFino = recetaFino.mixingRatio
         )
     }
 }

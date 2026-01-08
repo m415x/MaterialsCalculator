@@ -25,17 +25,12 @@
     <string name="concrete_section_resistance">Resistencia</string>
 
     <!-- LABELS -->
-    <string name="concrete_label_width">Ancho (%1$s)</string>
-    <string name="concrete_label_length">Largo (%1$s)</string>
-    <string name="concrete_label_thickness">Espesor (%1$s)</string>
-    <string name="concrete_label_quantity">Cantidad</string>
     <string name="concrete_label_type">Tipo de Hormigón</string>
     <string name="concrete_label_type_structural">ESTRUCTURAL</string>
     <string name="concrete_label_type_non_structural">NO ESTRUCTURAL</string>
-    <string name="concrete_label_uses">Usos:</string><!-- Ver usos -->
 
-    <!-- ERRORS -->
-    <string name="concrete_error_validation">Verifique las dimensiones y seleccione una mezcla.</string>
+    <!-- MESSAGE -->
+    <string name="concrete_message_error_validation">Verifique las dimensiones.</string>
 
     <!-- RESULTS -->
     <string name="concrete_result_total_volume">Volumen Total: %1$s %2$s</string>
@@ -47,4 +42,6 @@
     <string name="concrete_result_weight_kg">(%1$s %2$s)</string>
     <string name="concrete_result_volume_m3">%1$s %2$s</string>
     <string name="concrete_result_volume_liters">%1$s %2$s</string>
+    <string name="concrete_result_proportion">(Cem:Arena:Piedra)</string>
+    <string name="concrete_result_technical">%1$s Cem | A/C:</string>
 </resources>

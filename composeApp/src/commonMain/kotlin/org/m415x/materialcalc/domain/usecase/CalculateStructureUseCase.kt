@@ -20,8 +20,11 @@ package org.m415x.materialcalc.domain.usecase
 
 import org.m415x.materialcalc.domain.common.WasteRegistry
 import org.m415x.materialcalc.domain.common.calculateWetMaterials
+import org.m415x.materialcalc.domain.model.ConcreteType
+import org.m415x.materialcalc.domain.model.IronDiameter
+import org.m415x.materialcalc.domain.model.ResultadoEstructura
+import org.m415x.materialcalc.domain.model.SlabResult
 import org.m415x.materialcalc.domain.repository.MaterialRepository
-import org.m415x.materialcalc.domain.model.*
 import kotlin.math.PI
 import kotlin.math.ceil
 import kotlin.math.pow
@@ -40,7 +43,7 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
      * @param ladoAMetros Lado A de la estructura en metros.
      * @param ladoBMetros Lado B de la estructura en metros.
      * @param isCircular Indica si la estructura es circular.
-     * @param tipoHormigon Tipo de hormigón.
+     * @param concreteType Tipo de hormigón.
      * @param diametroPrincipal Diámetro principal de hierro.
      * @param cantidadVarillas Cantidad de varillas.
      * @param diametroEstribo Diámetro de estribo de hierro.
@@ -56,14 +59,14 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
         isCircular: Boolean = false,
 
         // Configuración Hormigón
-        tipoHormigon: TipoHormigon,
+        concreteType: ConcreteType,
 
         // Configuración Armadura Principal (Los hierros largos)
-        diametroPrincipal: DiametroHierro,
+        diametroPrincipal: IronDiameter,
         cantidadVarillas: Int,  // Ej. 4 hierros
 
         // Configuración Estribos (Los anillos)
-        diametroEstribo: DiametroHierro,
+        diametroEstribo: IronDiameter,
         separacionEstriboMetros: Double,
 
         // Configuraciones opcionales (con defaults)
@@ -86,16 +89,16 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
         }
 
         // B. Datos y Desperdicios
-        val receta = repository.getDosificacionHormigon(tipoHormigon)
+        val receta = repository.getConcreteDosing(concreteType)
             ?: throw IllegalArgumentException("Hormigón no encontrado")
 
         // C. Cálculo automático de materiales húmedos
         val matsConcreto = calculateWetMaterials(
-            volumenM3 = volumenGeometrico,
-            receta = receta,
-            desperdicio = desperdicioHormigon,
-            pesoBolsaCemento = pesoBolsaCementoKg,
-            pesoBolsaCal = 25
+            volumeM3 = volumenGeometrico,
+            recipe = receta,
+            waste = desperdicioHormigon,
+            cementBagWeight = pesoBolsaCementoKg,
+            limeBagWeight = 25
         )
 
         // ============================================================
@@ -107,7 +110,7 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
         val desperdicioEstribos = WasteRegistry.getForIron(isEstribo = true)
 
         // --- A. Hierro Principal ---
-        val pesoMetroPrincipal = repository.getPesoHierroPorMetro(diametroPrincipal)
+        val pesoMetroPrincipal = repository.getIronWeightPerMeter(diametroPrincipal)
 
         val longitudTotalPrincipal = (cantidadVarillas * largoMetros) * (1 + desperdicioHierroPrincipal)
         val pesoTotalPrincipal = longitudTotalPrincipal * pesoMetroPrincipal
@@ -116,7 +119,7 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
         val barrasPrincipalComprar = ceil(longitudTotalPrincipal / longitudComercialHierroMetros).toInt()
 
         // --- B. Estribos ---
-        val pesoMetroEstribo = repository.getPesoHierroPorMetro(diametroEstribo)
+        val pesoMetroEstribo = repository.getIronWeightPerMeter(diametroEstribo)
         val cantidadEstribos = ceil(largoMetros / separacionEstriboMetros).toInt()
 
         // Geometría del estribo (Longitud de una vuelta)
