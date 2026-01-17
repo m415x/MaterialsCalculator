@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,66 +20,72 @@ package org.m415x.materialcalc.domain.utils
 
 import org.m415x.materialcalc.domain.model.ConcreteDosing
 import org.m415x.materialcalc.domain.model.MortarDosing
-import org.m415x.materialcalc.domain.utils.ConstructionConstants.DENSIDAD_CAL_SUELTA
-import org.m415x.materialcalc.domain.utils.ConstructionConstants.DENSIDAD_CEMENTO_SUELTO
+import org.m415x.materialcalc.domain.utils.ConstructionConstants.APPARENT_CEMENT_DENSITY
+import org.m415x.materialcalc.domain.utils.ConstructionConstants.APPARENT_LIME_DENSITY
 import org.m415x.materialcalc.domain.utils.ConstructionConstants.formatPart
 
 /**
  * Convierte la dosificación técnica de hormigón a proporción volumétrica (1:3:3).
+ *
+ * @param ConcreteDosing Objeto que contiene la dosificación en kg y m³.
+ * @return Una cadena de texto representando la proporción volumétrica (ej: "1:3:3 (Cem:Arena:Piedra)").
  */
-fun ConcreteDosing.estimarProporcionTexto(): String {
+fun ConcreteDosing.estimateProportionTxt(): String {
     // 1. SI TENEMOS EL DATO ORIGINAL, LO USAMOS (Prioridad Absoluta)
     if (descriptionProportion.isNotBlank()) return descriptionProportion
 
     // 2. Calcular volumen aparente del cemento (el "1" de la fórmula)
-    val volCemento = this.cementKg / DENSIDAD_CEMENTO_SUELTO
+    val cementVolume = this.cementKg / APPARENT_CEMENT_DENSITY
 
-    if (volCemento <= 0.001) return "Sin Cemento"
+    if (cementVolume <= 0.001) return "Sin Cemento"
 
     // 3. Calcular partes relativas
     // Como arenaM3 y piedraM3 ya son volumen, solo dividimos por el volumen del cemento
-    val parteArena = this.sandM3 / volCemento
-    val partePiedra = this.gravelM3 / volCemento
+    val sandPart = this.sandM3 / cementVolume
+    val gravelPart = this.gravelM3 / cementVolume
 
     return buildString {
         append("1") // Cemento
-        append(":${formatPart(parteArena)}")
-        append(":${formatPart(partePiedra)}")
+        append(":${formatPart(sandPart)}")
+        append(":${formatPart(gravelPart)}")
         append(" (Cem:Arena:Piedra)")
     }
 }
 
 /**
  * Intenta convertir la dosificación técnica (kg) a una proporción volumétrica legible (1:3).
+ *
+ * @param MortarDosing Objeto que contiene la dosificación en kg.
+ * @return Una cadena de texto representando la proporción volumétrica (ej: "1:3 (Cem:Arena)").
  */
-fun MortarDosing.estimarProporcionTexto(): String {
+fun MortarDosing.estimateProportionTxt(): String {
     // 1. SI TENEMOS EL DATO ORIGINAL, LO USAMOS (Prioridad Absoluta)
     if (!parts.isNullOrBlank()) return parts
 
     // 2. Si no (ej: receta vieja o manual), usamos la estimación matemática
-    val volCemento = this.cementKg / DENSIDAD_CEMENTO_SUELTO
+    val cementVolume = this.cementKg / APPARENT_CEMENT_DENSITY
 
     // Si no hay cemento, es raro, devolvemos vacío o manejo especial
-    if (volCemento <= 0.001) return "Sin Cemento"
+    if (cementVolume <= 0.001) return "Sin Cemento"
 
     // 3. Normalizamos dividiendo todo por el volumen del cemento (El cemento es el "1")
-    val parteCemento = 1.0
-    val parteCal = if (this.limeKg > 0) (this.limeKg / DENSIDAD_CAL_SUELTA) / volCemento else 0.0
-    val parteArena = this.sandM3 / volCemento // La arena ya está en m3
+    val cementPart = 1.0
+    val limePart = if (this.limeKg > 0) (this.limeKg / APPARENT_LIME_DENSITY) / cementVolume else 0.0
+    val sandPart = this.sandM3 / cementVolume // La arena ya está en m3
     // val parteAgua = ... (Generalmente no se pone en el 1:3:3, es a ojo)
 
     return buildString {
-        append(formatPart(parteCemento))
+        append(formatPart(cementPart))
 
-        if (parteCal > 0.1) {
-            append(":${formatPart(parteCal)}")
+        if (limePart > 0.1) {
+            append(":${formatPart(limePart)}")
         }
 
-        append(":${formatPart(parteArena)}")
+        append(":${formatPart(sandPart)}")
 
         // Agregamos leyenda
         append(" (Cem")
-        if (parteCal > 0.1) append(":Cal")
+        if (limePart > 0.1) append(":Cal")
         append(":Arena)")
     }
 }

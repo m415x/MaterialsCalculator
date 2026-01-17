@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,28 +39,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
-import org.m415x.materialcalc.domain.model.BrickProps
-import org.m415x.materialcalc.domain.model.MortarDosing
 import org.m415x.materialcalc.domain.utils.PlatformInfo
-
-// Modelo auxiliar para el Dropdown (Mantenlo privado o dentro del archivo)
-data class BrickOption(
-    val id: String,
-    val label: String,
-    val isBearing: Boolean, // Portante
-    val isCustom: Boolean,
-    val description: String,
-    val props: BrickProps,
-    val recipe: MortarDosing // Receta asociada/sugerida
-)
-
-// Modelo auxiliar para la lista de mezclas
-data class MortarOption(
-    val id: String,
-    val name: String,
-    val description: String, // Ej: "1:3 (Cem:Arena)"
-    val data: MortarDosing
-)
 
 /**
  * Efecto secundario que solicita el foco automáticamente tras un retraso.

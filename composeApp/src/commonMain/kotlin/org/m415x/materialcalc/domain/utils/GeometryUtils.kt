@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,28 +24,37 @@ import org.m415x.materialcalc.ui.common.roundToDecimals // Asegúrate de tener a
 /**
  * Calcula la superficie neta de una pared descontando aberturas.
  * Realiza validaciones para asegurar que las aberturas no excedan la pared.
+ *
+ * @param length Largo de la pared en metros.
+ * @param height Alto de la pared en metros.
+ * @param openingsList Lista de aberturas a descontar.
+ * @return Superficie neta de la pared en metros cuadrados.
  */
 fun calculateNetSurface(
-    largo: Double,
-    alto: Double,
-    aberturas: List<Aperture>
+    length: Double,
+    height: Double,
+    openingsList: List<Aperture>
 ): Double {
-    val areaBruta = largo * alto
-    val areaAberturas = aberturas.sumOf { it.widthMeters * it.heightMeters * it.quantity }
+    val grossArea = length * height
+    val openingArea = openingsList.sumOf { it.widthMeters * it.heightMeters * it.quantity }
 
     // VALIDACIONES CENTRALIZADAS
-    if (areaAberturas > areaBruta) {
+    if (openingArea > grossArea) {
         throw IllegalArgumentException(
-            "El área de aberturas (${areaAberturas.roundToDecimals(2)} m²) supera el área del muro (${areaBruta.roundToDecimals(2)} m²)."
+            "El área de aberturas (${openingArea.roundToDecimals(2)} m²) supera el área del muro (${
+                grossArea.roundToDecimals(
+                    2
+                )
+            } m²)."
         )
     }
 
-    if (areaAberturas == areaBruta && areaBruta > 0) {
+    if (openingArea == grossArea && grossArea > 0) {
         throw IllegalArgumentException(
             "El área de aberturas es igual al área del muro. No hay superficie para calcular."
         )
     }
 
     // Retornamos el área neta segura
-    return (areaBruta - areaAberturas).coerceAtLeast(0.0)
+    return (grossArea - openingArea).coerceAtLeast(0.0)
 }

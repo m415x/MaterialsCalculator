@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ import org.m415x.materialcalc.domain.model.ConcreteDosing
 import org.m415x.materialcalc.domain.model.ConcreteType
 import org.m415x.materialcalc.domain.model.CustomRecipe
 import org.m415x.materialcalc.domain.utils.ConstructionConstants.formatPart
-import org.m415x.materialcalc.domain.utils.estimarProporcionTexto
+import org.m415x.materialcalc.domain.utils.estimateProportionTxt
 
 @Composable
 fun ConcreteSelectorField(
@@ -74,7 +74,7 @@ fun ConcreteSelectorField(
         isCustom: Boolean,
         receta: ConcreteDosing
     ): ConcreteOption {
-        val proporcion = receta.estimarProporcionTexto()
+        val proporcion = receta.estimateProportionTxt()
         val tecnico = "${receta.cementKg.toInt()} $resultTechnical ${receta.waterCementRatio}"
         val descripcionFinal = "$proporcion\n$tecnico"
 
@@ -96,19 +96,19 @@ fun ConcreteSelectorField(
 
     // 2. Procesar hormigones personalizados
     customRecipes
-        .filter { it.tipo == "CONCRETE" && (!filterStructuralOnly || it.isEstructural) }
+        .filter { it.type == "CONCRETE" && (!filterStructuralOnly || it.isStructural) }
         .forEach { custom ->
             val partesTexto = if (custom.isProportion) {
                 buildString {
-                    append(formatPart(custom.partCemento))
-                    append(":${formatPart(custom.partArena)}")
-                    append(":${formatPart(custom.partPiedra)}")
+                    append(formatPart(custom.partCement))
+                    append(":${formatPart(custom.partSand)}")
+                    append(":${formatPart(custom.partGravel)}")
                     append(" $resultProportion")
                 }
             } else null
 
             val receta = ConcreteDosing(
-                name = custom.nombre,
+                name = custom.name,
                 descriptionProportion = partesTexto ?: "",
                 cementKg = custom.cementKg,
                 sandM3 = custom.sandM3,
@@ -120,10 +120,10 @@ fun ConcreteSelectorField(
             customOptions.add(
                 crearOpcionHormigon(
                     custom.id,
-                    custom.nombre,
+                    custom.name,
                     "", // Resistencia vacía para custom
-                    custom.usos, // Usos tal cual viene (puede estar vacío)
-                    custom.isEstructural,
+                    custom.uses, // Usos tal cual viene (puede estar vacío)
+                    custom.isStructural,
                     custom.isCustom,
                     receta
                 )

@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,15 +22,26 @@ import kotlin.math.round
 
 /**
  * Constantes físicas de materiales para conversiones.
- * Valores de Densidad Aparente (Suelto) en kg/m³.
+ * Valores de Densidad Aparente (Suelto) en kg/m³. *
+ * NOTA: Estos valores son aproximados y pueden variar significativamente
+ * según la humedad, granulometría, compactación y tipo específico de material.
+ * Se utilizan para estimaciones y cálculos de dosificación en obra.
  */
 object ConstructionConstants {
     // Densidades Aparentes (Suelto, como se carga en balde)
     // Estos son los valores estándar para convertir Volumen <-> Peso en obra.
-    const val DENSIDAD_CEMENTO_SUELTO = 1200.0 // kg/m³ (Una bolsa de 50kg ocupa aprox 0.041 m³ o 41 litros)
-    const val DENSIDAD_CAL_SUELTA = 600.0      // kg/m³ (Varía mucho, 600 es promedio para cal hidratada)
-    const val DENSIDAD_ARENA_SUELTA = 1500.0   // kg/m³ (Seca/Húmeda varía, 1500 es estándar)
-    const val DENSIDAD_PIEDRA_SUELTA = 1600.0  // kg/m³
+    const val APPARENT_CEMENT_DENSITY = 1400.0 // kg/m³ (Valor estándar para cálculos de mezcla)
+    const val APPARENT_LIME_DENSITY = 600.0      // kg/m³ (Varía mucho, 600 es promedio para cal hidratada)
+    const val APPARENT_SAND_DENSITY = 1500.0   // kg/m³ (Seca/Húmeda varía, 1500 es estándar)
+    const val APPARENT_GRAVEL_DENSITY = 1600.0  // kg/m³
+
+    // Coeficientes de Aporte (Volumen Real / Volumen Aparente)
+    // Fuente: Chandias / Manuales de Construcción
+    const val COEF_CEMENT = 0.47
+    const val COEF_LIME = 0.37 // Polvo
+    const val COEF_SAND = 0.63
+    const val COEF_GRAVEL = 0.51
+    const val COEF_WATER = 1.0
 
     // Para visualización: Si el decimal es muy cercano a .0 o .5, lo redondeamos visualmente
     fun formatPart(value: Double): String {

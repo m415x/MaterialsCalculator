@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,8 +60,8 @@ fun IronsTabContent(repository: SettingsRepository) {
         list.addAll(customIrons.map {
             MaterialUiModel(
                 id = it.id,
-                title = it.nombre,
-                subtitle = "Ø ${it.diametro}mm | ${it.pesoLineal} kg/m",
+                title = it.name,
+                subtitle = "Ø ${it.diameterMm} mm | ${it.linearWeight} kg/m",
                 isCustom = true,
                 originalData = it // Guardamos el CustomIron aquí
             )
@@ -73,15 +73,15 @@ fun IronsTabContent(repository: SettingsRepository) {
                 val peso = staticRepo.getIronWeightPerMeter(type)
                 list.add(MaterialUiModel(
                     id = type.name,
-                    title = "Hierro Ø ${type.mm} mm",
-                    subtitle = "$peso kg/m (Estándar)",
+                    title = "Hierro Ø ${type.milimeters} mm",
+                    subtitle = "$peso kg/m",
                     isCustom = false,
                     // Creamos copia custom temporal
                     originalData = CustomIron(
                         id = "",
-                        nombre = "Hierro Ø ${type.mm} mm",
-                        diametro = type.mm,
-                        pesoLineal = peso
+                        name = "Hierro Ø ${type.milimeters} mm",
+                        diameterMm = type.milimeters,
+                        linearWeight = peso
                     )
                 ))
             }
@@ -213,7 +213,7 @@ fun RestoreIronsDialog(
                 items(hiddenIds.toList()) { id ->
                     // Buscamos el nombre legible usando el Enum
                     val nombre = try {
-                        IronDiameter.valueOf(id).mm.toString()
+                        IronDiameter.valueOf(id).milimeters.toString()
                     } catch (e: Exception) {
                         id
                     }
@@ -247,13 +247,30 @@ fun IronEditorDialog(
     onSave: (CustomIron) -> Unit
 ) {
     // Inicializamos valores (Convertimos Metros a String MM para inputs)
-    var name by remember { mutableStateOf(ironToEdit?.nombre ?: "") }
+    var name by remember { mutableStateOf(ironToEdit?.name ?: "") }
 
     var diam by remember {
-        mutableStateOf(ironToEdit?.diametro?.let { if (it == 0.0) "" else it.toString() } ?: "")
+        mutableStateOf(ironToEdit?.diameterMm?.let { if (it == 0.0) "" else it.toString() } ?: "")
     }
 
-    var pesoMetro by remember { mutableStateOf((ironToEdit?.pesoLineal ?: 0.0).toString()) }
+    var pesoMetro by remember { mutableStateOf((ironToEdit?.linearWeight ?: 0.0).toString()) }
+
+    // Estado para saber si el usuario ha editado manualmente el peso
+    // Si estamos editando uno existente, asumimos que ya fue editado (o calculado) y no lo tocamos automáticamente
+    // a menos que el usuario cambie el diámetro.
+    var isWeightManuallyEdited by remember { mutableStateOf(ironToEdit != null) }
+
+    // Efecto para calcular el peso automáticamente
+    LaunchedEffect(diam) {
+        if (!isWeightManuallyEdited) {
+            val d = diam.toSafeDoubleOrNull()
+            if (d != null && d > 0) {
+                // Fórmula: (d^2) / 162.2
+                val calculatedWeight = (d * d) / 162.2
+                pesoMetro = calculatedWeight.roundToDecimals(3).replace(',', '.')
+            }
+        }
+    }
 
     val isFormValid = name.isNotBlank() && diam.isNotBlank() && pesoMetro.isNotBlank()
 
@@ -280,7 +297,14 @@ fun IronEditorDialog(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 NumericInput(
                     value = diam,
-                    onValueChange = { diam = it },
+                    onValueChange = {
+                        diam = it
+                        // Si cambiamos el diámetro, permitimos que se recalcule el peso si no fue editado manualmente
+                        // O podríamos resetear isWeightManuallyEdited a false para forzar el recálculo
+                        // Pero lo mejor es: si el usuario escribe en diam, recalculamos.
+                        // Si el usuario escribe en peso, dejamos de recalcular.
+                        isWeightManuallyEdited = false
+                    },
                     label = "Diámetro",
                     suffix = { Text("mm") },
                     modifier = Modifier.weight(1f),
@@ -289,7 +313,10 @@ fun IronEditorDialog(
                 )
                 NumericInput(
                     value = pesoMetro,
-                    onValueChange = { pesoMetro = it },
+                    onValueChange = {
+                        pesoMetro = it
+                        isWeightManuallyEdited = true // El usuario tocó el peso, dejamos de calcular
+                    },
                     label = "Peso/Metro",
                     suffix = { Text("kg/m") },
                     modifier = Modifier.weight(1f),
@@ -316,9 +343,9 @@ fun IronEditorDialog(
 
                     val newIron = CustomIron(
                         id = finalId,
-                        nombre = name,
-                        diametro = d,
-                        pesoLineal = peso
+                        name = name,
+                        diameterMm = d,
+                        linearWeight = peso
                     )
                     onSave(newIron)
                 }

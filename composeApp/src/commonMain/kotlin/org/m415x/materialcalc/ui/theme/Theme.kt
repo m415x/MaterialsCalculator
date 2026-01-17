@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,8 @@ import androidx.compose.runtime.Composable
 
 enum class ColorPalette {
     Default,
-    Industrial
+    Industrial,
+    Security
 }
 
 // --- DEFAULT SCHEMES ---
@@ -335,6 +336,158 @@ private val industrialDarkHighContrastScheme = darkColorScheme(
     surfaceContainerHighest = ThemeIndustrialColors.surfaceContainerHighestDarkHighContrast,
 )
 
+private val securityLightScheme = lightColorScheme(
+    primary = ThemeSecurityColors.primaryLight,
+    onPrimary = ThemeSecurityColors.onPrimaryLight,
+    primaryContainer = ThemeSecurityColors.primaryContainerLight,
+    onPrimaryContainer = ThemeSecurityColors.onPrimaryContainerLight,
+    secondary = ThemeSecurityColors.secondaryLight,
+    onSecondary = ThemeSecurityColors.onSecondaryLight,
+    secondaryContainer = ThemeSecurityColors.secondaryContainerLight,
+    onSecondaryContainer = ThemeSecurityColors.onSecondaryContainerLight,
+    tertiary = ThemeSecurityColors.tertiaryLight,
+    onTertiary = ThemeSecurityColors.onTertiaryLight,
+    tertiaryContainer = ThemeSecurityColors.tertiaryContainerLight,
+    onTertiaryContainer = ThemeSecurityColors.onTertiaryContainerLight,
+    error = ThemeSecurityColors.errorLight,
+    onError = ThemeSecurityColors.onErrorLight,
+    errorContainer = ThemeSecurityColors.errorContainerLight,
+    onErrorContainer = ThemeSecurityColors.onErrorContainerLight,
+    background = ThemeSecurityColors.backgroundLight,
+    onBackground = ThemeSecurityColors.onBackgroundLight,
+    surface = ThemeSecurityColors.surfaceLight,
+    onSurface = ThemeSecurityColors.onSurfaceLight,
+    surfaceVariant = ThemeSecurityColors.surfaceVariantLight,
+    onSurfaceVariant = ThemeSecurityColors.onSurfaceVariantLight,
+    outline = ThemeSecurityColors.outlineLight,
+    outlineVariant = ThemeSecurityColors.outlineVariantLight,
+    scrim = ThemeSecurityColors.scrimLight,
+    inverseSurface = ThemeSecurityColors.inverseSurfaceLight,
+    inverseOnSurface = ThemeSecurityColors.inverseOnSurfaceLight,
+    inversePrimary = ThemeSecurityColors.inversePrimaryLight,
+    surfaceDim = ThemeSecurityColors.surfaceDimLight,
+    surfaceBright = ThemeSecurityColors.surfaceBrightLight,
+    surfaceContainerLowest = ThemeSecurityColors.surfaceContainerLowestLight,
+    surfaceContainerLow = ThemeSecurityColors.surfaceContainerLowLight,
+    surfaceContainer = ThemeSecurityColors.surfaceContainerLight,
+    surfaceContainerHigh = ThemeSecurityColors.surfaceContainerHighLight,
+    surfaceContainerHighest = ThemeSecurityColors.surfaceContainerHighestLight,
+)
+
+private val securityDarkScheme = darkColorScheme(
+    primary = ThemeSecurityColors.primaryDark,
+    onPrimary = ThemeSecurityColors.onPrimaryDark,
+    primaryContainer = ThemeSecurityColors.primaryContainerDark,
+    onPrimaryContainer = ThemeSecurityColors.onPrimaryContainerDark,
+    secondary = ThemeSecurityColors.secondaryDark,
+    onSecondary = ThemeSecurityColors.onSecondaryDark,
+    secondaryContainer = ThemeSecurityColors.secondaryContainerDark,
+    onSecondaryContainer = ThemeSecurityColors.onSecondaryContainerDark,
+    tertiary = ThemeSecurityColors.tertiaryDark,
+    onTertiary = ThemeSecurityColors.onTertiaryDark,
+    tertiaryContainer = ThemeSecurityColors.tertiaryContainerDark,
+    onTertiaryContainer = ThemeSecurityColors.onTertiaryContainerDark,
+    error = ThemeSecurityColors.errorDark,
+    onError = ThemeSecurityColors.onErrorDark,
+    errorContainer = ThemeSecurityColors.errorContainerDark,
+    onErrorContainer = ThemeSecurityColors.onErrorContainerDark,
+    background = ThemeSecurityColors.backgroundDark,
+    onBackground = ThemeSecurityColors.onBackgroundDark,
+    surface = ThemeSecurityColors.surfaceDark,
+    onSurface = ThemeSecurityColors.onSurfaceDark,
+    surfaceVariant = ThemeSecurityColors.surfaceVariantDark,
+    onSurfaceVariant = ThemeSecurityColors.onSurfaceVariantDark,
+    outline = ThemeSecurityColors.outlineDark,
+    outlineVariant = ThemeSecurityColors.outlineVariantDark,
+    scrim = ThemeSecurityColors.scrimDark,
+    inverseSurface = ThemeSecurityColors.inverseSurfaceDark,
+    inverseOnSurface = ThemeSecurityColors.inverseOnSurfaceDark,
+    inversePrimary = ThemeSecurityColors.inversePrimaryDark,
+    surfaceDim = ThemeSecurityColors.surfaceDimDark,
+    surfaceBright = ThemeSecurityColors.surfaceBrightDark,
+    surfaceContainerLowest = ThemeSecurityColors.surfaceContainerLowestDark,
+    surfaceContainerLow = ThemeSecurityColors.surfaceContainerLowDark,
+    surfaceContainer = ThemeSecurityColors.surfaceContainerDark,
+    surfaceContainerHigh = ThemeSecurityColors.surfaceContainerHighDark,
+    surfaceContainerHighest = ThemeSecurityColors.surfaceContainerHighestDark,
+)
+
+private val securityLightHighContrastScheme = lightColorScheme(
+    primary = ThemeSecurityColors.primaryLightHighContrast,
+    onPrimary = ThemeSecurityColors.onPrimaryLightHighContrast,
+    primaryContainer = ThemeSecurityColors.primaryContainerLightHighContrast,
+    onPrimaryContainer = ThemeSecurityColors.onPrimaryContainerLightHighContrast,
+    secondary = ThemeSecurityColors.secondaryLightHighContrast,
+    onSecondary = ThemeSecurityColors.onSecondaryLightHighContrast,
+    secondaryContainer = ThemeSecurityColors.secondaryContainerLightHighContrast,
+    onSecondaryContainer = ThemeSecurityColors.onSecondaryContainerLightHighContrast,
+    tertiary = ThemeSecurityColors.tertiaryLightHighContrast,
+    onTertiary = ThemeSecurityColors.onTertiaryLightHighContrast,
+    tertiaryContainer = ThemeSecurityColors.tertiaryContainerLightHighContrast,
+    onTertiaryContainer = ThemeSecurityColors.onTertiaryContainerLightHighContrast,
+    error = ThemeSecurityColors.errorLightHighContrast,
+    onError = ThemeSecurityColors.onErrorLightHighContrast,
+    errorContainer = ThemeSecurityColors.errorContainerLightHighContrast,
+    onErrorContainer = ThemeSecurityColors.onErrorContainerLightHighContrast,
+    background = ThemeSecurityColors.backgroundLightHighContrast,
+    onBackground = ThemeSecurityColors.onBackgroundLightHighContrast,
+    surface = ThemeSecurityColors.surfaceLightHighContrast,
+    onSurface = ThemeSecurityColors.onSurfaceLightHighContrast,
+    surfaceVariant = ThemeSecurityColors.surfaceVariantLightHighContrast,
+    onSurfaceVariant = ThemeSecurityColors.onSurfaceVariantLightHighContrast,
+    outline = ThemeSecurityColors.outlineLightHighContrast,
+    outlineVariant = ThemeSecurityColors.outlineVariantLightHighContrast,
+    scrim = ThemeSecurityColors.scrimLightHighContrast,
+    inverseSurface = ThemeSecurityColors.inverseSurfaceLightHighContrast,
+    inverseOnSurface = ThemeSecurityColors.inverseOnSurfaceLightHighContrast,
+    inversePrimary = ThemeSecurityColors.inversePrimaryLightHighContrast,
+    surfaceDim = ThemeSecurityColors.surfaceDimLightHighContrast,
+    surfaceBright = ThemeSecurityColors.surfaceBrightLightHighContrast,
+    surfaceContainerLowest = ThemeSecurityColors.surfaceContainerLowestLightHighContrast,
+    surfaceContainerLow = ThemeSecurityColors.surfaceContainerLowLightHighContrast,
+    surfaceContainer = ThemeSecurityColors.surfaceContainerLightHighContrast,
+    surfaceContainerHigh = ThemeSecurityColors.surfaceContainerHighLightHighContrast,
+    surfaceContainerHighest = ThemeSecurityColors.surfaceContainerHighestLightHighContrast,
+)
+
+private val securityDarkHighContrastScheme = darkColorScheme(
+    primary = ThemeSecurityColors.primaryDarkHighContrast,
+    onPrimary = ThemeSecurityColors.onPrimaryDarkHighContrast,
+    primaryContainer = ThemeSecurityColors.primaryContainerDarkHighContrast,
+    onPrimaryContainer = ThemeSecurityColors.onPrimaryContainerDarkHighContrast,
+    secondary = ThemeSecurityColors.secondaryDarkHighContrast,
+    onSecondary = ThemeSecurityColors.onSecondaryDarkHighContrast,
+    secondaryContainer = ThemeSecurityColors.secondaryContainerDarkHighContrast,
+    onSecondaryContainer = ThemeSecurityColors.onSecondaryContainerDarkHighContrast,
+    tertiary = ThemeSecurityColors.tertiaryDarkHighContrast,
+    onTertiary = ThemeSecurityColors.onTertiaryDarkHighContrast,
+    tertiaryContainer = ThemeSecurityColors.tertiaryContainerDarkHighContrast,
+    onTertiaryContainer = ThemeSecurityColors.onTertiaryContainerDarkHighContrast,
+    error = ThemeSecurityColors.errorDarkHighContrast,
+    onError = ThemeSecurityColors.onErrorDarkHighContrast,
+    errorContainer = ThemeSecurityColors.errorContainerDarkHighContrast,
+    onErrorContainer = ThemeSecurityColors.onErrorContainerDarkHighContrast,
+    background = ThemeSecurityColors.backgroundDarkHighContrast,
+    onBackground = ThemeSecurityColors.onBackgroundDarkHighContrast,
+    surface = ThemeSecurityColors.surfaceDarkHighContrast,
+    onSurface = ThemeSecurityColors.onSurfaceDarkHighContrast,
+    surfaceVariant = ThemeSecurityColors.surfaceVariantDarkHighContrast,
+    onSurfaceVariant = ThemeSecurityColors.onSurfaceVariantDarkHighContrast,
+    outline = ThemeSecurityColors.outlineDarkHighContrast,
+    outlineVariant = ThemeSecurityColors.outlineVariantDarkHighContrast,
+    scrim = ThemeSecurityColors.scrimDarkHighContrast,
+    inverseSurface = ThemeSecurityColors.inverseSurfaceDarkHighContrast,
+    inverseOnSurface = ThemeSecurityColors.inverseOnSurfaceDarkHighContrast,
+    inversePrimary = ThemeSecurityColors.inversePrimaryDarkHighContrast,
+    surfaceDim = ThemeSecurityColors.surfaceDimDarkHighContrast,
+    surfaceBright = ThemeSecurityColors.surfaceBrightDarkHighContrast,
+    surfaceContainerLowest = ThemeSecurityColors.surfaceContainerLowestDarkHighContrast,
+    surfaceContainerLow = ThemeSecurityColors.surfaceContainerLowDarkHighContrast,
+    surfaceContainer = ThemeSecurityColors.surfaceContainerDarkHighContrast,
+    surfaceContainerHigh = ThemeSecurityColors.surfaceContainerHighDarkHighContrast,
+    surfaceContainerHighest = ThemeSecurityColors.surfaceContainerHighestDarkHighContrast,
+)
+
 /**
  * Composable que define el tema de la aplicación.
  * 
@@ -364,11 +517,15 @@ fun AppTheme(
             when (colorPalette) {
                 ColorPalette.Default -> if (actualDarkTheme) defaultDarkHighContrastScheme else defaultLightHighContrastScheme
                 ColorPalette.Industrial -> if (actualDarkTheme) industrialDarkHighContrastScheme else industrialLightHighContrastScheme
+                ColorPalette.Security -> if (actualDarkTheme) securityDarkHighContrastScheme else securityLightHighContrastScheme
             }
         }
         // Luego: Paleta de Colores
         colorPalette == ColorPalette.Industrial -> {
             if (actualDarkTheme) industrialDarkScheme else industrialLightScheme
+        }
+        colorPalette == ColorPalette.Security -> {
+            if (actualDarkTheme) securityDarkScheme else securityLightScheme
         }
         // Por defecto: Paleta Default
         else -> {

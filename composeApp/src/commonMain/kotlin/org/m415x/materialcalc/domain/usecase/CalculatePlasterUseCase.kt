@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,114 +19,108 @@
 package org.m415x.materialcalc.domain.usecase
 
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
-import org.m415x.materialcalc.domain.common.WasteRegistry
 import org.m415x.materialcalc.domain.common.calculateWetMaterials
 import org.m415x.materialcalc.domain.model.Aperture
 import org.m415x.materialcalc.domain.model.MortarDosing
-import org.m415x.materialcalc.domain.model.ResultadoRevoque
+import org.m415x.materialcalc.domain.model.PlasterResult
 import org.m415x.materialcalc.domain.utils.calculateNetSurface
 
 /**
- * Calcula los materiales para un volumen de hormigón.
+ * Calcula los materiales para un muro.
  *
  * @param repository Repositorio de materiales.
  */
 class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) {
 
     /**
-     * Calcula los materiales para un volumen de hormigón.
+     * Calcula los materiales para un muro.
      *
-     * @param largoParedMetros Largo de la pared en metros.
-     * @param altoParedMetros Alto de la pared en metros.
-     * @param espesorGruesoMetros Espesor del revoque grueso en metros.
-     * @param espesorFinoMetros Espesor del revoque fino en metros.
-     * @param isAmbasCaras Indica si se calcula para ambas caras.
-     * @param bolsaCementoKg Peso de la bolsa de cemento en kg.
-     * @param bolsaCalKg Peso de la bolsa de cal en kg.
-     * @param bolsaFinoPremezclaKg Peso de la bolsa de fino premezcla en kg.
+     * @param lengthMeters Largo de la pared en metros.
+     * @param heightMeters Alto de la pared en metros.
+     * @param thickThickness Espesor del revoque grueso en metros.
+     * @param thinThickness Espesor del revoque fino en metros.
+     * @param isBothSides Indica si se calcula para ambas caras.
+     * @param openingsList Lista de aberturas en la pared.
+     * @param mortarDosing Receta de mortero.
+     * @param cementBagWeightKg Peso de la bolsa de cemento en kg.
+     * @param limeBagWeightKg Peso de la bolsa de cal en kg.
+     * @param premixBagWeightKg Peso de la bolsa de fino premezcla en kg.
+     * @param percentagePlasterWaste Porcentaje de desperdicio en revoque.
      * @return Resultado del cálculo.
      */
     operator fun invoke(
-        largoParedMetros: Double,
-        altoParedMetros: Double,
-        espesorGruesoMetros: Double,
-        espesorFinoMetros: Double,
-        isAmbasCaras: Boolean,
-        aberturas: List<Aperture>,
-        recetaGrueso: MortarDosing,
-        bolsaCementoKg: Int = 25,
-        bolsaCalKg: Int = 25,
-        bolsaFinoPremezclaKg: Int = 25,
-        porcentajeDesperdicio: Double,
-    ): ResultadoRevoque {
+        lengthMeters: Double,
+        heightMeters: Double,
+        thickThickness: Double,
+        thinThickness: Double,
+        isBothSides: Boolean,
+        openingsList: List<Aperture>,
+        mortarDosing: MortarDosing,
+        cementBagWeightKg: Int,
+        limeBagWeightKg: Int,
+        premixBagWeightKg: Int,
+        percentagePlasterWaste: Double,
+    ): PlasterResult {
 
-        // ============================================================
         // 1. GEOMETRÍA (ÁREA NETA)
-        // ============================================================
-        // Ahora esto incluye las validaciones automáticamente
-        val superficieNetaUnaCara = calculateNetSurface(
-            largo = largoParedMetros,
-            alto = altoParedMetros,
-            aberturas = aberturas
+        val netSurfaceOneSide = calculateNetSurface(
+            length = lengthMeters,
+            height = heightMeters,
+            openingsList = openingsList
         )
 
-        // 4. Superficie Total (Aplicamos si son ambas caras)
+        // Superficie Total (Aplicamos si son ambas caras)
         // Si hay ventana, se descuenta de ambos lados, así que la lógica se mantiene:
         // (Pared - Ventana) * 2 lados
-        val superficieTotalCalculo = if (isAmbasCaras) superficieNetaUnaCara * 2 else superficieNetaUnaCara
+        val totalCalculationArea = if (isBothSides) netSurfaceOneSide * 2 else netSurfaceOneSide
 
-        // ----------------------------------------------------
         // CÁLCULO DE REVOQUE GRUESO (JAHARRO)
-        // ----------------------------------------------------
-        val volumenGruesoGeo = superficieTotalCalculo * espesorGruesoMetros
+        val geometricThickVolume = totalCalculationArea * thickThickness
 
-        val matsGrueso = calculateWetMaterials(
-            volumeM3 = volumenGruesoGeo,
-            recipe = recetaGrueso,
-            waste = porcentajeDesperdicio,
-            cementBagWeight = bolsaCementoKg,
-            limeBagWeight = bolsaCalKg
+        val mathThick = calculateWetMaterials(
+            volumeM3 = geometricThickVolume,
+            recipe = mortarDosing,
+            waste = percentagePlasterWaste,
+            cementBagWeight = cementBagWeightKg,
+            limeBagWeight = limeBagWeightKg
         )
 
-        // ----------------------------------------------------
         // CÁLCULO DE REVOQUE FINO (ENLUCIDO)
-        // ----------------------------------------------------
-        val volumenFinoGeo = superficieTotalCalculo * espesorFinoMetros
-        val desperdicioFino = WasteRegistry.getForRevoqueFino()
+        val geometricThinVolume = totalCalculationArea * thinThickness
+        // Usamos el mismo porcentaje de desperdicio que para el grueso
+        val finePercentageWaste = percentagePlasterWaste
 
         // Opción 1: Premezcla (Rendimiento ~2.5 kg/m2)
-        val consumoBasePremezcla = superficieTotalCalculo * 2.5
-        val finoPremezclaTotal = consumoBasePremezcla * (1 + desperdicioFino)
+        val premixPerformance = totalCalculationArea * 2.5
+        val totalFinePemix = premixPerformance * (1 + finePercentageWaste)
 
         // Opción 2: Tradicional
-        val recetaFino = repository.getFinePlasterRecipe()
-        val matsFino = calculateWetMaterials(
-            volumeM3 = volumenFinoGeo,
-            recipe = recetaFino,
-            waste = desperdicioFino,
-            limeBagWeight = bolsaCalKg,
-            cementBagWeight = 25
+        val finePlasterRecipe = repository.getFinePlasterRecipe()
+        val mathFine = calculateWetMaterials(
+            volumeM3 = geometricThinVolume,
+            recipe = finePlasterRecipe,
+            waste = finePercentageWaste,
+            limeBagWeight = limeBagWeightKg,
+            cementBagWeight = cementBagWeightKg
         )
 
-        return ResultadoRevoque(
-            areaTotalM2 = superficieTotalCalculo, // Área real a cubrir
-
-            bolsaCementoKg = bolsaCementoKg,
-            bolsaCalKg = bolsaCalKg,
-            bolsaFinoPremezclaKg = bolsaFinoPremezclaKg,
-
-            volumenGruesoM3 = volumenGruesoGeo * (1 + porcentajeDesperdicio),
-            gruesoCementoKg = matsGrueso.cementoKg,
-            gruesoCalKg = matsGrueso.calKg,
-            gruesoArenaM3 = matsGrueso.arenaM3,
-            porcentajeDesperdicioGrueso = porcentajeDesperdicio,
-            dosificacionGrueso = recetaGrueso.mixingRatio,
-
-            finoPremezclaKg = finoPremezclaTotal,
-            finoCalKg = matsFino.calKg,
-            finoArenaM3 = matsFino.arenaM3,
-            porcentajeDesperdicioFino = desperdicioFino,
-            dosificacionFino = recetaFino.mixingRatio
+        return PlasterResult(
+            totalAreaM2 = totalCalculationArea, // Área real a cubrir
+            cementBagKg = cementBagWeightKg,
+            limeBagKg = limeBagWeightKg,
+            premixBagKg = premixBagWeightKg,
+            thickVolumeM3 = geometricThickVolume * (1 + percentagePlasterWaste),
+            thickCementKg = mathThick.cementKg,
+            thickLimeKg = mathThick.limeKg,
+            thickSandKg = mathThick.sandM3,
+            thickWaterLiters = mathThick.waterLiters,
+            thickPercentageWaste = percentagePlasterWaste,
+            thickDosage = mortarDosing.mixingRatio,
+            finePremixKg = totalFinePemix,
+            fineLimeKg = mathFine.limeKg,
+            fineSandM3 = mathFine.sandM3,
+            finePercentageWaste = finePercentageWaste,
+            fineDosage = finePlasterRecipe.mixingRatio
         )
     }
 }

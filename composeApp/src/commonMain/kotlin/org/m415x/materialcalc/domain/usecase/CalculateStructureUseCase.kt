@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,12 +18,8 @@
 
 package org.m415x.materialcalc.domain.usecase
 
-import org.m415x.materialcalc.domain.common.WasteRegistry
 import org.m415x.materialcalc.domain.common.calculateWetMaterials
-import org.m415x.materialcalc.domain.model.ConcreteType
-import org.m415x.materialcalc.domain.model.IronDiameter
-import org.m415x.materialcalc.domain.model.ResultadoEstructura
-import org.m415x.materialcalc.domain.model.SlabResult
+import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.domain.repository.MaterialRepository
 import kotlin.math.PI
 import kotlin.math.ceil
@@ -39,163 +35,183 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
     /**
      * Calcula los materiales para una estructura.
      *
-     * @param largoMetros Largo de la estructura en metros.
-     * @param ladoAMetros Lado A de la estructura en metros.
-     * @param ladoBMetros Lado B de la estructura en metros.
+     * @param lengthMeters Largo de la estructura en metros.
+     * @param sideAMeters Lado A de la estructura en metros.
+     * @param sideBMeters Lado B de la estructura en metros.
      * @param isCircular Indica si la estructura es circular.
      * @param concreteType Tipo de hormigón.
-     * @param diametroPrincipal Diámetro principal de hierro.
-     * @param cantidadVarillas Cantidad de varillas.
-     * @param diametroEstribo Diámetro de estribo de hierro.
-     * @param separacionEstriboMetros Separación de estribo en metros.
-     * @param pesoBolsaCementoKg Peso de la bolsa de cemento en kg.
+     * @param mainIronDiameter Diámetro principal de hierro.
+     * @param mainIronQuantity Cantidad de varillas.
+     * @param stirrupIronDiameter Diámetro de estribo de hierro.
+     * @param stirrupSpacingMeters Separación de estribo en metros.
+     * @param cementBagWeightKg Peso de la bolsa de cemento en kg.
+     * @param limeBagWeightKg Peso de la bolsa de cal en kg.
+     * @param percentageCementWaste Porcentaje de desperdicio en hormigón.
+     * @param percentageMainIronWaste Porcentaje de desperdicio en hierro principal.
+     * @param percentageStirrupIronWaste Porcentaje de desperdicio enswiper de hierro.
+     * @param startHookLengthMeters Longitud adicional por gancho inicial en metros.
+     * @param endHookLengthMeters Longitud adicional por gancho final en metros.
      * @return Resultado del cálculo.
      */
     operator fun invoke(
         // Dimensiones generales
-        largoMetros: Double,
-        ladoAMetros: Double,
-        ladoBMetros: Double,
+        lengthMeters: Double,
+        sideAMeters: Double,
+        sideBMeters: Double,
         isCircular: Boolean = false,
-
         // Configuración Hormigón
         concreteType: ConcreteType,
-
         // Configuración Armadura Principal (Los hierros largos)
-        diametroPrincipal: IronDiameter,
-        cantidadVarillas: Int,  // Ej. 4 hierros
-
+        mainIronDiameter: IronDiameter,
+        mainIronQuantity: Int,
         // Configuración Estribos (Los anillos)
-        diametroEstribo: IronDiameter,
-        separacionEstriboMetros: Double,
+        stirrupIronDiameter: IronDiameter,
+        stirrupSpacingMeters: Double,
+        // Configuraciones opcionales
+        cementBagWeightKg: Int,
+        limeBagWeightKg: Int,
+        percentageCementWaste: Double,
+        percentageMainIronWaste: Double,
+        percentageStirrupIronWaste: Double,
+        // Hierros custom (opcionales, para sobreescribir el peso si se usan)
+        customMainIron: CustomIron? = null,
+        customStirrupIron: CustomIron? = null,
+        // Ganchos
+        startHookLengthMeters: Double = 0.0,
+        endHookLengthMeters: Double = 0.0
+    ): StructureResult {
 
-        // Configuraciones opcionales (con defaults)
-        pesoBolsaCementoKg: Int = 25,
-        desperdicioHormigon: Double,
-        desperdicioHierroPrincipal: Double,
-        desperdicioEstribos: Double
-    ): ResultadoEstructura {
-
-        // ============================================================
         // 1. CÁLCULO DE HORMIGÓN (Usando el Motor Unificado)
-        // ============================================================
-
         // A. Volumen Geométrico
-        val volumenGeometrico = if (isCircular) {
-            val radio = ladoAMetros / 2
-            PI * radio.pow(2) * largoMetros
+        val geometricStructureVolume = if (isCircular) {
+            val radius = sideAMeters / 2
+            PI * radius.pow(2) * lengthMeters
         } else {
-            ladoAMetros * ladoBMetros * largoMetros
+            sideAMeters * sideBMeters * lengthMeters
         }
 
         // B. Datos y Desperdicios
-        val receta = repository.getConcreteDosing(concreteType)
+        val concreteDosing = repository.getConcreteDosing(concreteType)
             ?: throw IllegalArgumentException("Hormigón no encontrado")
 
         // C. Cálculo automático de materiales húmedos
-        val matsConcreto = calculateWetMaterials(
-            volumeM3 = volumenGeometrico,
-            recipe = receta,
-            waste = desperdicioHormigon,
-            cementBagWeight = pesoBolsaCementoKg,
-            limeBagWeight = 25
+        val mathConcrete = calculateWetMaterials(
+            volumeM3 = geometricStructureVolume,
+            recipe = concreteDosing,
+            waste = percentageCementWaste,
+            cementBagWeight = cementBagWeightKg,
+            limeBagWeight = limeBagWeightKg
         )
 
-        // ============================================================
         // 2. CÁLCULO DE ARMADURA (HIERROS)
-        // ============================================================
-
-        // Obtenemos desperdicios específicos del registro
-        val desperdicioPrincipal = WasteRegistry.getForIron(isEstribo = false)
-        val desperdicioEstribos = WasteRegistry.getForIron(isEstribo = true)
+        val commercialLengthIronMeters = 12 // Hardcoded for now
 
         // --- A. Hierro Principal ---
-        val pesoMetroPrincipal = repository.getIronWeightPerMeter(diametroPrincipal)
+        // Usamos el peso del custom si existe, sino el del enum
+        val mainIronWeight = customMainIron?.linearWeight ?: repository.getIronWeightPerMeter(mainIronDiameter)
 
-        val longitudTotalPrincipal = (cantidadVarillas * largoMetros) * (1 + desperdicioHierroPrincipal)
-        val pesoTotalPrincipal = longitudTotalPrincipal * pesoMetroPrincipal
-
-        val longitudComercialHierroMetros = 12 // Hardcoded for now
-        val barrasPrincipalComprar = ceil(longitudTotalPrincipal / longitudComercialHierroMetros).toInt()
+        // La longitud total de cada barra incluye el largo de la estructura más los ganchos
+        val singleBarLength = lengthMeters + startHookLengthMeters + endHookLengthMeters
+        val mainIronTotalLength = (mainIronQuantity * singleBarLength) * (1 + percentageMainIronWaste)
+        val mainIronTotalWeight = mainIronTotalLength * mainIronWeight
+        val mainIronBarsBuy = ceil(mainIronTotalLength / commercialLengthIronMeters).toInt()
 
         // --- B. Estribos ---
-        val pesoMetroEstribo = repository.getIronWeightPerMeter(diametroEstribo)
-        val cantidadEstribos = ceil(largoMetros / separacionEstriboMetros).toInt()
+        // Usamos el peso del custom si existe, sino el del enum
+        val stirrupIronWeight = customStirrupIron?.linearWeight ?: repository.getIronWeightPerMeter(stirrupIronDiameter)
+        val stirrupQuantity = ceil(lengthMeters / stirrupSpacingMeters).toInt()
 
         // Geometría del estribo (Longitud de una vuelta)
-        val longitudUnEstribo = if (isCircular) {
-            val diametroReal = (ladoAMetros - 0.05).coerceAtLeast(0.0) // Restamos recubrimiento
-            (PI * diametroReal) + 0.15 // +15cm ganchos
+        val stirrupLengthMeters = if (isCircular) {
+            val actualDiameter = (sideAMeters - 0.05).coerceAtLeast(0.0) // Restamos recubrimiento
+            (PI * actualDiameter) + 0.15 // +15cm ganchos
         } else {
-            val aReal = (ladoAMetros - 0.05).coerceAtLeast(0.0)
-            val bReal = (ladoBMetros - 0.05).coerceAtLeast(0.0)
-            (2 * aReal + 2 * bReal) + 0.15 // +15cm ganchos
+            val realASide = (sideAMeters - 0.05).coerceAtLeast(0.0)
+            val realBSide = (sideBMeters - 0.05).coerceAtLeast(0.0)
+            (2 * realASide + 2 * realBSide) + 0.15 // +15cm ganchos
         }
 
-        val longitudTotalEstribos = (cantidadEstribos * longitudUnEstribo) * (1 + desperdicioEstribos)
-        val pesoTotalEstribos = longitudTotalEstribos * pesoMetroEstribo
+        val stirrupIronTotalLength = (stirrupQuantity * stirrupLengthMeters) * (1 + percentageStirrupIronWaste)
+        val stirrupIronTotalWeight = stirrupIronTotalLength * stirrupIronWeight
+        val stirrupIronBarsBuy = ceil(stirrupIronTotalLength / commercialLengthIronMeters).toInt()
 
-        val barrasEstribosComprar = ceil(longitudTotalEstribos / longitudComercialHierroMetros).toInt()
-
-        // ============================================================
         // 3. RESULTADO FINAL
-        // ============================================================
-        return ResultadoEstructura(
-            // Hormigón (Viene del motor)
-            volumenHormigonM3 = volumenGeometrico * (1 + desperdicioHormigon),
-            cementoKg = matsConcreto.cementoKg,
-            arenaM3 = matsConcreto.arenaM3,
-            piedraM3 = matsConcreto.piedraM3,
-            aguaLitros = matsConcreto.aguaLitros,
-            bolsaCementoKg = pesoBolsaCementoKg,
-            porcentajeDesperdicioHormigon = desperdicioHormigon,
-
-            // Armadura (Calculada aquí)
-            diametroPrincipal = diametroPrincipal,
-            diametroEstribo = diametroEstribo,
-            hierroPrincipalKg = pesoTotalPrincipal,
-            hierroEstribosKg = pesoTotalEstribos,
-            hierroPrincipalMetros = longitudTotalPrincipal,
-            hierroEstribosMetros = longitudTotalEstribos,
-            cantidadHierroPrincipal = barrasPrincipalComprar,
-            cantidadHierroEstribos = barrasEstribosComprar,
-            porcentajeDesperdicioHierroPrincipal = desperdicioHierroPrincipal,
-            porcentajeDesperdicioHierroEstribos = desperdicioEstribos
+        return StructureResult(
+            volumeConcreteM3 = geometricStructureVolume * (1 + percentageCementWaste),
+            cementKg = mathConcrete.cementKg,
+            sandM3 = mathConcrete.sandM3,
+            gravelM3 = mathConcrete.gravelM3,
+            waterLiters = mathConcrete.waterLiters,
+            cementBagKg = cementBagWeightKg,
+            percentageConcreteWaste = percentageCementWaste,
+            mainDiameter = mainIronDiameter, // TODO: Considerar si StructureResult debe soportar CustomIron en el futuro para mostrar el nombre correcto
+            stirrupDiameter = stirrupIronDiameter,
+            mainIronKg = mainIronTotalWeight,
+            stirrupIronKg = stirrupIronTotalWeight,
+            mainIronMeters = mainIronTotalLength,
+            stirrupIronMeters = stirrupIronTotalLength,
+            mainIronAmount = mainIronBarsBuy,
+            stirrupIronAmount = stirrupIronBarsBuy,
+            percentageMainIronWaste = percentageMainIronWaste,
+            percentageStirrupIronWaste = percentageStirrupIronWaste
         )
     }
 
     fun calculateSlab(
         widthX: Double,      // m
         lengthY: Double,     // m
+        thickness: Double,   // m (espesor)
         sepXcm: Double,      // cm
         sepYcm: Double,      // cm
-        phiX: Double,        // mm
-        phiY: Double,        // mm
+        phiX: IronDiameter,  // mm
+        phiY: IronDiameter,  // mm
         wastePct: Double,    // % (desde Settings)
-        includeHooks: Boolean
+        hookLengthMeters: Double, // Longitud de gancho (se asume igual para ambos extremos y ambas direcciones)
+        concreteType: ConcreteType,
+        cementBagWeightKg: Int,
+        limeBagWeightKg: Int,
+        percentageConcreteWaste: Double
     ): SlabResult {
         val sepXm = sepXcm / 100.0
         val sepYm = sepYcm / 100.0
 
         // 1. Cantidad de barras (CIRSOC 201 sugiere cubrir todo el paño)
+        // Se suma 1 para asegurar que se cubra el borde final
         val countX = ceil(lengthY / sepXm).toInt() + 1
         val countY = ceil(widthX / sepYm).toInt() + 1
 
         // 2. Longitud individual (Recubrimiento típico 2cm por lado)
-        val recubrimiento = 0.02 * 2
-        val hookL = if (includeHooks) (10 * (phiX / 1000.0)) * 2 else 0.0 // Pata estándar 10*phi
+        val covering = 0.02 * 2
+        // El gancho se aplica en ambos extremos
+        val totalHookL = hookLengthMeters * 2
 
-        val individualLengthX = (widthX - recubrimiento) + hookL
-        val individualLengthY = (lengthY - recubrimiento) + hookL
+        val individualLengthX = (widthX - covering) + totalHookL
+        val individualLengthY = (lengthY - covering) + totalHookL
 
         // 3. Totales
-        val netMeters = (countX * individualLengthX) + (countY * individualLengthY)
-        val totalMeters = netMeters * (1 + (wastePct / 100))
+        val netMetersX = countX * individualLengthX
+        val netMetersY = countY * individualLengthY
+        val totalMeters = (netMetersX + netMetersY) * (1 + wastePct)
 
-        // Peso específico del acero: (phi^2 / 162.2) kg/m
-        val weightX = (phiX * phiX / 162.2) * (countX * individualLengthX)
-        val weightY = (phiY * phiY / 162.2) * (countY * individualLengthY)
-        val totalWeight = (weightX + weightY) * (1 + (wastePct / 100))
+        // Peso específico del acero
+        val weightX = repository.getIronWeightPerMeter(phiX) * netMetersX
+        val weightY = repository.getIronWeightPerMeter(phiY) * netMetersY
+        val totalWeight = (weightX + weightY) * (1 + wastePct)
+
+        val commercialBars12m = ceil(totalMeters / 12.0).toInt()
+
+        // 4. Hormigón
+        val volumeM3 = widthX * lengthY * thickness
+        val concreteDosing = repository.getConcreteDosing(concreteType)
+            ?: throw IllegalArgumentException("Hormigón no encontrado")
+
+        val mathConcrete = calculateWetMaterials(
+            volumeM3 = volumeM3,
+            recipe = concreteDosing,
+            waste = percentageConcreteWaste,
+            cementBagWeight = cementBagWeightKg,
+            limeBagWeight = limeBagWeightKg
+        )
 
         return SlabResult(
             totalWeightKg = totalWeight,
@@ -204,8 +220,78 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
             countY = countY,
             lengthX = individualLengthX,
             lengthY = individualLengthY,
-            commercialBars12m = ceil(totalMeters / 12.0).toInt(),
-            wasteAmountKg = totalWeight - (weightX + weightY)
+            diameterX = phiX.milimeters,
+            diameterY = phiY.milimeters,
+            weightX = weightX * (1 + wastePct),
+            weightY = weightY * (1 + wastePct),
+            commercialBars12m = commercialBars12m,
+            wasteAmountKg = totalWeight - (weightX + weightY),
+            suggestedMesh = null,
+            meshPanelsNeeded = null,
+            percentageIronWaste = wastePct,
+            volumeConcreteM3 = volumeM3 * (1 + percentageConcreteWaste),
+            cementKg = mathConcrete.cementKg,
+            sandM3 = mathConcrete.sandM3,
+            gravelM3 = mathConcrete.gravelM3,
+            waterLiters = mathConcrete.waterLiters,
+            cementBagKg = cementBagWeightKg,
+            percentageConcreteWaste = percentageConcreteWaste
+        )
+    }
+
+    fun calculateSlabWithMesh(
+        widthX: Double,
+        lengthY: Double,
+        thickness: Double,
+        meshId: String,
+        concreteType: ConcreteType,
+        cementBagWeightKg: Int,
+        limeBagWeightKg: Int,
+        percentageConcreteWaste: Double
+    ): SlabResult {
+        // 1. Calcular paneles de malla
+        // Panel estándar de 2.4m x 6m = 14.4 m2
+        val panelArea = 2.4 * 6.0
+        val slabArea = widthX * lengthY
+        // Se suele agregar un desperdicio por solapes (aprox 10-15%)
+        val panelsNeeded = ceil((slabArea * 1.15) / panelArea).toInt()
+
+        // 2. Hormigón
+        val volumeM3 = widthX * lengthY * thickness
+        val concreteDosing = repository.getConcreteDosing(concreteType)
+            ?: throw IllegalArgumentException("Hormigón no encontrado")
+
+        val mathConcrete = calculateWetMaterials(
+            volumeM3 = volumeM3,
+            recipe = concreteDosing,
+            waste = percentageConcreteWaste,
+            cementBagWeight = cementBagWeightKg,
+            limeBagWeight = limeBagWeightKg
+        )
+
+        return SlabResult(
+            totalWeightKg = 0.0, // No calculamos peso exacto de malla por ahora
+            totalMeters = 0.0,
+            countX = 0,
+            countY = 0,
+            lengthX = 0.0,
+            lengthY = 0.0,
+            diameterX = 0.0,
+            diameterY = 0.0,
+            weightX = 0.0,
+            weightY = 0.0,
+            commercialBars12m = 0,
+            wasteAmountKg = 0.0,
+            suggestedMesh = meshId.uppercase(),
+            meshPanelsNeeded = panelsNeeded,
+            percentageIronWaste = 0.0,
+            volumeConcreteM3 = volumeM3 * (1 + percentageConcreteWaste),
+            cementKg = mathConcrete.cementKg,
+            sandM3 = mathConcrete.sandM3,
+            gravelM3 = mathConcrete.gravelM3,
+            waterLiters = mathConcrete.waterLiters,
+            cementBagKg = cementBagWeightKg,
+            percentageConcreteWaste = percentageConcreteWaste
         )
     }
 }

@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,32 +18,32 @@
 
 package org.m415x.materialcalc.domain.common
 
-import org.m415x.materialcalc.domain.model.MaterialRecipe
+import org.m415x.materialcalc.domain.model.WetMixRecipe
 import kotlin.math.ceil
 
 /**
  * Clase auxiliar para devolver los resultados brutos calculados
  *
- * @property cementoKg Cantidad de cemento en Kg.
- * @property calKg Cantidad de cal en Kg.
- * @property arenaM3 Cantidad de arena en M3.
- * @property piedraM3 Cantidad de piedra en M3.
- * @property aguaLitros Cantidad de agua en litros.
- * @property cementoBolsas Cantidad de bolsas de cemento.
- * @property calBolsas Cantidad de bolsas de cal.
+ * @property cementKg Cantidad de cemento en Kg.
+ * @property limeKg Cantidad de cal en Kg.
+ * @property sandM3 Cantidad de arena en M3.
+ * @property gravelM3 Cantidad de piedra en M3.
+ * @property waterLiters Cantidad de agua en litros.
+ * @property cementBags Cantidad de bolsas de cemento.
+ * @property limeBags Cantidad de bolsas de cal.
  */
 data class MaterialQuantities(
-    val cementoKg: Double,
-    val calKg: Double,
-    val arenaM3: Double,
-    val piedraM3: Double,
-    val aguaLitros: Double,
-    val cementoBolsas: Int,
-    val calBolsas: Int
+    val cementKg: Double,
+    val limeKg: Double,
+    val sandM3: Double,
+    val gravelM3: Double,
+    val waterLiters: Double,
+    val cementBags: Int,
+    val limeBags: Int
 )
 
 /**
- * Función pura que calcula materiales base.
+ * Función pura que calcula materiales húmedos base.
  *
  * @param volumeM3 Volumen geométrico real.
  * @param recipe La dosificación a usar (Hormigón o Mortero).
@@ -51,37 +51,41 @@ data class MaterialQuantities(
  * @param cementBagWeight Peso de una bolsa de cemento.
  * @param limeBagWeight Peso de una bolsa de cal.
  *
- * @return MaterialQuantities
+ * @return MaterialQuantities con los resultados.
  */
 fun calculateWetMaterials(
     volumeM3: Double,
-    recipe: MaterialRecipe,
+    recipe: WetMixRecipe,
     waste: Double,
     cementBagWeight: Int,
     limeBagWeight: Int
 ): MaterialQuantities {
 
     // 1. Aplicamos desperdicio al volumen
-    val volumenReal = volumeM3 * (1.0 + waste)
+    val actualVolume = volumeM3 * (1.0 + waste)
 
     // 2. Calculamos brutos
-    val cemKg = volumenReal * recipe.cementKg
-    val calKg = volumenReal * recipe.limeKg
-    val arena = volumenReal * recipe.sandM3
-    val piedra = volumenReal * recipe.gravelM3
+    val cementKg = actualVolume * recipe.cementKg
+    val limeKg = actualVolume * recipe.limeKg
+    val sandM3 = actualVolume * recipe.sandM3
+    val gravelM3 = actualVolume * recipe.gravelM3
 
-    // El agua suele calcularse sobre el cemento (Relación A/C)
-    // O sobre el total de secos, depende tu fórmula original.
-    // Usaremos la lógica de tu código: KgCemento * Relacion
-    val agua = cemKg * recipe.waterCementRatio
+    // El agua se calcula de manera diferente si hay cal o no.
+    // Si waterCementRatio es 0.0, asumimos que waterLiters es el valor total por m3.
+    // Si waterCementRatio > 0.0, calculamos el agua en base al cemento (Hormigón).
+    val water = if (recipe.waterCementRatio > 0.0) {
+        cementKg * recipe.waterCementRatio
+    } else {
+        actualVolume * recipe.waterLiters
+    }
 
     return MaterialQuantities(
-        cementoKg = cemKg,
-        calKg = calKg,
-        arenaM3 = arena,
-        piedraM3 = piedra,
-        aguaLitros = agua,
-        cementoBolsas = ceil(cemKg / cementBagWeight).toInt(),
-        calBolsas = ceil(calKg / limeBagWeight).toInt()
+        cementKg = cementKg,
+        limeKg = limeKg,
+        sandM3 = sandM3,
+        gravelM3 = gravelM3,
+        waterLiters = water,
+        cementBags = ceil(cementKg / cementBagWeight).toInt(),
+        limeBags = ceil(limeKg / limeBagWeight).toInt()
     )
 }

@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,18 @@
 
 package org.m415x.materialcalc.domain.registry
 
+/**
+ * Registro de mallas SIMA (Steel Industrial Mesh Alliance).
+ * Contiene las especificaciones de las mallas estándar utilizadas en la industria de la construcción.
+ *
+ * @property id Identificador único de la malla.
+ * @property name Nombre de la malla.
+ * @property phiMm Diámetro del alambre en milímetros.
+ * @property separationCm Separación entre alambres en centímetros.
+ * @property weightKgM2 Peso de la malla en kilogramos por metro cuadrado.
+ * @property panelWidthM Ancho del panel en metros.
+ * @property panelLengthM Longitud del panel en metros.
+ */
 data class SimaMesh(
     val id: String,
     val name: String,
@@ -28,6 +40,10 @@ data class SimaMesh(
     val panelLengthM: Double = 5.0
 )
 
+/** 
+ * Registro de mallas SIMA (Steel Industrial Mesh Alliance).
+ * Contiene una lista de mallas estándar y métodos para acceder a ellas.
+ */
 object SimaMeshRegistry {
     val standardMeshes = listOf(
         SimaMesh("q92", "Q-92", 4.2, 15, 1.48),

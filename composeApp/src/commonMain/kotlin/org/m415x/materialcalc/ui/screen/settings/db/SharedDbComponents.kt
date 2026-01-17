@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@ import materialscalculator.composeapp.generated.resources.button_cancel
 import materialscalculator.composeapp.generated.resources.button_remove
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.ui.common.AppDialog
+import org.m415x.materialcalc.ui.common.PrimaryBadge
 
 // --- MODELO GENÉRICO PARA LA LISTA ---
 // Usamos este modelo para que la LazyColumn sea igual para todos
@@ -43,7 +44,8 @@ data class MaterialUiModel(
     val title: String,
     val subtitle: String,
     val isCustom: Boolean,
-    val originalData: Any? = null // Guardamos el objeto real (CustomBrick/CustomIron) aquí para editarlo
+    val originalData: Any? = null, // Guardamos el objeto real (CustomBrick/CustomIron) aquí para editarlo
+    val type: String? = null // Tipo de mezcla (CONCRETE, MORTAR, PLASTER)
 )
 
 // --- ITEM DE LISTA UNIVERSAL ---
@@ -85,7 +87,18 @@ fun UniversalMaterialItem(
             Spacer(Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    if (item.type != null) {
+                        val badgeText = when (item.type) {
+                            "CONCRETE" -> "Hormigón"
+                            "MORTAR" -> "Mortero"
+                            "PLASTER" -> "Revoque"
+                            else -> item.type
+                        }
+                        PrimaryBadge(text = badgeText)
+                    }
+                }
                 Text(
                     item.subtitle,
                     style = MaterialTheme.typography.bodySmall,

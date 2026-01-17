@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,18 +21,18 @@ package org.m415x.materialcalc.domain.model
 /**
  * Define los tipos de ladrillos que el usuario puede elegir. Todas las medidas en CENTIMETROS.
  *
- * @property nameBrick Nombre del ladrillo
+ * @property brickName Nombre del ladrillo
  * @property isBearing Indica si el ladrillo es portante
  * @property description Descripción y usos del ladrillo
  */
 enum class BrickType(
-    val nameBrick: String,
+    val brickName: String,
     val isBearing: Boolean,
     val description: String
 ) {
 
     // Ladrillos macizos de arcilla
-    COMUN("Común", true, "Muros, parrillas"),
+    COMUN("Ladrillo Común", true, "Muros, parrillas"),
     LADRILLON("Ladrillón", true, "Muros de carga"),
 
     // Huecos (Tabiquería / No Portantes) - Altura estándar 18cm

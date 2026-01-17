@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,10 +55,10 @@ data class AppSettingsState(
     val fineThicknessMm: Double = 3.0,
 
     // Valores por Defecto (IDs)
-    val defaultBrickId: String = "",
-    val defaultConcreteGenId: String = "",
-    val defaultConcreteStrId: String = "",
-    val defaultPlasterId: String = "",
+    val defaultBrickId: String = "LADRILLON",
+    val defaultConcreteGenId: String = "H13",
+    val defaultConcreteStrId: String = "H17",
+    val defaultPlasterId: String = "STD_JAHARRO",
 
     // Listas Personalizadas
     val customBricks: List<CustomBrick> = emptyList(),

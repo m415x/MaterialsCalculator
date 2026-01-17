@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,24 +22,37 @@ import kotlinx.serialization.Serializable
 
 /**
  * Representa un ladrillo creado por el usuario.
+ *
  * @Serializable permite convertirlo a JSON automáticamente.
+ * @property id Identificador único (usaremos UUID o Timestamp)
+ * @property name Nombre descriptivo del ladrillo
+ * @property width Ancho del ladrillo en metros
+ * @property height Alto del ladrillo en metros
+ * @property length Largo del ladrillo en metros
+ * @property joint Espesor de la junta del ladrillo en metros
+ * @property isBearing Indica si el ladrillo es portante
+ * @property description Descripción y usos del ladrillo
  */
 @Serializable
 data class CustomBrick(
-    val id: String,                  // Identificador único (usaremos UUID o Timestamp)
-    val nombre: String,              // Ej: "Bloque San Juan"
-    val ancho: Double,               // Metros
-    val alto: Double,                // Metros
-    val largo: Double,               // Metros
-    val junta: Double,               // Metros (Espesor de mezcla sugerido)
-    val isPortante: Boolean = false, // Por defecto false
-    val descripcion: String = ""     // Por defecto vacío
+    val id: String,
+    val name: String,                
+    val width: Double,               
+    val height: Double,              
+    val length: Double,              
+    val joint: Double,               
+    val isBearing: Boolean = false, 
+    val description: String = "" 
 )
 
-// Extensión útil para convertir este ladrillo a las propiedades que usa el cálculo
+/**
+ * Extensión útil para convertir este ladrillo a las propiedades que usa el cálculo.
+ *
+ * @return BrickProps
+ */
 fun CustomBrick.toProperties() = BrickProps(
-    width = this.ancho,
-    height = this.alto,
-    length = this.largo,
-    gasketThickness = this.junta
+    width = this.width,
+    height = this.height,
+    length = this.length,
+    gasketThickness = this.joint
 )

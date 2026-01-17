@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,81 +18,110 @@
 
 package org.m415x.materialcalc.domain.common
 
-// Helper object para calcular proporciones
+import org.m415x.materialcalc.domain.utils.ConstructionConstants
+
+/**
+ * Clase auxiliar para calcular proporciones.
+ *
+ * @property ResultProportion Clase auxiliar para devolver los resultados brutos calculados.
+ */
 object MixCalculator {
-    // Densidades aproximadas (kg/m3)
-    const val DENSIDAD_CEMENTO_APARENTE = 1400.0
-    const val DENSIDAD_CAL_APARENTE = 600.0
 
-    // Coeficientes de Aporte (Volumen Real / Volumen Aparente)
-    // Fuente: Chandias / Manuales de Construcción
-    const val COEF_CEMENTO = 0.47
-    const val COEF_CAL = 0.37
-    const val COEF_ARENA = 0.63
-    const val COEF_PIEDRA = 0.51
-    const val COEF_AGUA = 1.0
-
-    data class ResultadoProporcion(
-        val cementoKg: Double,
-        val calKg: Double,
-        val arenaM3: Double,
-        val piedraM3: Double,
-        val aguaLitros: Double
+    data class ResultProportion(
+        val cementKg: Double,
+        val limeKg: Double,
+        val sandM3: Double,
+        val gravelM3: Double,
+        val waterLiters: Double
     )
 
-    data class RecetaHormigonera(
-        val baldesArena: Double,
-        val baldesPiedra: Double,
-        val baldesAgua: Double,
-        val capacidadBaldeL: Double
+    data class MixParts(
+        val partCement: Double,
+        val partLime: Double,
+        val partSand: Double,
+        val partGravel: Double
     )
 
+    /**
+     * Función pura que calcula proporciones técnicas (kg/m3) a partir de partes (baldes).
+     *
+     * @param cementParts Partes de cemento.
+     * @param limeParts Partes de cal.
+     * @param sandParts Partes de arena.
+     * @param gravelParts Partes de piedra.
+     * @param waterCementRatio Relación agua/cemento.
+     *
+     * @return ResultProportion con los resultados.
+     */
     fun calculateByParts(
-        partesCemento: Double,
-        partesCal: Double,
-        partesArena: Double,
-        partesPiedra: Double,
-        relacionAguaCemento: Double
-    ): ResultadoProporcion {
+        cementParts: Double,
+        limeParts: Double,
+        sandParts: Double,
+        gravelParts: Double,
+        waterCementRatio: Double
+    ): ResultProportion {
 
         // El agua se calcula en base al cemento (es lo más real en obra)
-        val partesAgua = partesCemento * relacionAguaCemento
+        // Si hay cal, el agua se estima en base a la arena (aprox 25% del volumen de arena para llegar a ~250L/m3)
+        val waterParts = if (limeParts > 0) {
+            sandParts * 0.25
+        } else {
+            if (waterCementRatio > 0) cementParts * waterCementRatio else 0.0
+        }
 
         // 1. Calcular el Volumen Real que genera esa suma de partes
-        val volumenReal = (partesCemento * COEF_CEMENTO) +
-                (partesCal * COEF_CAL) +
-                (partesArena * COEF_ARENA) +
-                (partesPiedra * COEF_PIEDRA) +
-                (partesAgua * COEF_AGUA)
+        val actualVolume = (cementParts * ConstructionConstants.COEF_CEMENT) +
+                (limeParts * ConstructionConstants.COEF_LIME) +
+                (sandParts * ConstructionConstants.COEF_SAND) +
+                (gravelParts * ConstructionConstants.COEF_GRAVEL) +
+                (waterParts * ConstructionConstants.COEF_WATER)
 
-        if (volumenReal <= 0.0) return ResultadoProporcion(0.0, 0.0, 0.0, 0.0, 0.0)
+        if (actualVolume <= 0.0) return ResultProportion(0.0, 0.0, 0.0, 0.0, 0.0)
 
         // 2. Factor: Cuántas veces entra esa mezcla en 1000 litros (1m3)
-        val factor = 1000.0 / volumenReal // litros
+        val factor = 1000.0 / actualVolume
 
         // 3. Cantidades Finales
-        return ResultadoProporcion(
-            cementoKg = (partesCemento * factor) * (DENSIDAD_CEMENTO_APARENTE / 1000.0),
-            calKg = (partesCal * factor) * (DENSIDAD_CAL_APARENTE / 1000.0),
-            arenaM3 = (partesArena * factor) / 1000.0,
-            piedraM3 = (partesPiedra * factor) / 1000.0,
-            aguaLitros = partesAgua * factor // Litros totales por m3
+        return ResultProportion(
+            cementKg = (cementParts * factor) * (ConstructionConstants.APPARENT_CEMENT_DENSITY / 1000.0),
+            limeKg = (limeParts * factor) * (ConstructionConstants.APPARENT_LIME_DENSITY / 1000.0),
+            sandM3 = (sandParts * factor) / 1000.0,
+            gravelM3 = (gravelParts * factor) / 1000.0,
+            waterLiters = waterParts * factor
         )
     }
 
-    fun calculateRecipeByBag(
-        partesArena: Double,
-        partesPiedra: Double,
-        relacionAC: Double,
-        capacidadBaldeL: Double = 20.0
-    ): RecetaHormigonera {
-        val litrosPorBolsaCemento = 35.7 // Volumen aparente de 50kg de cemento
+    /**
+     * Función inversa: Calcula las partes (baldes) a partir de la dosificación técnica (kg/m3).
+     * Normaliza asumiendo Cemento = 1 parte.
+     *
+     * @param cementKg Cemento en kg.
+     * @param limeKg Cal en kg.
+     * @param sandM3 Arena en m3.
+     * @param gravelM3 Piedra en m3.
+     *
+     * @return MixParts con las partes normalizadas.
+     */
+    fun calculatePartsFromTechnical(
+        cementKg: Double,
+        limeKg: Double,
+        sandM3: Double,
+        gravelM3: Double
+    ): MixParts {
+        if (cementKg <= 0.0) return MixParts(0.0, 0.0, 0.0, 0.0)
 
-        return RecetaHormigonera(
-            baldesArena = (litrosPorBolsaCemento * partesArena) / capacidadBaldeL,
-            baldesPiedra = (litrosPorBolsaCemento * partesPiedra) / capacidadBaldeL,
-            baldesAgua = (50.0 * relacionAC) / capacidadBaldeL, // El agua es por peso de cemento (1kg = 1L)
-            capacidadBaldeL = capacidadBaldeL
+        // 1. Convertir todo a volumen aparente (m3)
+        val volCem = cementKg / ConstructionConstants.APPARENT_CEMENT_DENSITY
+        val volLime = limeKg / ConstructionConstants.APPARENT_LIME_DENSITY
+        val volSand = sandM3 // Ya está en m3
+        val volGravel = gravelM3 // Ya está en m3
+
+        // 2. Normalizar respecto al cemento (Cemento = 1)
+        return MixParts(
+            partCement = 1.0,
+            partLime = volLime / volCem,
+            partSand = volSand / volCem,
+            partGravel = volGravel / volCem
         )
     }
 }

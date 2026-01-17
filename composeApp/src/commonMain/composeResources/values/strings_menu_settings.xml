@@ -1,6 +1,6 @@
 <!--
   ~ materialCalc
-  ~ Copyright (C) 2025 M415X
+  ~ Copyright (C) 2026 M415X
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
     <string name="settings_item_materials_title">Materiales y Medidas</string>
     <string name="settings_item_materials_desc">Ladrillos, hierros y mezclas</string>
     <string name="settings_item_prices_title">Precios</string>
-    <string name="settings_item_prices_desc">Configurar costos unitarios de materiales y mano de obra</string>
+    <string name="settings_item_prices_desc">Costos unitarios de materiales y mano de obra</string>
     <string name="settings_item_sync_title">Sincronización Nube</string>
     <string name="settings_item_sync_desc">Guardar mis datos</string>
 

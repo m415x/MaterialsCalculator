@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,24 +18,64 @@
 
 package org.m415x.materialcalc.domain.model
 
+import materialscalculator.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.StringResource
+import kotlin.math.max
+
+
 /**
  * Enumeración que representa los tipos de estructuras.
  *
- * @property label Etiqueta para mostrar en la UI.
+ * @property labelRes Recurso de etiqueta para mostrar en la UI.
  */
-enum class StructureType(val label: String) {
-    BEAM("Viga"),
-    COLUMN("Columna"),
-    SLAB("Losa")
+enum class StructureType(val labelRes: StringResource) {
+    BEAM(Res.string.structure_type_beam),
+    COLUMN(Res.string.structure_type_column),
+    SLAB(Res.string.structure_type_slab)
+}
+
+/**
+ * Enumeración que representa los tipos de terminaciones de armadura.
+ */
+enum class RebarTerminationType(val displayName: String) {
+    STRAIGHT("Recta"),
+    HOOK_90("Gancho 90°"),
+    HOOK_135("Gancho 135°"),
+    HOOK_180("Gancho 180°")
+}
+
+/**
+ * Calcula la longitud por defecto del gancho en metros según el reglamento CIRSOC.
+ *
+ * @param rebarDiameterMm Diámetro de la barra en milímetros.
+ * @return Longitud del gancho en metros.
+ */
+fun RebarTerminationType.getDefaultLengthMeters(rebarDiameterMm: Double): Double {
+    val db = rebarDiameterMm / 1000.0 // pasar a metros
+    return when (this) {
+        RebarTerminationType.STRAIGHT -> 0.0
+        RebarTerminationType.HOOK_90 -> 12.0 * db
+        RebarTerminationType.HOOK_135 -> max(6.0 * db, 0.075)
+        RebarTerminationType.HOOK_180 -> max(4.0 * db, 0.065)
+    }
+}
+
+/**
+ * Enumeración que representa los tipos de terminaciones (nudos) para el dibujo técnico.
+ */
+enum class BeamColumnJointType(val displayName: String) {
+    SIMPLE_SUPPORT("Apoyo Simple"),
+    RIGID_FRAME("Nudo Rígido"),
+    CANTILEVER("Voladizo (Ménsula)")
 }
 
 /**
  * Enumeración que representa los diámetros de hierro.
  *
- * @property mm Diámetro en milímetros.
- * @property pesoLinealKgM Peso lineal en kg/m.
+ * @property milimeters Diámetro en milímetros.
+ * @property linearWeightKgM Peso lineal en kg/m.
  */
-enum class IronDiameter(val mm: Double, val pesoLinealKgM: Double) {
+enum class IronDiameter(val milimeters: Double, val linearWeightKgM: Double) {
     HIERRO_4_2(4.2, 0.109),
     HIERRO_6(6.0, 0.222),
     HIERRO_8(8.0, 0.395),
@@ -49,43 +89,43 @@ enum class IronDiameter(val mm: Double, val pesoLinealKgM: Double) {
 /**
  * Representa el resultado del cálculo de una estructura.
  *
- * @property volumenHormigonM3 Volumen de hormigón en m³.
- * @property porcentajeDesperdicioHormigon Porcentaje de desperdicio de hormigón.
- * @property cementoKg Cantidad de cemento en kg.
- * @property bolsaCementoKg Peso de la bolsa de cemento.
- * @property arenaM3 Cantidad de arena en m³.
- * @property piedraM3 Cantidad de piedra en m³.
- * @property aguaLitros Cantidad de agua en litros.
- * @property diametroPrincipal Diámetro del hierro principal.
- * @property hierroPrincipalMetros Metros de hierro principal.
- * @property hierroPrincipalKg Kilos de hierro principal.
- * @property cantidadHierroPrincipal Cantidad de barras de hierro principal.
- * @property porcentajeDesperdicioHierroPrincipal Porcentaje de desperdicio de hierro principal.
- * @property diametroEstribo Diámetro del hierro de estribo.
- * @property hierroEstribosMetros Metros de hierro de estribo.
- * @property hierroEstribosKg Kilos de hierro de estribo.
- * @property cantidadHierroEstribos Cantidad de barras de hierro de estribo.
- * @property porcentajeDesperdicioHierroEstribos Porcentaje de desperdicio de hierro de estribo.
+ * @property volumeConcreteM3 Volumen de hormigón en m³.
+ * @property percentageConcreteWaste Porcentaje de desperdicio de hormigón.
+ * @property cementKg Cantidad de cemento en kg.
+ * @property cementBagKg Peso de la bolsa de cemento.
+ * @property sandM3 Cantidad de arena en m³.
+ * @property gravelM3 Cantidad de piedra en m³.
+ * @property waterLiters Cantidad de agua en litros.
+ * @property mainDiameter Diámetro del hierro principal.
+ * @property mainIronMeters Metros de hierro principal.
+ * @property mainIronKg Kilos de hierro principal.
+ * @property mainIronAmount Cantidad de barras de hierro principal.
+ * @property percentageMainIronWaste Porcentaje de desperdicio de hierro principal.
+ * @property stirrupDiameter Diámetro del hierro de estribo.
+ * @property stirrupIronMeters Metros de hierro de estribo.
+ * @property stirrupIronKg Kilos de hierro de estribo.
+ * @property stirrupIronAmount Cantidad de barras de hierro de estribo.
+ * @property percentageStirrupIronWaste Porcentaje de desperdicio de hierro de estribo.
  */
-data class ResultadoEstructura(
+data class StructureResult(
     // Hormigón
-    val volumenHormigonM3: Double,
-    val porcentajeDesperdicioHormigon: Double,
-    val cementoKg: Double,
-    val bolsaCementoKg: Int,
-    val arenaM3: Double,
-    val piedraM3: Double,
-    val aguaLitros: Double,
+    val volumeConcreteM3: Double,
+    val percentageConcreteWaste: Double,
+    val cementKg: Double,
+    val cementBagKg: Int,
+    val sandM3: Double,
+    val gravelM3: Double,
+    val waterLiters: Double,
     // Hierro Principal
-    val diametroPrincipal: IronDiameter,
-    val hierroPrincipalMetros: Double,
-    val hierroPrincipalKg: Double,
-    val cantidadHierroPrincipal: Int,
-    val porcentajeDesperdicioHierroPrincipal: Double,
+    val mainDiameter: IronDiameter,
+    val mainIronMeters: Double,
+    val mainIronKg: Double,
+    val mainIronAmount: Int,
+    val percentageMainIronWaste: Double,
     // Estribos
-    val diametroEstribo: IronDiameter,
-    val hierroEstribosMetros: Double,
-    val hierroEstribosKg: Double,
-    val cantidadHierroEstribos: Int,
-    val porcentajeDesperdicioHierroEstribos: Double
+    val stirrupDiameter: IronDiameter,
+    val stirrupIronMeters: Double,
+    val stirrupIronKg: Double,
+    val stirrupIronAmount: Int,
+    val percentageStirrupIronWaste: Double
 )

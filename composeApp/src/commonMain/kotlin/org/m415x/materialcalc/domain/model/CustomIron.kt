@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,10 +20,19 @@ package org.m415x.materialcalc.domain.model
 
 import kotlinx.serialization.Serializable
 
+/**
+ * Representa un hierro creado por el usuario.
+ *
+ * @Serializable permite convertirlo a JSON automáticamente.
+ * @property id Identificador único (usaremos UUID o Timestamp)
+ * @property name Nombre descriptivo del hierro
+ * @property diameterMm Diámetro del hierro en milímetros
+ * @property linearWeight Peso lineal del hierro en kg/m
+ */
 @Serializable
 data class CustomIron(
     val id: String,
-    val nombre: String,
-    val diametro: Double,
-    val pesoLineal: Double
+    val name: String,
+    val diameterMm: Double,
+    val linearWeight: Double
 )

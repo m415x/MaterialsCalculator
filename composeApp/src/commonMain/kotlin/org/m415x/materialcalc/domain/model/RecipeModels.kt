@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ package org.m415x.materialcalc.domain.model
  * @property waterLiters Cantidad de agua en litros
  * @property waterCementRatio Relación de agua con cemento
  */
-interface MaterialRecipe {
+interface WetMixRecipe {
     val cementKg: Double
     val limeKg: Double
     val sandM3: Double
@@ -59,7 +59,7 @@ data class ConcreteDosing(
     override val waterLiters: Double,
     override val waterCementRatio: Double,
     override val limeKg: Double = 0.0
-) : MaterialRecipe
+) : WetMixRecipe
 
 /**
  * Contiene las constantes de materiales para 1 m³ de mortero. (Valores promedio de tablas estándar)
@@ -69,17 +69,18 @@ data class ConcreteDosing(
  * @property limeKg Cantidad de cal en kilogramos
  * @property sandM3 Cantidad de arena en metros cúbicos
  * @property waterLiters Cantidad de agua en litros
- * @property waterCementRatio Relación de agua con cemento
+ * @property waterCementRatio Relación de agua con cemento (Opcional en morteros con cal)
  * @property gravelM3 Cantidad de piedra en metros cúbicos
  * @property parts Descripción de las partes de la mezcla (ej: "1:4", "1:1:6")
  */
 data class MortarDosing(
+    val name: String,
     val mixingRatio: String,
     override val cementKg: Double,
     override val limeKg: Double,
     override val sandM3: Double,
     override val waterLiters: Double,
-    override val waterCementRatio: Double,
+    override val waterCementRatio: Double = 0.0,
     override val gravelM3: Double = 0.0,
     val parts: String? = null
-) : MaterialRecipe
+) : WetMixRecipe

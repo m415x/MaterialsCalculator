@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,21 +64,43 @@ fun RecipesTabContent(repository: SettingsRepository) {
         customRecipes.forEach {
             val proporcion = if (it.isProportion) {
                 buildString {
-                    append(formatPart(it.partCemento))
-                    if (it.partCal > 0) append(":${formatPart(it.partCal)}")
-                    append(":${formatPart(it.partArena)}")
-                    if (it.partPiedra > 0) append(":${formatPart(it.partPiedra)}")
+                    append(formatPart(it.partCement))
+                    if (it.partLime > 0) append(":${formatPart(it.partLime)}")
+                    append(":${formatPart(it.partSand)}")
+                    if (it.partGravel > 0) append(":${formatPart(it.partGravel)}")
                 }
             } else {
                 "Personalizado"
             }
+
+            // Generación dinámica de la etiqueta (Cem:Cal:Arena...)
+            val label = if (it.isProportion) {
+                val parts = mutableListOf("Cem")
+                if (it.partLime > 0) parts.add("Cal")
+                parts.add("Arena")
+                if (it.partGravel > 0) parts.add("Piedra")
+                "(${parts.joinToString(":")})"
+            } else {
+                ""
+            }
+
+            val waterInfo =
+                if (it.waterCementRatio > 0) "A/C: ${it.waterCementRatio}" else "Agua: ${it.waterLiters.toInt()} Lt"
+
+            val subtitleText = if (label.isNotEmpty()) {
+                "$proporcion $label\n${it.cementKg.toInt()} kg Cem | $waterInfo"
+            } else {
+                "$proporcion\n${it.cementKg.toInt()} kg Cem | $waterInfo"
+            }
+
             customOptions.add(
                 MaterialUiModel(
                     id = it.id,
-                    title = it.nombre,
-                    subtitle = "$proporcion (Cem:Arena:Piedra)\n${it.cementKg.toInt()} kg Cem | A/C: ${it.waterCementRatio}",
+                    title = it.name,
+                    subtitle = subtitleText,
                     isCustom = true,
-                    originalData = it
+                    originalData = it,
+                    type = it.type // Pasamos el tipo para el badge
                 )
             )
         }
@@ -94,23 +116,24 @@ fun RecipesTabContent(repository: SettingsRepository) {
                         isCustom = false,
                         originalData = CustomRecipe(
                             id = "",
-                            nombre = type.name,
+                            name = type.name,
                             cementKg = r.cementKg,
                             sandM3 = r.sandM3,
                             gravelM3 = r.gravelM3,
                             limeKg = 0.0,
                             waterCementRatio = r.waterCementRatio,
                             waterLiters = r.waterLiters,
-                            tipo = "CONCRETE",
-                            usos = "",
-                            isEstructural = type.isStructural,
+                            type = "CONCRETE",
+                            uses = "",
+                            isStructural = type.isStructural,
                             isProportion = false,
-                            partCemento = 0.0,
-                            partCal = 0.0,
-                            partArena = 0.0,
-                            partPiedra = 0.0,
-                            partAgua = 0.0
-                        )
+                            partCement = 0.0,
+                            partLime = 0.0,
+                            partSand = 0.0,
+                            partGravel = 0.0,
+                            partWater = 0.0
+                        ),
+                        type = "CONCRETE"
                     )
                 )
             }
@@ -262,10 +285,10 @@ fun RecipeEditorDialog(
     onDismiss: () -> Unit,
     onSave: (CustomRecipe) -> Unit
 ) {
-    var name by remember { mutableStateOf(recipeToEdit?.nombre ?: "") }
-    var selectedType by remember { mutableStateOf(recipeToEdit?.tipo ?: "CONCRETE") }
-    var usos by remember { mutableStateOf(recipeToEdit?.usos ?: "") }
-    var isEstructural by remember { mutableStateOf(recipeToEdit?.isEstructural ?: false) }
+    var name by remember { mutableStateOf(recipeToEdit?.name ?: "") }
+    var selectedType by remember { mutableStateOf(recipeToEdit?.type ?: "CONCRETE") }
+    var usos by remember { mutableStateOf(recipeToEdit?.uses ?: "") }
+    var isEstructural by remember { mutableStateOf(recipeToEdit?.isStructural ?: false) }
     var isProportionMode by remember { mutableStateOf(recipeToEdit?.isProportion ?: false) }
     var preserveProportions by remember { mutableStateOf(false) }
 
@@ -286,30 +309,74 @@ fun RecipeEditorDialog(
         return this.toString().removeSuffix(".0")
     }
 
-    var pCemento by remember { mutableStateOf(recipeToEdit?.partCemento.toPartString("1")) }
-    var pCal by remember { mutableStateOf(recipeToEdit?.partCal.toPartString("0")) }
-    var pArena by remember { mutableStateOf(recipeToEdit?.partArena.toPartString("3")) }
-    var pPiedra by remember { mutableStateOf(recipeToEdit?.partPiedra.toPartString("3")) }
+    var pCemento by remember { mutableStateOf(recipeToEdit?.partCement.toPartString("1")) }
+    var pCal by remember { mutableStateOf(recipeToEdit?.partLime.toPartString("0")) }
+    var pArena by remember { mutableStateOf(recipeToEdit?.partSand.toPartString("3")) }
+    var pPiedra by remember { mutableStateOf(recipeToEdit?.partGravel.toPartString("3")) }
     var pAgua by remember { mutableStateOf(recipeToEdit?.waterCementRatio.toPartString("0.5")) }
 
     var cemento by remember { mutableStateOf(recipeToEdit?.cementKg?.toString()?.removeSuffix(".0") ?: "") }
     var cal by remember { mutableStateOf(recipeToEdit?.limeKg?.toString()?.removeSuffix(".0") ?: "") }
     var arena by remember { mutableStateOf(recipeToEdit?.sandM3?.toString() ?: "") }
     var piedra by remember { mutableStateOf(recipeToEdit?.gravelM3?.toString() ?: "") }
-    var agua by remember { mutableStateOf(recipeToEdit?.waterCementRatio?.toString() ?: "0.5") }
+
+    // Inicialización inteligente de 'agua' (Ratio o Litros según tipo)
+    var agua by remember {
+        mutableStateOf(
+            if (recipeToEdit != null) {
+                if (recipeToEdit.type == RecipeType.CONCRETE) recipeToEdit.waterCementRatio.toString()
+                else recipeToEdit.waterLiters.toInt().toString()
+            } else {
+                "0.5"
+            }
+        )
+    }
 
     val sincronizarTecnicoDesdeProporcion = {
         val res = MixCalculator.calculateByParts(
-            partesCemento = pCemento.toSafeDoubleOrNull() ?: 0.0,
-            partesCal = pCal.toSafeDoubleOrNull() ?: 0.0,
-            partesArena = pArena.toSafeDoubleOrNull() ?: 0.0,
-            partesPiedra = if (selectedType == "CONCRETE") pPiedra.toSafeDoubleOrNull() ?: 0.0 else 0.0,
-            relacionAguaCemento = pAgua.toSafeDoubleOrNull() ?: 0.5
+            cementParts = pCemento.toSafeDoubleOrNull() ?: 0.0,
+            limeParts = pCal.toSafeDoubleOrNull() ?: 0.0,
+            sandParts = pArena.toSafeDoubleOrNull() ?: 0.0,
+            gravelParts = if (selectedType == "CONCRETE") pPiedra.toSafeDoubleOrNull() ?: 0.0 else 0.0,
+            waterCementRatio = pAgua.toSafeDoubleOrNull() ?: 0.5
         )
-        cemento = res.cementoKg.toInt().toString()
-        cal = res.calKg.toInt().toString()
-        arena = res.arenaM3.roundToDecimals(3).replace(',', '.')
-        piedra = res.piedraM3.roundToDecimals(3).replace(',', '.')
+        cemento = res.cementKg.toInt().toString()
+        cal = res.limeKg.toInt().toString()
+        arena = res.sandM3.roundToDecimals(3).replace(',', '.')
+        piedra = res.gravelM3.roundToDecimals(3).replace(',', '.')
+
+        if (selectedType == RecipeType.CONCRETE) {
+            agua = pAgua
+        } else {
+            agua = res.waterLiters.toInt().toString()
+        }
+    }
+
+    val sincronizarProporcionDesdeTecnico = {
+        val cKg = cemento.toSafeDoubleOrNull() ?: 0.0
+        val lKg = cal.toSafeDoubleOrNull() ?: 0.0
+        val sM3 = arena.toSafeDoubleOrNull() ?: 0.0
+        val gM3 = piedra.toSafeDoubleOrNull() ?: 0.0
+        val wVal = agua.toSafeDoubleOrNull() ?: 0.0
+
+        val parts = MixCalculator.calculatePartsFromTechnical(
+            cementKg = cKg,
+            limeKg = lKg,
+            sandM3 = sM3,
+            gravelM3 = gM3
+        )
+
+        if (parts.partCement > 0) {
+            pCemento = formatPart(parts.partCement)
+            pCal = formatPart(parts.partLime)
+            pArena = formatPart(parts.partSand)
+            pPiedra = formatPart(parts.partGravel)
+
+            // Agua: Si es concreto es ratio directo, si no estimamos
+            if (selectedType == RecipeType.CONCRETE) {
+                pAgua = wVal.toString()
+            }
+        }
     }
 
     RequestFocusOnStart(focusNombreMezcla)
@@ -319,8 +386,10 @@ fun RecipeEditorDialog(
         title = { Text(if (recipeToEdit?.id.isNullOrBlank()) "Nueva Mezcla" else "Editar Mezcla") },
         content = {
             Text("Tipo de Mezcla", style = MaterialTheme.typography.labelMedium)
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            InputRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 FilterChip(
@@ -346,10 +415,11 @@ fun RecipeEditorDialog(
             )
 
             if (selectedType == RecipeType.CONCRETE) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().clickable { isEstructural = !isEstructural }
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                InputRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isEstructural = !isEstructural }
+                        .padding(vertical = 4.dp)
                 ) {
                     Checkbox(checked = isEstructural, onCheckedChange = { isEstructural = it })
                     Text("Es Apto Estructura (Portante)", style = MaterialTheme.typography.bodyMedium)
@@ -360,11 +430,15 @@ fun RecipeEditorDialog(
 
             Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Modo de Ingreso", style = MaterialTheme.typography.labelLarge)
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                InputRow {
                     Switch(
                         checked = isProportionMode,
                         onCheckedChange = { isChecked ->
-                            if (!isChecked) {
+                            if (isChecked) {
+                                // Al activar empírico, calculamos partes desde técnico
+                                sincronizarProporcionDesdeTecnico()
+                            } else {
+                                // Al desactivar, calculamos técnico desde partes
                                 sincronizarTecnicoDesdeProporcion()
                             }
                             isProportionMode = isChecked
@@ -385,35 +459,34 @@ fun RecipeEditorDialog(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                InputRow {
                     NumericInput(
                         pCemento,
                         { pCemento = it },
                         "Cemento",
                         modifier = Modifier.weight(1f),
                         focusRequester = focusCementoParte,
-                        nextFocusRequester = if (selectedType != "CONCRETE") focusCalParte else focusArenaParte
+                        nextFocusRequester = focusArenaParte
                     )
-                    if (selectedType != "CONCRETE") {
-                        NumericInput(
-                            pCal,
-                            { pCal = it },
-                            "Cal",
-                            modifier = Modifier.weight(1f),
-                            focusRequester = focusCalParte,
-                            nextFocusRequester = focusArenaParte
-                        )
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     NumericInput(
                         pArena,
                         { pArena = it },
                         "Arena",
                         modifier = Modifier.weight(1f),
                         focusRequester = focusArenaParte,
-                        nextFocusRequester = if (selectedType == "CONCRETE") focusPiedraParte else null
+                        nextFocusRequester = if (selectedType == "CONCRETE") focusPiedraParte else focusCalParte
                     )
+                }
+                InputRow {
+                    if (selectedType != "CONCRETE") {
+                        NumericInput(
+                            pCal,
+                            { pCal = it },
+                            "Cal",
+                            modifier = Modifier.weight(1f),
+                            focusRequester = focusCalParte
+                        )
+                    }
                     if (selectedType == "CONCRETE") {
                         NumericInput(
                             pPiedra,
@@ -421,7 +494,17 @@ fun RecipeEditorDialog(
                             "Piedra",
                             modifier = Modifier.weight(1f),
                             focusRequester = focusPiedraParte,
-                            onDone = {})
+                            nextFocusRequester = focusRelacioAgua
+                        )
+                    }
+                    if (selectedType == "CONCRETE") {
+                        NumericInput(
+                            pAgua,
+                            { pAgua = it },
+                            "Agua (A/C)",
+                            modifier = Modifier.weight(1f),
+                            focusRequester = focusRelacioAgua
+                        )
                     }
                 }
                 Button(
@@ -438,7 +521,7 @@ fun RecipeEditorDialog(
                     Text("Calcular y Aplicar")
                 }
             } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                InputRow {
                     NumericInput(
                         cemento,
                         { cemento = it },
@@ -470,7 +553,7 @@ fun RecipeEditorDialog(
                         )
                     }
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                InputRow {
                     NumericInput(
                         arena,
                         { arena = it },
@@ -489,17 +572,18 @@ fun RecipeEditorDialog(
                             focusRequester = focusRelacioAgua,
                             nextFocusRequester = focusUsos
                         )
-                    } else {
-                        Spacer(Modifier.weight(1f))
                     }
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                HorizontalDivider()
+
+                InputRow {
                     AppInput(
                         value = usos,
                         onValueChange = { usos = it },
                         label = "Usos / Descripción",
                         focusRequester = focusUsos,
-                        onDone = {})
+                        onDone = {}
+                    )
                 }
             }
         },
@@ -513,26 +597,37 @@ fun RecipeEditorDialog(
                     }
                     val shouldSaveAsProportion = isProportionMode || preserveProportions
                     val cementoVal = cemento.toSafeDoubleOrNull() ?: 0.0
-                    val aguaVal = agua.toSafeDoubleOrNull() ?: 0.5
+                    val aguaVal = agua.toSafeDoubleOrNull() ?: 0.0
+
+                    val finalRatio = if (selectedType == RecipeType.CONCRETE) aguaVal else 0.0
+                    val finalLiters = if (selectedType == RecipeType.CONCRETE) cementoVal * aguaVal else aguaVal
+
+                    // Asegurar que piedra sea 0 si no es concreto
+                    val finalGravelM3 =
+                        if (selectedType == RecipeType.CONCRETE) piedra.toSafeDoubleOrNull() ?: 0.0 else 0.0
+                    val finalPartGravel =
+                        if (selectedType == RecipeType.CONCRETE && shouldSaveAsProportion) pPiedra.toSafeDoubleOrNull()
+                            ?: 0.0 else 0.0
+
                     onSave(
                         CustomRecipe(
                             id = recipeToEdit?.id?.ifBlank { Uuid.random().toString() } ?: Uuid.random().toString(),
-                            nombre = name,
-                            tipo = selectedType,
+                            name = name,
+                            type = selectedType,
                             cementKg = cementoVal,
                             limeKg = cal.toSafeDoubleOrNull() ?: 0.0,
                             sandM3 = arena.toSafeDoubleOrNull() ?: 0.0,
-                            gravelM3 = piedra.toSafeDoubleOrNull() ?: 0.0,
-                            waterCementRatio = aguaVal,
-                            waterLiters = cementoVal * aguaVal,
-                            usos = usos,
-                            isEstructural = if (selectedType == "CONCRETE") isEstructural else false,
+                            gravelM3 = finalGravelM3,
+                            waterCementRatio = finalRatio,
+                            waterLiters = finalLiters,
+                            uses = usos,
+                            isStructural = if (selectedType == "CONCRETE") isEstructural else false,
                             isProportion = shouldSaveAsProportion,
-                            partCemento = if (shouldSaveAsProportion) pCemento.toSafeDoubleOrNull() ?: 0.0 else 0.0,
-                            partCal = if (shouldSaveAsProportion) pCal.toSafeDoubleOrNull() ?: 0.0 else 0.0,
-                            partArena = if (shouldSaveAsProportion) pArena.toSafeDoubleOrNull() ?: 0.0 else 0.0,
-                            partPiedra = if (shouldSaveAsProportion) pPiedra.toSafeDoubleOrNull() ?: 0.0 else 0.0,
-                            partAgua = if (shouldSaveAsProportion) pAgua.toSafeDoubleOrNull() ?: 0.0 else 0.0
+                            partCement = if (shouldSaveAsProportion) pCemento.toSafeDoubleOrNull() ?: 0.0 else 0.0,
+                            partLime = if (shouldSaveAsProportion) pCal.toSafeDoubleOrNull() ?: 0.0 else 0.0,
+                            partSand = if (shouldSaveAsProportion) pArena.toSafeDoubleOrNull() ?: 0.0 else 0.0,
+                            partGravel = finalPartGravel,
+                            partWater = if (shouldSaveAsProportion) pAgua.toSafeDoubleOrNull() ?: 0.0 else 0.0
                         )
                     )
                 }

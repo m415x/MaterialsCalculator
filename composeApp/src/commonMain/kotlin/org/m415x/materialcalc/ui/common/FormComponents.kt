@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -100,6 +100,31 @@ fun InputRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = horizontalArrangement,
         verticalAlignment = Alignment.CenterVertically,
+        content = content
+    )
+}
+
+/**
+ * Componente utilitario para crear una fila de inputs que fluye en múltiples líneas si es necesario.
+ *
+ * @param modifier Modificador para personalizar el layout.
+ * @param horizontalArrangement La alineación horizontal de los elementos. Por defecto, espaciado uniforme.
+ * @param verticalArrangement La alineación vertical de los elementos. Por defecto, centrado.
+ * @param content El contenido de la fila.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun InputFlowRow(
+    modifier: Modifier = Modifier,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(16.dp),
+    verticalArrangement: Arrangement.Vertical = Arrangement.Center,
+    content: @Composable FlowRowScope.() -> Unit
+) {
+    FlowRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = horizontalArrangement,
+        verticalArrangement = verticalArrangement,
+        maxItemsInEachRow = 2,
         content = content
     )
 }

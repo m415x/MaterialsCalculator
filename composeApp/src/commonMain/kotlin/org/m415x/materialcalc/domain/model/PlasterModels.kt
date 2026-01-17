@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,42 +19,54 @@
 package org.m415x.materialcalc.domain.model
 
 /**
+ * Enumeración que representa los tipos de revoque estándar.
+ *
+ * @property displayName Nombre amigable para mostrar en la UI.
+ */
+enum class PlasterType(val displayName: String) {
+    STD_JAHARRO("Tradicional (Jaharro)"),
+    // A futuro: IGNIFUGO, MONOCAPA, etc.
+}
+
+/**
  * Empaqueta los resultados de forma ordenada.
  *
- * @property areaTotalM2 Superficie total (x1 o x2 caras)
- * @property bolsaCementoKg Cantidad de bolsas de cemento
- * @property bolsaCalKg Cantidad de bolsas de cal
- * @property bolsaFinoPremezclaKg Cantidad de bolsas de premezcla fina
- * @property volumenGruesoM3 Volumen grueso en metros cúbicos
- * @property gruesoCementoKg Cantidad de cemento grueso en kilogramos
- * @property gruesoCalKg Cantidad de cal gruesa en kilogramos
- * @property gruesoArenaM3 Cantidad de arena gruesa en metros cúbicos
- * @property porcentajeDesperdicioGrueso Porcentaje de desperdicio grueso
- * @property dosificacionGrueso Proporcion grueso
- * @property finoPremezclaKg Cantidad de premezcla fina en kilogramos
- * @property finoCalKg Cantidad de cal fina en kilogramos
- * @property finoArenaM3 Cantidad de arena fina en metros cúbicos
- * @property porcentajeDesperdicioFino Porcentaje de desperdicio fino
- * @property dosificacionFino Proporcion fina
+ * @property totalAreaM2 Superficie total (x1 o x2 caras)
+ * @property cementBagKg Cantidad de bolsas de cemento
+ * @property limeBagKg Cantidad de bolsas de cal
+ * @property premixBagKg Cantidad de bolsas de premezcla fina
+ * @property thickVolumeM3 Volumen grueso en metros cúbicos
+ * @property thickCementKg Cantidad de cemento grueso en kilogramos
+ * @property thickLimeKg Cantidad de cal gruesa en kilogramos
+ * @property thickSandKg Cantidad de arena gruesa en metros cúbicos
+ * @property thickWaterLiters Cantidad de agua gruesa en litros
+ * @property thickPercentageWaste Porcentaje de desperdicio grueso
+ * @property thickDosage Proporcion grueso
+ * @property finePremixKg Cantidad de premezcla fina en kilogramos
+ * @property fineLimeKg Cantidad de cal fina en kilogramos
+ * @property fineSandM3 Cantidad de arena fina en metros cúbicos
+ * @property finePercentageWaste Porcentaje de desperdicio fino
+ * @property fineDosage Proporcion fina
  */
-data class ResultadoRevoque(
-    val areaTotalM2: Double, // Superficie total (x1 o x2 caras)
-    val bolsaCementoKg: Int,
-    val bolsaCalKg: Int,
-    val bolsaFinoPremezclaKg: Int,
+data class PlasterResult(
+    val totalAreaM2: Double,
+    val cementBagKg: Int,
+    val limeBagKg: Int,
+    val premixBagKg: Int,
     // --- REVOQUE GRUESO (Jaharro) ---
-    val volumenGruesoM3: Double,
-    val gruesoCementoKg: Double,
-    val gruesoCalKg: Double,
-    val gruesoArenaM3: Double,
-    val porcentajeDesperdicioGrueso: Double,
-    val dosificacionGrueso: String,
+    val thickVolumeM3: Double,
+    val thickCementKg: Double,
+    val thickLimeKg: Double,
+    val thickSandKg: Double,
+    val thickWaterLiters: Double,
+    val thickPercentageWaste: Double,
+    val thickDosage: String,
     // --- REVOQUE FINO (Enlucido) ---
     // Opción 1: Premezclado (Bolsa lista)
-    val finoPremezclaKg: Double,
+    val finePremixKg: Double,
     // Opción 2: Tradicional (A la cal)
-    val finoCalKg: Double,
-    val finoArenaM3: Double, // Arena voladora/fina
-    val porcentajeDesperdicioFino: Double,
-    val dosificacionFino: String
+    val fineLimeKg: Double,
+    val fineSandM3: Double,
+    val finePercentageWaste: Double,
+    val fineDosage: String
 )

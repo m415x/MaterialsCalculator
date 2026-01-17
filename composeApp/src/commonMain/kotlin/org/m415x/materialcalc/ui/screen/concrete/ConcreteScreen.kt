@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@ fun ConcreteScreen(appSettings: AppSettingsState) {
     val focusWidth = remember { FocusRequester() }
     val focusLength = remember { FocusRequester() }
     val focusHigh = remember { FocusRequester() }
-    val focusQuantity = remember { FocusRequester() }
+//    val focusQuantity = remember { FocusRequester() }
     val focusConcrete = remember { FocusRequester() }
 
     RequestFocusOnStart(focusWidth)
@@ -108,11 +108,11 @@ fun ConcreteScreen(appSettings: AppSettingsState) {
                                 widthMeters = w!!,
                                 lengthMeters = l!!,
                                 thicknessMeters = h!!,
-                                quantityUnits = q!!,
-                                recipe = selectedRecipe!!,
+                                unitQuantity = q!!,
+                                concreteDosing = selectedRecipe!!,
                                 cementBagWeightKg = weightBagCement,
                                 limeBagWeightKg = weightBagLime,
-                                wastePercentage = wasteConcretePct / 100.0
+                                percentageConcreteWaste = wasteConcretePct / 100.0
                             )
                             errorMsg = null
                             showResultSheet = true
@@ -177,7 +177,8 @@ fun ConcreteScreen(appSettings: AppSettingsState) {
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(1f),
                         focusRequester = focusHigh,
-                        nextFocusRequester = focusQuantity
+//                        nextFocusRequester = focusQuantity
+                        nextFocusRequester = focusConcrete
                     )
 //                    NumericInput(
 //                        value = quantity,

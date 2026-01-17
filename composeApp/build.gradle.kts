@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,9 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-val appVersion = "1.1.0-beta.2"
+val appCode = 4
+val appVersion = "1.2.0-beta.3"
+val appVersionDesktop = "1.2.0"
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -111,7 +113,7 @@ android {
         applicationId = "org.m415x.materialcalc"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 3
+        versionCode = appCode // Usamos la variable global
         versionName = appVersion // Usamos la variable global
     }
     packaging {
@@ -144,7 +146,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "org.m415x.materialcalc"
-            packageVersion = "1.1.0" // Desktop suele requerir formato X.Y.Z estricto, cuidado con beta
+            packageVersion = appVersionDesktop // Desktop suele requerir formato X.Y.Z estricto, cuidado con beta
         }
     }
 }
@@ -167,7 +169,7 @@ spotless {
             """
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -195,7 +197,7 @@ spotless {
             """
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

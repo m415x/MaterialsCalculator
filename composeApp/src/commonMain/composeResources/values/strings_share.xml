@@ -1,6 +1,6 @@
 <!--
   ~ materialCalc
-  ~ Copyright (C) 2025 M415X
+  ~ Copyright (C) 2026 M415X
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License as published by
@@ -40,18 +40,18 @@
     <string name="share_wall_title">*CÁLCULO DE MURO*</string>
     <string name="share_wall_brick">Ladrillo:</string>
     <string name="share_wall_surfaces">*Superficies:*</string>
-    <string name="share_wall_total_surface">● Total Muro:</string>
-    <string name="share_wall_openings_surface">● Aberturas:</string>
-    <string name="share_wall_net_surface">● Real a cubrir:</string>
+    <string name="share_wall_total_surface">Total Muro:</string>
+    <string name="share_wall_openings_surface">Aberturas:</string>
+    <string name="share_wall_net_surface">Real a cubrir:</string>
     <string name="share_wall_openings_title">*Aberturas:*</string>
     <string name="share_wall_no_openings">(Sin aberturas)</string>
-    <string name="share_wall_bricks_qty">● *Ladrillos:*</string>
-    <string name="share_wall_mortar_qty">● *Mortero* (%1$s m³):</string>
+    <string name="share_wall_bricks_qty">*Ladrillos:*</string>
+    <string name="share_wall_mortar_qty">*Mortero* (%1$s %2$s):</string>
 
     <!-- SHARE: STRUCTURE -->
     <string name="share_structure_title">*CÁLCULO DE ARMADURA*</string>
     <string name="share_structure_length">Largo Total:</string>
-    <string name="share_structure_concrete_section">*1. HORMIGÓN (%1$s m³)*</string>
+    <string name="share_structure_concrete_section">*1. HORMIGÓN (%1$s %2$s)*</string>
     <string name="share_structure_type">Tipo:</string>
     <string name="share_structure_iron_section">*2. ARMADURA (HIERROS)*</string>
     <string name="share_structure_main_iron">*Principal (Longitudinal):*</string>
@@ -62,6 +62,14 @@
     <string name="share_structure_separation">Separación:</string>
     <string name="share_structure_each">cada</string>
     <string name="share_structure_bars_12m">barras de 12 m</string>
+
+    <!-- SHARE: SLAB -->
+    <string name="share_slab_title">*CÁLCULO DE LOSA*</string>
+    <string name="share_slab_mesh_section">*MALLA SIMA*</string>
+    <string name="share_slab_mesh_suggested">Sugerida:</string>
+    <string name="share_slab_mesh_panels">Paneles (2.4x6 m):</string>
+    <string name="share_slab_iron_x">Dirección X:</string>
+    <string name="share_slab_iron_y">Dirección Y:</string>
 
     <!-- SHARE: PLASTER -->
     <string name="share_plaster_title">*CÁLCULO DE REVOQUE*</string>
@@ -75,4 +83,6 @@
     <string name="share_plaster_fine_sand">Arena Fina:</string>
     <string name="share_plaster_aerial_lime">Cal Aérea:</string>
     <string name="share_plaster_cement_min">Cemento: (Mínimo para ligar)</string>
+    <string name="share_plaster_both_sides">(Ambas caras)</string>
+    <string name="share_plaster_single_side">(Una sola cara)</string>
 </resources>

@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,13 +76,13 @@ fun BricksTabContent(repository: SettingsRepository) {
         // A. Agregamos los CUSTOM
         list.addAll(customBricks.map {
             // Convertimos CustomBrick a MaterialUiModel
-            val w = (it.ancho * 100).toInt()
-            val h = (it.alto * 100).toInt()
-            val l = (it.largo * 100).toInt()
+            val w = (it.width * 100).toInt()
+            val h = (it.height * 100).toInt()
+            val l = (it.length * 100).toInt()
 
             MaterialUiModel(
                 id = it.id,
-                title = it.nombre,
+                title = it.name,
                 subtitle = "${w}x${h}x${l} cm",
                 isCustom = true,
                 originalData = it // Guardamos el objeto real
@@ -99,19 +99,19 @@ fun BricksTabContent(repository: SettingsRepository) {
 
                 list.add(MaterialUiModel(
                     id = type.name,
-                    title = type.nameBrick,
+                    title = type.brickName,
                     subtitle = "${w}x${h}x${l} cm",
                     isCustom = false,
                     // Creamos un CustomBrick temporal para facilitar la copia en el editor
                     originalData = CustomBrick(
                         id = "", // ID vacío para que al guardar se genere uno nuevo
-                        nombre = type.nameBrick,
-                        ancho = props.width,
-                        alto = props.height,
-                        largo = props.length,
-                        junta = props.gasketThickness,
-                        isPortante = type.isBearing,
-                        descripcion = type.description
+                        name = type.brickName,
+                        width = props.width,
+                        height = props.height,
+                        length = props.length,
+                        joint = props.gasketThickness,
+                        isBearing = type.isBearing,
+                        description = type.description
                     )
                 ))
             }
@@ -248,7 +248,7 @@ fun RestoreBricksDialog(
                 items(hiddenIds.toList()) { id ->
                     // Buscamos el nombre legible usando el Enum
                     val nombre = try {
-                        BrickType.valueOf(id).nameBrick
+                        BrickType.valueOf(id).brickName
                     } catch (e: Exception) {
                         id
                     }
@@ -283,9 +283,9 @@ fun BrickEditorDialog(
     onSave: (CustomBrick) -> Unit
 ) {
     // Inicializamos valores (Convertimos Metros a String CM para inputs)
-    var name by remember { mutableStateOf(brickToEdit?.nombre ?: "") }
-    var descripcion by remember { mutableStateOf(brickToEdit?.descripcion ?: "") }
-    var isPortante by remember { mutableStateOf(brickToEdit?.isPortante ?: false) }
+    var name by remember { mutableStateOf(brickToEdit?.name ?: "") }
+    var descripcion by remember { mutableStateOf(brickToEdit?.description ?: "") }
+    var isPortante by remember { mutableStateOf(brickToEdit?.isBearing ?: false) }
 
     // Función auxiliar para formatear "0.18" -> "18"
     fun mToCmStr(m: Double): String {
@@ -295,10 +295,10 @@ fun BrickEditorDialog(
         return if (cm % 1 == 0.0) cm.toInt().toString() else cm.toString()
     }
 
-    var anchoCm by remember { mutableStateOf(mToCmStr(brickToEdit?.ancho ?: 0.0)) }
-    var altoCm by remember { mutableStateOf(mToCmStr(brickToEdit?.alto ?: 0.0)) }
-    var largoCm by remember { mutableStateOf(mToCmStr(brickToEdit?.largo ?: 0.0)) }
-    var juntaCm by remember { mutableStateOf(mToCmStr(brickToEdit?.junta ?: 0.015)) }
+    var anchoCm by remember { mutableStateOf(mToCmStr(brickToEdit?.width ?: 0.0)) }
+    var altoCm by remember { mutableStateOf(mToCmStr(brickToEdit?.height ?: 0.0)) }
+    var largoCm by remember { mutableStateOf(mToCmStr(brickToEdit?.length ?: 0.0)) }
+    var juntaCm by remember { mutableStateOf(mToCmStr(brickToEdit?.joint ?: 0.015)) }
 
     val isFormValid = name.isNotBlank() && anchoCm.isNotBlank() && altoCm.isNotBlank() && largoCm.isNotBlank()
 
@@ -410,13 +410,13 @@ fun BrickEditorDialog(
 
                     val newBrick = CustomBrick(
                         id = finalId,
-                        nombre = name,
-                        ancho = w,
-                        alto = h,
-                        largo = l,
-                        junta = j,
-                        isPortante = isPortante,
-                        descripcion = descripcion
+                        name = name,
+                        width = w,
+                        height = h,
+                        length = l,
+                        joint = j,
+                        isBearing = isPortante,
+                        description = descripcion
                     )
                     onSave(newBrick)
                 }

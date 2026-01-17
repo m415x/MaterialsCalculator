@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,9 @@
 
 package org.m415x.materialcalc.domain.utils
 
+/**
+ * Proporciona información específica de la plataforma, como la versión de la aplicación y el año de compilación.
+ */
 expect object PlatformInfo {
     val appVersion: String
     val buildYear: String

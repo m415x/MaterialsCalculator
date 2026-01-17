@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,11 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import materialscalculator.composeapp.generated.resources.Res
 import materialscalculator.composeapp.generated.resources.label_custom
+import materialscalculator.composeapp.generated.resources.label_uses
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
-import org.m415x.materialcalc.domain.model.BrickType
-import org.m415x.materialcalc.domain.model.CustomBrick
-import org.m415x.materialcalc.domain.model.toProperties
+import org.m415x.materialcalc.domain.model.*
 
 @Composable
 fun BrickSelectorField(
@@ -57,7 +56,7 @@ fun BrickSelectorField(
                 factoryOptions.add(
                     type.ordinal to BrickOption(
                         id = type.name,
-                        label = type.nameBrick,
+                        label = type.brickName,
                         isBearing = type.isBearing,
                         isCustom = false,
                         description = type.description,
@@ -74,10 +73,10 @@ fun BrickSelectorField(
             customOptions.add(
                 BrickOption(
                     id = custom.id,
-                    label = "${custom.nombre} (C)",
-                    isBearing = custom.isPortante,
+                    label = custom.name,
+                    isBearing = custom.isBearing,
                     isCustom = true,
-                    description = custom.descripcion,
+                    description = custom.description,
                     props = custom.toProperties(),
                     recipe = recetaDefault
                 )
@@ -123,7 +122,7 @@ fun BrickSelectorField(
             }
             if (opcion.description.isNotBlank()) {
                 Text(
-                    opcion.description,
+                    "${stringResource(Res.string.label_uses)} ${opcion.description}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -136,4 +135,17 @@ fun BrickSelectorField(
             )
         }
     }
+}
+
+// Modelo auxiliar para el Dropdown (Mantenlo privado o dentro del archivo)
+data class BrickOption(
+    val id: String,
+    val label: String,
+    val isBearing: Boolean, // Portante
+    val isCustom: Boolean,
+    val description: String,
+    val props: BrickProps,
+    val recipe: MortarDosing // Receta asociada/sugerida
+) {
+    override fun toString(): String = label
 }

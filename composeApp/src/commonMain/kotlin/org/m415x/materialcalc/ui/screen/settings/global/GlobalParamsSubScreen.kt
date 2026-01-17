@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,48 +21,23 @@ package org.m415x.materialcalc.ui.screen.settings.global
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.SettingsRepository.Defaults
-import org.m415x.materialcalc.data.repository.StaticMaterialRepository
 import org.m415x.materialcalc.domain.model.AppSettingsState
-import org.m415x.materialcalc.domain.model.BrickType
-import org.m415x.materialcalc.ui.common.AppDropdown
+import org.m415x.materialcalc.ui.common.BrickSelectorField
 import org.m415x.materialcalc.ui.common.ConcreteSelectorField
+import org.m415x.materialcalc.ui.common.MortarSelectorField
 import org.m415x.materialcalc.ui.screen.settings.EditDoubleSetting
 import org.m415x.materialcalc.ui.screen.settings.EditIntegerSetting
 import org.m415x.materialcalc.ui.screen.settings.EditPercentSetting
-
-// --- MODELOS VISUALES ---
-private data class BrickDisplayOption(
-    val id: String,
-    val name: String,
-    val details: String,     // Ej: "18x18x33 cm"
-    val isPortante: Boolean,
-    val isCustom: Boolean
-) {
-    // Sobrescribimos toString para que AppDropdown muestre el nombre simple cuando está cerrado
-    override fun toString(): String = name
-}
-
-private data class RecipeDisplayOption(
-    val id: String,
-    val name: String,
-    val proporcionMezcla: String, // Ej: "1:3:3" o "300kg Cem..."
-    val isCustom: Boolean
-) {
-    override fun toString(): String = name
-}
 
 /**
  * Pantalla de parámetros globales.
@@ -73,63 +48,12 @@ private data class RecipeDisplayOption(
 @Composable
 fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettingsState) {
     val scope = rememberCoroutineScope()
-    val staticRepo = remember { StaticMaterialRepository() }
 
     // --- DATOS PARA LAS LISTAS (Fusión) ---
     val customBricks = appSettings.customBricks
     val customRecipes = appSettings.customRecipes
     val hiddenBricks = appSettings.hiddenBrickIds
     val hiddenRecipes = appSettings.hiddenRecipeIds
-
-    // --- LADRILLOS ---
-    val brickOptions = remember(customBricks, hiddenBricks) {
-        val list = mutableListOf<BrickDisplayOption>()
-
-        // A. Fábrica
-        BrickType.entries.filter { it.name !in hiddenBricks }.forEach { t ->
-            val p = staticRepo.getBrickProps(t)!!
-            val medidas =
-                "${(p.width * 100).toInt()}x${(p.height * 100).toInt()}x${(p.length * 100).toInt()} cm"
-            list.add(BrickDisplayOption(t.name, t.nameBrick, medidas, t.isBearing, false))
-        }
-
-        // B. Custom
-        customBricks.forEach { c ->
-            val medidas = "${(c.ancho * 100).toInt()}x${(c.alto * 100).toInt()}x${(c.largo * 100).toInt()} cm"
-            // Agregamos "(C)" al nombre para distinguir copias si tienen el mismo nombre
-            list.add(BrickDisplayOption(c.id, "${c.nombre} (C)", medidas, c.isPortante, true))
-        }
-        list.sortedBy { it.name }
-    }
-
-    // --- REVOQUE ---
-    val plasterOptions = remember(customRecipes) {
-        val list = mutableListOf<RecipeDisplayOption>()
-
-        // 1. Estándar
-        val jaharro = staticRepo.getThickPlasterRecipe()
-        list.add(
-            RecipeDisplayOption(
-                id = "STD_JAHARRO",
-                name = "Jaharro (Estándar)",
-                proporcionMezcla = jaharro.mixingRatio,
-                isCustom = false
-            )
-        )
-
-        // 2. Custom
-        customRecipes.filter { it.tipo == "PLASTER" }.forEach { c ->
-            list.add(
-                RecipeDisplayOption(
-                    id = c.id,
-                    name = c.nombre,
-                    proporcionMezcla = c.nombre,
-                    isCustom = true
-                )
-            )
-        }
-        list.sortedBy { it.name }
-    }
 
     // Lectura de valores (con valores por defecto mientras carga)
     val cementWeight = appSettings.bagCementKg
@@ -151,10 +75,6 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
     val defConcGenId = appSettings.defaultConcreteGenId
     val defConcStrId = appSettings.defaultConcreteStrId
     val defPlasterId = appSettings.defaultPlasterId
-
-    // Helpers para encontrar el objeto seleccionado completo
-    val selectedBrick = brickOptions.find { it.id == defBrickId }
-    val selectedPlasterMix = plasterOptions.find { it.id == defPlasterId }
 
     // Definimos los FocusRequesters necesarios
     val focusCemento = remember { FocusRequester() }
@@ -188,37 +108,13 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 // Selector Ladrillo
-                AppDropdown(
-                    label = "Ladrillo para Muros",
-                    selectedText = selectedBrick?.name ?: "Seleccionar...",
-                    options = brickOptions,
-                    onSelect = { opt -> scope.launch { repository.saveDefaultBrick(opt.id) } }
-                ) { option ->
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(option.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                            if (option.isPortante) {
-                                Spacer(Modifier.width(8.dp))
-                                Surface(
-                                    color = MaterialTheme.colorScheme.tertiaryContainer,
-                                    shape = MaterialTheme.shapes.extraSmall
-                                ) {
-                                    Text(
-                                        "PORTANTE",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                                        color = MaterialTheme.colorScheme.onTertiaryContainer
-                                    )
-                                }
-                            }
-                        }
-                        Text(
-                            option.details,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                BrickSelectorField(
+                    selectedBrickId = defBrickId,
+                    onBrickSelected = { opt -> scope.launch { repository.saveDefaultBrick(opt.id) } },
+                    customBricks = customBricks,
+                    hiddenIds = hiddenBricks,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 ConcreteSelectorField(
                     selectedRecipeId = defConcGenId,
@@ -239,14 +135,34 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                     label = "Hormigón Estructural (Vigas/Columnas)"
                 )
 
-                AppDropdown(
-                    label = "Mezcla Revoque Grueso",
-                    selectedText = selectedPlasterMix?.name ?: "Seleccionar...",
-                    options = plasterOptions,
-                    onSelect = { opt -> scope.launch { repository.saveDefaultPlasterRough(opt.id) } }
-                ) { option ->
-                    RecipeItemRow(option) // Reusamos la fila visual que hicimos para hormigón
-                }
+                MortarSelectorField(
+                    selectedRecipeId = defPlasterId,
+                    onRecipeSelected = { id, _ -> scope.launch { repository.saveDefaultPlasterRough(id) } },
+                    customRecipes = customRecipes,
+                    hiddenIds = hiddenRecipes,
+                    modifier = Modifier.fillMaxWidth(),
+                    filterType = "PLASTER",
+                    label = "Mezcla Revoque Grueso"
+                )
+// TODO
+//                AppDropdown(
+//                    label = "Hierro Principal",
+//                    selectedText = ,
+//                    options = ,
+//                    onSelect = { opt -> scope.launch {  } }
+//                ) { option -> }
+//                AppDropdown(
+//                    label = "Hierro Estribos",
+//                    selectedText = ,
+//                    options = ,
+//                    onSelect = { opt -> scope.launch {  } }
+//                ) { option -> }
+//                AppDropdown(
+//                    label = "Hierro Malla",
+//                    selectedText = ,
+//                    options = ,
+//                    onSelect = { opt -> scope.launch {  } }
+//                ) { option -> }
             }
         }
 
@@ -333,6 +249,16 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                     focusRequester = focusFino,
                     nextFocusRequester = focusHormigon
                 )
+// TODO
+//                EditDoubleSetting(
+//                    label = "Separación máxima entre columnas",
+//                    value = ,
+//                    defaultValue = ,
+//                    suffix = ,
+//                    onSave = { scope.launch {  } },
+//                    focusRequester = ,
+//                    nextFocusRequester =
+//                )
             }
         }
 
@@ -410,27 +336,5 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-    }
-}
-
-@Composable
-private fun RecipeItemRow(option: RecipeDisplayOption) {
-    Column {
-        Text(option.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                // Puedes usar un icono de mezcla o puntos
-                imageVector = androidx.compose.material.icons.Icons.Default.Science,
-                contentDescription = null,
-                modifier = Modifier.size(12.dp),
-                tint = MaterialTheme.colorScheme.secondary
-            )
-            Spacer(Modifier.width(4.dp))
-            Text(
-                option.proporcionMezcla,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.secondary
-            )
-        }
     }
 }

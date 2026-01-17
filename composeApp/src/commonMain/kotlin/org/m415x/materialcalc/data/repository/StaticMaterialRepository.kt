@@ -1,6 +1,6 @@
 /*
  * materialCalc
- * Copyright (C) 2025 M415X
+ * Copyright (C) 2026 M415X
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -108,6 +108,20 @@ class StaticMaterialRepository : MaterialRepository {
     )
 
     /**
+     * Base de datos interna de dosificaciones de revoques.
+     */
+    private val plasterDB = mapOf(
+        PlasterType.STD_JAHARRO to MortarDosing(
+            name = PlasterType.STD_JAHARRO.displayName,
+            mixingRatio = "1/4:1:3 (Cem:Cal:Arena)",
+            cementKg = 115.0,       // Aprox 4 bolsas por m3 (es una mezcla "bastarda", lleva menos cemento que un concreto)
+            limeKg = 200.0,         // Mucha cal para plasticidad
+            sandM3 = 1.1,           // Arena común
+            waterLiters = 250.0
+        )
+    )
+
+    /**
      * Mapeo de dimensiones y juntas sugeridas.
      * Se asume colocación estándar (no panderete/canto, salvo especificación).
      *
@@ -200,12 +214,12 @@ class StaticMaterialRepository : MaterialRepository {
      * @property reinforcedLimeMixture Dosificación para 1 m3 de Revoque Reforzado
      */
     private val reinforcedLimeMixture = MortarDosing(
-        mixingRatio = "1/4:1:3 (Cem:Cal:Arena)",
-        cementKg = 210.0,
+        name = "Mortero Reforzado",
+        mixingRatio = "1/2:1:4 (Cem:Cal:Arena)",
+        cementKg = 170.0,
         limeKg = 150.0,
         sandM3 = 1.05,
-        waterLiters = 210.0 * 0.6,
-        waterCementRatio = 0.6
+        waterLiters = 240.0
     )
 
     /**
@@ -214,26 +228,13 @@ class StaticMaterialRepository : MaterialRepository {
      * @property cementSandMixture Dosificación para 1 m3 de Mezcla Cemento-Arena (sin cal)
      */
     private val cementSandMixture = MortarDosing(
+        name = "Mortero Cementicio",
         mixingRatio = "1:3 (Cem:Arena)",
-        cementKg = 350.0,
+        cementKg = 450.0,
         limeKg = 0.0,
         sandM3 = 1.1,
-        waterLiters = 350.0 * 0.5,
+        waterLiters = 220.0,
         waterCementRatio = 0.5
-    )
-
-    /**
-     * Dosificación para 1 m3 de Revoque Reforzado Tradicional (1/4 Cemento : 1 Área : 3 Arena)
-     *
-     * @property thickPlasterRecipe Dosificación para 1 m3 de Revoque Reforzado
-     */
-    private val thickPlasterRecipe = MortarDosing(
-        mixingRatio = "1/4:1:3 (Cem:Cal:Arena)",
-        cementKg = 75.0,  // Aprox 3 bolsas por m3 (es una mezcla "bastarda", lleva menos cemento que un concreto)
-        limeKg = 160.0,     // Mucha cal para plasticidad
-        sandM3 = 1.1,      // Arena común
-        waterLiters = 75.0 * 0.6,
-        waterCementRatio = 0.6
     )
 
     /**
@@ -242,12 +243,12 @@ class StaticMaterialRepository : MaterialRepository {
      * @property finePlasterRecipe Dosificación para 1 m3 de Revoque Fino Tradicional (1/8 Cemento : 1 Aérea : 2 Arena Fina).
      */
     private val finePlasterRecipe = MortarDosing(
+        name = "Revoque Fino (Enlucido)",
         mixingRatio = "1/8:1:2 (Cem:Cal:Arena)",
-        cementKg = 30.0,  // Muy poco, solo para ligar
-        limeKg = 250.0,     // Pura cal aérea
-        sandM3 = 1.0,      // Arena fina (voladora)
-        waterLiters = 30.0 * 0.5,
-        waterCementRatio = 0.5
+        cementKg = 90.0,        // Muy poco, solo para ligar
+        limeKg = 250.0,         // Pura cal aérea
+        sandM3 = 1.0,           // Arena fina (voladora)
+        waterLiters = 240.0
     )
 
     /**
@@ -256,6 +257,11 @@ class StaticMaterialRepository : MaterialRepository {
      * @property getConcreteDosing Dosificación para 1 m3 de hormigón.
      */
     override fun getConcreteDosing(type: ConcreteType) = concreteDB[type]
+
+    /**
+     * Dosificación para 1 m3 de revoque.
+     */
+    fun getPlasterDosing(type: PlasterType) = plasterDB[type]
 
     /**
      * Propiedades de un ladrillo.
@@ -286,7 +292,7 @@ class StaticMaterialRepository : MaterialRepository {
      * @property getIronWeightPerMeter Peso por metro de varilla según diámetro.
      */
     override fun getIronWeightPerMeter(diameter: IronDiameter): Double {
-        return diameter.pesoLinealKgM
+        return diameter.linearWeightKgM
     }
 
     /**
@@ -294,7 +300,7 @@ class StaticMaterialRepository : MaterialRepository {
      *
      * @property getThickPlasterRecipe Mezcla recomendada para revoque reforzado.
      */
-    fun getThickPlasterRecipe() = thickPlasterRecipe
+    fun getThickPlasterRecipe() = plasterDB[PlasterType.STD_JAHARRO]!!
 
     /**
      * Mezcla recomendada para revoque fino.
@@ -313,7 +319,7 @@ class StaticMaterialRepository : MaterialRepository {
             val props = getBrickProps(type)!!
             BrickOption(
                 id = type.name,
-                name = type.nameBrick,
+                name = type.brickName,
                 props = props,
                 isCustom = false
             )
@@ -323,7 +329,7 @@ class StaticMaterialRepository : MaterialRepository {
         val customOptions = customBricks.map { custom ->
             BrickOption(
                 id = custom.id,
-                name = custom.nombre,
+                name = custom.name,
                 props = custom.toProperties(),
                 isCustom = true
             )
