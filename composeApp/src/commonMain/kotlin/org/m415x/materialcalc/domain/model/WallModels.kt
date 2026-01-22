@@ -18,37 +18,40 @@
 
 package org.m415x.materialcalc.domain.model
 
+import materialscalculator.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.StringResource
+
 /**
  * Define los tipos de ladrillos que el usuario puede elegir. Todas las medidas en CENTIMETROS.
  *
- * @property brickName Nombre del ladrillo
+ * @property brickNameRes Recurso del nombre del ladrillo
  * @property isBearing Indica si el ladrillo es portante
- * @property description Descripción y usos del ladrillo
+ * @property descriptionRes Recurso de descripción y usos del ladrillo
  */
 enum class BrickType(
-    val brickName: String,
+    val brickNameRes: StringResource,
     val isBearing: Boolean,
-    val description: String
+    val descriptionRes: StringResource
 ) {
 
     // Ladrillos macizos de arcilla
-    COMUN("Ladrillo Común", true, "Muros, parrillas"),
-    LADRILLON("Ladrillón", true, "Muros de carga"),
+    COMUN(Res.string.brick_name_comun, true, Res.string.brick_desc_comun),
+    LADRILLON(Res.string.brick_name_ladrillon, true, Res.string.brick_desc_ladrillon),
 
     // Huecos (Tabiquería / No Portantes) - Altura estándar 18cm
-    HUECO_8("Cerámico Hueco 8", false, "Tabiquería interior"),
-    HUECO_12("Cerámico Hueco 12", false, "Tabiquería interior/exterior"),
-    HUECO_18("Cerámico Hueco 18", false, "Tabiquería, cerramientos"),
+    HUECO_8(Res.string.brick_name_hueco_8, false, Res.string.brick_desc_hueco_8),
+    HUECO_12(Res.string.brick_name_hueco_12, false, Res.string.brick_desc_hueco_12),
+    HUECO_18(Res.string.brick_name_hueco_18, false, Res.string.brick_desc_hueco_18),
 
     // Portantes (Estructurales) - Altura estándar 19cm
-    PORTANTE_12("Cerámico Portante 12", true, "Muros de carga"),
-    PORTANTE_18("Cerámico Portante 18", true, "Muros de carga"),
+    PORTANTE_12(Res.string.brick_name_portante_12, true, Res.string.brick_desc_portante_12),
+    PORTANTE_18(Res.string.brick_name_portante_18, true, Res.string.brick_desc_portante_18),
 
     // Bloques de cemento/hormigón (Portantes y no portantes)
-    BLOQUE_10("Bloque 10", false, "Tabiques, muros divisorios"),
-    BLOQUE_13("Bloque 13", true, "Muros de carga"),
-    BLOQUE_15("Bloque 15", true, "Muros de carga"),
-    BLOQUE_20("Bloque 20", true, "Muros de carga")
+    BLOQUE_10(Res.string.brick_name_bloque_10, false, Res.string.brick_desc_bloque_10),
+    BLOQUE_13(Res.string.brick_name_bloque_13, true, Res.string.brick_desc_bloque_13),
+    BLOQUE_15(Res.string.brick_name_bloque_15, true, Res.string.brick_desc_bloque_15),
+    BLOQUE_20(Res.string.brick_name_bloque_20, true, Res.string.brick_desc_bloque_20)
 }
 
 /**
@@ -110,7 +113,11 @@ data class WallResult(
     val waterLiters: Double,
     val percentageMortarWaste: Double,
     // Configuración
-    val mixingRatio: String,
+    val mixingRatio: TextSource,
     val cementBagKg: Int,
-    val limeBagKg: Int
+    val limeBagKg: Int,
+    // Costos
+    val materialsCost: Double = 0.0,
+    val laborCost: Double = 0.0,
+    val totalCost: Double = 0.0
 )

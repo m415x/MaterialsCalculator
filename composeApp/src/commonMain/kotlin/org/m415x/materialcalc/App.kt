@@ -31,7 +31,11 @@ import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.domain.model.AppSettingsState
-import org.m415x.materialcalc.ui.common.*
+import org.m415x.materialcalc.ui.common.layout.AppBottomBar
+import org.m415x.materialcalc.ui.common.layout.AppTopBar
+import org.m415x.materialcalc.ui.common.utils.KmpBackHandler
+import org.m415x.materialcalc.ui.common.utils.clearFocusOnTap
+import org.m415x.materialcalc.ui.common.utils.getBrightnessManager
 import org.m415x.materialcalc.ui.navigation.BottomTab
 import org.m415x.materialcalc.ui.navigation.Screen
 import org.m415x.materialcalc.ui.screen.calculator.CalculatorTabContent

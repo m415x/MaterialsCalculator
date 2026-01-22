@@ -28,7 +28,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -39,13 +40,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
-import org.m415x.materialcalc.data.repository.StaticMaterialRepository
 import org.m415x.materialcalc.domain.common.toPresentationUnit
-import org.m415x.materialcalc.domain.model.*
+import org.m415x.materialcalc.domain.model.AppSettingsState
+import org.m415x.materialcalc.domain.model.WallResult
+import org.m415x.materialcalc.domain.model.asString
 import org.m415x.materialcalc.domain.usecase.CalculateWallUseCase
-import org.m415x.materialcalc.domain.utils.ConstructionConstants.formatPart
 import org.m415x.materialcalc.domain.utils.estimateProportionTxt
-import org.m415x.materialcalc.ui.common.*
+import org.m415x.materialcalc.ui.common.dialogs.AppDialog
+import org.m415x.materialcalc.ui.common.display.AppResultBottomSheet
+import org.m415x.materialcalc.ui.common.display.ErrorMessage
+import org.m415x.materialcalc.ui.common.display.PriceResultSection
+import org.m415x.materialcalc.ui.common.display.ResultRow
+import org.m415x.materialcalc.ui.common.inputs.BrickSelectorField
+import org.m415x.materialcalc.ui.common.inputs.NumericInput
+import org.m415x.materialcalc.ui.common.layout.InputRow
+import org.m415x.materialcalc.ui.common.layout.InputSection
+import org.m415x.materialcalc.ui.common.layout.OpeningsSection
+import org.m415x.materialcalc.ui.common.presenters.BrickPresenter
+import org.m415x.materialcalc.ui.common.presenters.MortarPresenter
+import org.m415x.materialcalc.ui.common.utils.*
 
 /**
  * Pantalla principal de la calculadora de muros.
@@ -56,134 +69,61 @@ import org.m415x.materialcalc.ui.common.*
 @Composable
 fun WallScreen(appSettings: AppSettingsState) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    val nombreApp = stringResource(Res.string.app_name)
-    val staticRepo = remember { StaticMaterialRepository() }
+    val appName = stringResource(Res.string.app_name)
     val calculateWall = remember { CalculateWallUseCase() }
 
-    // Usamos los valores directamente desde appSettings
-    val customRecipes = appSettings.customRecipes
-    val bolsaCemento = appSettings.bagCementKg
-    val bolsaCal = appSettings.bagLimeKg
-    val wLadrillo = appSettings.wasteBrickPct
-    val wMezcla = appSettings.wasteMortarPct
+    // Instanciamos los Presenters
+    val brickPresenter = remember { BrickPresenter() }
+    val mortarPresenter = remember { MortarPresenter() }
 
-    // --- ESTADOS DE LA UI ---
-    var largoPared by remember { mutableStateOf("") }
-    var altoPared by remember { mutableStateOf("") }
-    val aberturas = remember { mutableStateListOf<Aperture>() }
-
-    // Selección de Ladrillo y Mezcla
-    var selectedOption by remember { mutableStateOf<BrickOption?>(null) }
-    var selectedMezcla by remember { mutableStateOf<MortarDosing?>(null) }
-
-    // --- EFECTO REACTIVO INTELIGENTE ---
-    // Cuando cambia el ladrillo, cambiamos la mezcla a la sugerida por defecto.
-    LaunchedEffect(selectedOption) {
-        if (selectedOption != null && selectedMezcla?.mixingRatio != selectedOption?.recipe?.mixingRatio) {
-            selectedMezcla = selectedOption!!.recipe
-        }
+    // --- PREPARACIÓN DE DATOS (State Hoisting) ---
+    val brickOptions = remember(appSettings.customBricks, appSettings.hiddenBrickIds) {
+        brickPresenter.getOptions(appSettings.customBricks, appSettings.hiddenBrickIds)
     }
 
-    // --- B. LISTA DE MEZCLAS ---
-    val opcionesMezcla = remember(customRecipes) {
-        val list = mutableListOf<MortarOption>()
+    // --- B. LISTA DE MEZCLAS (Usando MortarPresenter) ---
+    // Aquí usamos "MORTAR" para obtener mezclas de asiento
+    val labelCem = stringResource(Res.string.abbr_cement)
+    val labelLime = stringResource(Res.string.abbr_lime)
+    val labelSand = stringResource(Res.string.abbr_sand)
+    val labelKg = stringResource(Res.string.unit_kilograms)
+    val labelRatio = stringResource(Res.string.abbr_water_cement_ratio)
 
-        fun crearOpcion(id: String, nombre: String, receta: MortarDosing): MortarOption {
-            val proporcionTexto = receta.estimateProportionTxt()
-            val detalleTecnico = buildString {
-                append("${receta.cementKg.toInt()} kg Cem")
-                if (receta.limeKg > 0) append(" + ${receta.limeKg.toInt()} kg Cal")
-                if (receta.waterCementRatio > 0) {
-                    append(" (A/C:${receta.waterCementRatio})")
-                }
-            }
-            val descripcionFinal = "$proporcionTexto\n$detalleTecnico"
-            return MortarOption(id, nombre, descripcionFinal, receta)
-        }
-
-        val mezclaCal = staticRepo.getMortarDosing(BrickType.COMUN)
-        list.add(MortarOption("STD_CAL", mezclaCal.name, mezclaCal.mixingRatio, mezclaCal))
-
-        val mezclaCementicia = staticRepo.getMortarDosing(BrickType.BLOQUE_20)
-        list.add(MortarOption("STD_CEM", mezclaCementicia.name, mezclaCementicia.mixingRatio, mezclaCementicia))
-
-        customRecipes
-            .filter { it.type == "MORTAR" }
-            .forEach { custom ->
-                val partesTexto = if (custom.isProportion) {
-                    buildString {
-                        append(formatPart(custom.partCement))
-                        if (custom.partLime > 0) append(":${formatPart(custom.partLime)}")
-                        append(":${formatPart(custom.partSand)}")
-                        append(" (Cem")
-                        if (custom.partLime > 0) append(":Cal")
-                        append(":Arena)")
-                    }
-                } else null
-
-                // Si partesTexto es null (modo técnico), usamos el nombre temporalmente,
-                // pero estimateProportionTxt() se encargará de calcularlo bien después.
-                // Lo ideal es que mixingRatio tenga la proporción si es posible.
-                val ratioDisplay = partesTexto ?: custom.name
-
-                val dosis = MortarDosing(
-                    name = custom.name,
-                    mixingRatio = ratioDisplay,
-                    cementKg = custom.cementKg,
-                    limeKg = custom.limeKg,
-                    sandM3 = custom.sandM3,
-                    waterCementRatio = custom.waterCementRatio,
-                    waterLiters = if (custom.waterCementRatio > 0) custom.cementKg * custom.waterCementRatio else 240.0, // Fallback si no hay ratio
-                    parts = partesTexto
-                )
-                list.add(crearOpcion(custom.id, custom.name, receta = dosis))
-            }
-        list
+    val mortarOptions = remember(appSettings.customRecipes, appSettings.hiddenRecipeIds) {
+        mortarPresenter.getOptions(
+            appSettings.customRecipes,
+            appSettings.hiddenRecipeIds,
+            filterType = "MORTAR",
+            labelCem = labelCem,
+            labelLime = labelLime,
+            labelSand = labelSand,
+            labelKg = labelKg,
+            labelRatio = labelRatio
+        )
     }
 
-    var showMezclaDialog by remember { mutableStateOf(false) }
-    var resultado by remember { mutableStateOf<WallResult?>(null) }
-    var errorMsg by remember { mutableStateOf<String?>(null) }
-    var showResultSheet by remember { mutableStateOf(false) }
+    // --- INICIALIZACIÓN DEL STATE HOLDER ---
+    val state = rememberWallScreenState(
+        appSettings = appSettings,
+        calculateWall = calculateWall,
+        brickOptions = brickOptions,
+        mortarOptions = mortarOptions
+    )
 
     val shareManager = remember { getShareManager() }
-    val focusLargo = remember { FocusRequester() }
-    val focusAlto = remember { FocusRequester() }
-    val focusAberturaAncho = remember { FocusRequester() }
-    val focusTipoLadrillo = remember { FocusRequester() }
+    val focusLength = remember { FocusRequester() }
+    val focusHeight = remember { FocusRequester() }
+    val focusOpeningWidth = remember { FocusRequester() }
+    val focusBrickType = remember { FocusRequester() }
 
-    RequestFocusOnStart(focusLargo)
+    RequestFocusOnStart(focusLength)
 
     Scaffold(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = {
                     keyboardController?.hide()
-                    val l = largoPared.toSafeDoubleOrNull()
-                    val h = altoPared.toSafeDoubleOrNull()
-
-                    if (areValidDimensions(l, h) && selectedOption != null && selectedMezcla != null) {
-                        try {
-                            resultado = calculateWall(
-                                lengthMeters = l!!,
-                                heightMeters = h!!,
-                                brickProps = selectedOption!!.props,
-                                mortarDosing = selectedMezcla!!,
-                                openingList = aberturas.toList(),
-                                cementBagWeightKg = bolsaCemento,
-                                limeBagWeightKg = bolsaCal,
-                                percentageBrickWaste = wLadrillo / 100.0,
-                                percentageMortarWaste = wMezcla / 100.0
-                            )
-                            errorMsg = null
-                            showResultSheet = true
-                        } catch (e: Exception) {
-                            errorMsg = "Error: ${e.message}"
-                        }
-                    } else {
-                        errorMsg = "Verifica dimensiones y selección."
-                        resultado = null
-                    }
+                    state.calculate()
                 },
                 icon = { Icon(Icons.Default.Calculate, null) },
                 text = { Text(stringResource(Res.string.button_calculate)) }
@@ -201,22 +141,22 @@ fun WallScreen(appSettings: AppSettingsState) {
             InputSection(title = stringResource(Res.string.wall_section_dimensions)) {
                 InputRow {
                     NumericInput(
-                        value = largoPared,
-                        onValueChange = { largoPared = it },
+                        value = state.wallLength,
+                        onValueChange = { state.wallLength = it },
                         label = stringResource(Res.string.label_length, stringResource(Res.string.unit_meters)),
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(1f),
-                        focusRequester = focusLargo,
-                        nextFocusRequester = focusAlto
+                        focusRequester = focusLength,
+                        nextFocusRequester = focusHeight
                     )
                     NumericInput(
-                        value = altoPared,
-                        onValueChange = { altoPared = it },
+                        value = state.wallHeight,
+                        onValueChange = { state.wallHeight = it },
                         label = stringResource(Res.string.label_height, stringResource(Res.string.unit_meters)),
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(1f),
-                        focusRequester = focusAlto,
-                        nextFocusRequester = focusAberturaAncho
+                        focusRequester = focusHeight,
+                        nextFocusRequester = focusOpeningWidth
                     )
                 }
             }
@@ -226,9 +166,12 @@ fun WallScreen(appSettings: AppSettingsState) {
                 attenuatedTitle = stringResource(Res.string.openings_attenuated_title)
             ) {
                 OpeningsSection(
-                    aberturas = aberturas,
-                    focusRequesterAncho = focusAberturaAncho,
-                    nextFocusRequesterAlto = focusTipoLadrillo
+                    openings = state.openings,
+                    onAddOpening = { state.addOpening(it) },
+                    onRemoveOpening = { state.removeOpening(it) },
+                    onEditOpening = { index, newOpening -> state.updateOpening(index, newOpening) },
+                    focusRequesterWidth = focusOpeningWidth,
+                    nextFocusRequesterHeight = focusBrickType
                 )
             }
 
@@ -237,15 +180,13 @@ fun WallScreen(appSettings: AppSettingsState) {
                 showDivider = false
             ) {
                 BrickSelectorField(
-                    selectedBrickId = selectedOption?.id ?: "",
-                    onBrickSelected = { selectedOption = it },
-                    customBricks = appSettings.customBricks,
-                    hiddenIds = appSettings.hiddenBrickIds,
-                    defaultBrickId = appSettings.defaultBrickId,
-                    modifier = Modifier.fillMaxWidth().focusRequester(focusTipoLadrillo)
+                    options = state.brickOptions,
+                    selectedOption = state.selectedBrickOption,
+                    onOptionSelected = { state.onBrickSelected(it) },
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusBrickType)
                 )
 
-                if (selectedMezcla != null) {
+                if (state.selectedMix != null) {
                     Card(
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
@@ -272,12 +213,12 @@ fun WallScreen(appSettings: AppSettingsState) {
                                 Text(
                                     // Aquí usamos estimateProportionTxt() para asegurar que se vea la proporción
                                     // incluso si mixingRatio vino como nombre por defecto.
-                                    selectedMezcla!!.estimateProportionTxt(),
+                                    state.selectedMix!!.estimateProportionTxt().asString(),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
-                            TextButton(onClick = { showMezclaDialog = true }) {
+                            TextButton(onClick = { state.showMezclaDialog = true }) {
                                 Text(stringResource(Res.string.button_change))
                             }
                         }
@@ -285,62 +226,35 @@ fun WallScreen(appSettings: AppSettingsState) {
                 }
             }
 
-// TODO Switchs para armaduras y revoques
-//            InputRow(horizontalArrangement = Arrangement.SpaceBetween) {
-//                Column {
-//                    Text("Calcular vigas y columnas", style = MaterialTheme.typography.bodyLarge)
-//                    Text(
-//                        "",
-//                        style = MaterialTheme.typography.bodySmall,
-//                        color = MaterialTheme.colorScheme.onSurfaceVariant
-//                    )
-//                }
-//                Switch(
-//                    checked = ,
-//                    onCheckedChange = {  }
-//                )
-//            }
-//            InputRow(horizontalArrangement = Arrangement.SpaceBetween) {
-//                Column {
-//                    Text("Calcular Revoque", style = MaterialTheme.typography.bodyLarge)
-//                    Text(
-//                        "",
-//                        style = MaterialTheme.typography.bodySmall,
-//                        color = MaterialTheme.colorScheme.onSurfaceVariant
-//                    )
-//                }
-//                Switch(
-//                    checked = ,
-//                    onCheckedChange = {  }
-//                )
-//            }
-
-            ErrorMessage(errorMsg)
+            ErrorMessage(state.errorMsg)
 
             Spacer(modifier = Modifier.height(80.dp))
         }
     }
 
-    if (showMezclaDialog) {
+    if (state.showMezclaDialog) {
         AppDialog(
-            onDismissRequest = { showMezclaDialog = false },
-            title = { Text("Elegir Mezcla") },
+            onDismissRequest = { state.showMezclaDialog = false },
+            title = { Text(stringResource(Res.string.wall_dialog_choose_mix)) },
             content = {
                 LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
-                    items(opcionesMezcla) { opcion ->
+                    items(state.mortarOptions) { option ->
                         Row(
                             modifier = Modifier.fillMaxWidth().clickable {
-                                selectedMezcla = opcion.data
-                                showMezclaDialog = false
+                                state.onMixSelected(option.data)
                             }.padding(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            RadioButton(selected = (opcion.data == selectedMezcla), onClick = null)
+                            // Comparamos por nombre o contenido porque selectedMix es MortarDosing y opcion.data también
+                            RadioButton(
+                                selected = (option.data.name.asString() == state.selectedMix?.name?.asString()),
+                                onClick = null
+                            )
                             Spacer(Modifier.width(8.dp))
                             Column {
-                                Text(opcion.name, style = MaterialTheme.typography.bodyLarge)
+                                Text(option.name.asString(), style = MaterialTheme.typography.bodyLarge)
                                 Text(
-                                    opcion.description,
+                                    "${option.proportion.asString()}\n${option.technical}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     lineHeight = 14.sp
@@ -352,54 +266,60 @@ fun WallScreen(appSettings: AppSettingsState) {
                 }
             },
             actions = {
-                TextButton(onClick = { showMezclaDialog = false }) { Text(stringResource(Res.string.button_cancel)) }
+                TextButton(onClick = {
+                    state.showMezclaDialog = false
+                }) { Text(stringResource(Res.string.button_cancel)) }
             }
         )
     }
 
-    if (showResultSheet && resultado != null) {
+    if (state.showResultSheet && state.result != null) {
         val brickDimensions =
-            "${(selectedOption?.props?.width ?: 0.0) * 100}x${(selectedOption?.props?.height ?: 0.0) * 100}x${(selectedOption?.props?.length ?: 0.0) * 100}"
+            "${(state.selectedBrickOption?.props?.width ?: 0.0) * 100}x${(state.selectedBrickOption?.props?.height ?: 0.0) * 100}x${(state.selectedBrickOption?.props?.length ?: 0.0) * 100}"
         val shareText = rememberWallShareText(
-            result = resultado!!,
-            length = largoPared.toSafeDoubleOrNull() ?: 0.0,
-            height = altoPared.toSafeDoubleOrNull() ?: 0.0,
-            brickType = selectedOption?.label ?: "N/A",
+            result = state.result!!,
+            length = state.wallLength.toSafeDoubleOrNull() ?: 0.0,
+            height = state.wallHeight.toSafeDoubleOrNull() ?: 0.0,
+            brickType = state.selectedBrickOption?.label?.asString() ?: "N/A",
             brickDetail = "(${brickDimensions} ${stringResource(Res.string.unit_centimeters)})",
-            openings = aberturas.toList(),
-            mixDetail = selectedMezcla?.mixingRatio ?: "N/A",
-            appName = nombreApp
+            openings = state.openings.toList(),
+            mixDetail = state.selectedMix?.mixingRatio?.asString() ?: "N/A",
+            appName = appName
         )
 
         AppResultBottomSheet(
-            onDismissRequest = { showResultSheet = false },
+            onDismissRequest = { state.showResultSheet = false },
             onSave = { /* TODO */ },
-            onEdit = { showResultSheet = false },
+            onEdit = { state.showResultSheet = false },
             onShare = { shareManager.shareText(shareText) }
         ) {
-            WallResultContent(resultado!!)
+            WallResultContent(state.result!!)
         }
     }
 }
 
 @Composable
 fun WallResultContent(res: WallResult) {
-    Text("Área Neta: ${res.netAreaM2.roundToDecimals(2)} m²", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-    Spacer(modifier = Modifier.height(16.dp))
-    ResultRow(label = "Ladrillos", value = "${res.quantityBricks} U")
     Text(
-        "(Incluye ${(res.percentageBrickWaste * 100).toInt()}% desperdicio)",
+        stringResource(Res.string.wall_result_net_area, res.netAreaM2.roundToDecimals(2)),
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp
+    )
+    Spacer(modifier = Modifier.height(16.dp))
+    ResultRow(label = stringResource(Res.string.wall_result_bricks), value = "${res.quantityBricks} U")
+    Text(
+        stringResource(Res.string.wall_result_waste_included, (res.percentageBrickWaste * 100).toInt()),
         style = MaterialTheme.typography.bodySmall
     )
     Spacer(modifier = Modifier.height(16.dp))
-    Text("Mortero (${res.mortarM3.roundToDecimals(2)} m³)", fontWeight = FontWeight.Bold)
+    Text(stringResource(Res.string.wall_result_mortar, res.mortarM3.roundToDecimals(2)), fontWeight = FontWeight.Bold)
     Text(
-        "(Incluye ${(res.percentageMortarWaste * 100).toInt()}% desperdicio)",
+        stringResource(Res.string.wall_result_waste_included, (res.percentageMortarWaste * 100).toInt()),
         style = MaterialTheme.typography.bodySmall
     )
     Spacer(modifier = Modifier.height(8.dp))
     ResultRow(
-        label = "Cemento",
+        label = stringResource(Res.string.wall_result_cement),
         value = res.cementKg.toPresentationUnit(
             res.cementBagKg,
             Res.string.unit_bag,
@@ -408,7 +328,7 @@ fun WallResultContent(res: WallResult) {
     )
     if (res.limeKg > 0) {
         ResultRow(
-            label = "Cal",
+            label = stringResource(Res.string.wall_result_lime),
             value = res.limeKg.toPresentationUnit(
                 res.limeBagKg,
                 Res.string.unit_bag,
@@ -416,6 +336,24 @@ fun WallResultContent(res: WallResult) {
             )
         )
     }
-    ResultRow(label = "Arena", value = "${res.sandM3.roundToDecimals(2)} m³")
-    ResultRow(label = "Agua", value = "${res.waterLiters.roundToDecimals(1)} Lt")
+    ResultRow(
+        label = stringResource(Res.string.wall_result_sand),
+        value = stringResource(
+            Res.string.concrete_result_volume_m3,
+            res.sandM3.roundToDecimals(2),
+            stringResource(Res.string.unit_cubic_meters)
+        )
+    )
+    ResultRow(
+        label = stringResource(Res.string.wall_result_water),
+        value = stringResource(
+            Res.string.concrete_result_volume_liters,
+            res.waterLiters.roundToDecimals(1),
+            stringResource(Res.string.unit_liters)
+        )
+    )
+
+    // --- CÁLCULO DE PRECIOS ---
+    // Ahora usamos los valores calculados en el UseCase
+    PriceResultSection(res.materialsCost, res.laborCost)
 }

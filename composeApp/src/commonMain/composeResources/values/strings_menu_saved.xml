@@ -19,4 +19,6 @@
 <resources>
     <!-- MENU: SAVED -->
     <string name="saved_title_main">Cálculos Guardados</string>
+    <string name="saved_title_history">Historial de Cálculos</string>
+    <string name="saved_desc_coming_soon">Aquí podrás ver tus cálculos guardados próximamente.</string>
 </resources>

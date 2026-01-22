@@ -29,9 +29,6 @@
     <string name="concrete_label_type_structural">ESTRUCTURAL</string>
     <string name="concrete_label_type_non_structural">NO ESTRUCTURAL</string>
 
-    <!-- MESSAGE -->
-    <string name="concrete_message_error_validation">Verifique las dimensiones.</string>
-
     <!-- RESULTS -->
     <string name="concrete_result_total_volume">Volumen Total: %1$s %2$s</string>
     <string name="concrete_result_waste_included">(Incluye %1$s% desperdicio)</string>

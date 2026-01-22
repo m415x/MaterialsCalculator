@@ -32,13 +32,17 @@
     <string name="button_close">Cerrar</string>
     <string name="button_remove">Eliminar</string>
     <string name="button_change">Cambiar</string>
+    <string name="button_new">Nuevo</string>
+    <string name="button_edit">Editar</string>
+    <string name="button_hide">Ocultar</string>
+    <string name="button_restore">Restaurar</string>
 
     <!-- UNITS -->
     <string name="unit_units">u</string>
     <string name="unit_bag">bolsa</string>
     <string name="unit_bags">bolsas</string>
     <string name="unit_kilograms">kg</string>
-    <string name="unit_liters">Lt</string>
+    <string name="unit_liters">lt</string>
     <string name="unit_meters">m</string>
     <string name="unit_square_meters">m²</string>
     <string name="unit_cubic_meters">m³</string>
@@ -46,6 +50,13 @@
     <string name="unit_square_centimeters">cm²</string>
     <string name="unit_cubic_centimeters">cm³</string>
     <string name="unit_millimeters">mm</string>
+    <string name="unit_kg_m">kg/m</string>
+    <string name="unit_linear_meter">ml</string>
+    <string name="unit_bar">barra</string>
+    <string name="unit_bars">barras</string>
+    <string name="unit_mesh">malla</string>
+    <string name="unit_meshes">mallas</string>
+    <string name="unit_bag_with_weight">x %1$d kg</string>
 
     <!-- LABELS -->
     <string name="label_width">Ancho (%1$s)</string>
@@ -57,4 +68,15 @@
     <string name="label_custom_c">C</string>
     <string name="label_uses">Usos:</string><!-- Ver usos -->
     <string name="label_error">Error</string>
+
+    <!-- ABBREVIATIONS -->
+    <string name="abbr_cement">Cem</string>
+    <string name="abbr_lime">Cal</string>
+    <string name="abbr_sand">Arena</string>
+    <string name="abbr_gravel">Piedra</string>
+    <string name="abbr_water">Agua</string>
+    <string name="abbr_water_cement_ratio">A/C</string>
+
+    <!-- MESSAGES -->
+    <string name="message_error_validation">Verifica los valores ingresados.</string>
 </resources>

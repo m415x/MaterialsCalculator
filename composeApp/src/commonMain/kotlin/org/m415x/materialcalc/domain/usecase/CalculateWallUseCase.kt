@@ -21,8 +21,11 @@ package org.m415x.materialcalc.domain.usecase
 import org.m415x.materialcalc.domain.common.calculateWetMaterials
 import org.m415x.materialcalc.domain.model.Aperture
 import org.m415x.materialcalc.domain.model.BrickProps
+import org.m415x.materialcalc.domain.model.LaborPrice
+import org.m415x.materialcalc.domain.model.MaterialPrice
 import org.m415x.materialcalc.domain.model.MortarDosing
 import org.m415x.materialcalc.domain.model.WallResult
+import org.m415x.materialcalc.domain.service.CostCalculator
 import org.m415x.materialcalc.domain.utils.calculateNetSurface
 import kotlin.math.ceil
 
@@ -43,7 +46,9 @@ class CalculateWallUseCase {
      * @param limeBagWeightKg Peso de la bolsa de cal en kg.
      * @param percentageBrickWaste Porcentaje de desperdicio en ladrillos.
      * @param percentageMortarWaste Porcentaje de desperdicio en mortero.
-     * @return Resultado del cálculo.
+     * @param materialPrices Lista de precios de materiales (opcional).
+     * @param laborPrices Lista de precios de mano de obra (opcional).
+     * @return Resultado del cálculo encapsulado en Result.
      */
     operator fun invoke(
         lengthMeters: Double,
@@ -54,51 +59,89 @@ class CalculateWallUseCase {
         cementBagWeightKg: Int,
         limeBagWeightKg: Int,
         percentageBrickWaste: Double,
-        percentageMortarWaste: Double
-    ): WallResult {
+        percentageMortarWaste: Double,
+        materialPrices: List<MaterialPrice> = emptyList(),
+        laborPrices: List<LaborPrice> = emptyList()
+    ): Result<WallResult> {
 
-        // 1. GEOMETRÍA (ÁREA NETA)
-        val netSurface = calculateNetSurface(
-            length = lengthMeters,
-            height = heightMeters,
-            openingsList = openingList
-        )
+        return try {
+            // 1. GEOMETRÍA (ÁREA NETA)
+            val netSurface = calculateNetSurface(
+                length = lengthMeters,
+                height = heightMeters,
+                openingsList = openingList
+            )
 
-        // 2. CÁLCULO DE LADRILLOS (Unidades Físicas)
-        val brickSurfaceWithJoint =
-            (brickProps.length + brickProps.gasketThickness) * (brickProps.height + brickProps.gasketThickness)
-        val bricksM2 = 1.0 / brickSurfaceWithJoint
-        val totalTheoreticalBricks = netSurface * bricksM2
-        val actualQuantityBricks = ceil(totalTheoreticalBricks * (1 + percentageBrickWaste)).toInt()
+            // 2. CÁLCULO DE LADRILLOS (Unidades Físicas)
+            val brickSurfaceWithJoint =
+                (brickProps.length + brickProps.gasketThickness) * (brickProps.height + brickProps.gasketThickness)
+            val bricksM2 = 1.0 / brickSurfaceWithJoint
+            val totalTheoreticalBricks = netSurface * bricksM2
+            val actualQuantityBricks = ceil(totalTheoreticalBricks * (1 + percentageBrickWaste)).toInt()
 
-        // 3. CÁLCULO DE MORTERO (Mezcla Húmeda)
-        val wallVolumeM3 = netSurface * brickProps.width
-        val volumeSolidBricks =
-            totalTheoreticalBricks * (brickProps.length * brickProps.height * brickProps.width)
-        val geometricMortarVolume = (wallVolumeM3 - volumeSolidBricks).coerceAtLeast(0.0)
+            // 3. CÁLCULO DE MORTERO (Mezcla Húmeda)
+            val wallVolumeM3 = netSurface * brickProps.width
+            val volumeSolidBricks =
+                totalTheoreticalBricks * (brickProps.length * brickProps.height * brickProps.width)
+            val geometricMortarVolume = (wallVolumeM3 - volumeSolidBricks).coerceAtLeast(0.0)
 
-        val mathMortar = calculateWetMaterials(
-            volumeM3 = geometricMortarVolume,
-            recipe = mortarDosing,
-            waste = percentageMortarWaste,
-            cementBagWeight = cementBagWeightKg,
-            limeBagWeight = limeBagWeightKg
-        )
+            val mathMortar = calculateWetMaterials(
+                volumeM3 = geometricMortarVolume,
+                recipe = mortarDosing,
+                waste = percentageMortarWaste,
+                cementBagWeight = cementBagWeightKg,
+                limeBagWeight = limeBagWeightKg
+            )
 
-        // 4. RESULTADO FINAL
-        return WallResult(
-            netAreaM2 = netSurface,
-            quantityBricks = actualQuantityBricks,
-            percentageBrickWaste = percentageBrickWaste,
-            mortarM3 = geometricMortarVolume * (1 + percentageMortarWaste),
-            cementKg = mathMortar.cementKg,
-            limeKg = mathMortar.limeKg,
-            sandM3 = mathMortar.sandM3,
-            waterLiters = mathMortar.waterLiters,
-            percentageMortarWaste = percentageMortarWaste,
-            mixingRatio = mortarDosing.mixingRatio,
-            cementBagKg = cementBagWeightKg,
-            limeBagKg = limeBagWeightKg
-        )
+            // 4. CÁLCULO DE COSTOS
+            val costCalc = CostCalculator(materialPrices, laborPrices)
+            
+            // Costo Materiales
+            var matCost = 0.0
+            
+            // Cemento (Bolsas o Kg)
+            val bagsCement = mathMortar.cementKg / cementBagWeightKg
+            matCost += costCalc.getBagMaterialCost("Cemento", bagsCement, mathMortar.cementKg)
+            
+            // Cal (Bolsas o Kg)
+            if (mathMortar.limeKg > 0) {
+                val bagsLime = mathMortar.limeKg / limeBagWeightKg
+                matCost += costCalc.getBagMaterialCost("Cal", bagsLime, mathMortar.limeKg)
+            }
+            
+            // Arena (m3)
+            matCost += costCalc.getMaterialCost("Arena", mathMortar.sandM3)
+            
+            // Ladrillos (Unidades)
+            // Buscamos "Ladrillo" genérico o específico si tuviéramos el nombre
+            matCost += costCalc.getMaterialCost("Ladrillo", actualQuantityBricks.toDouble())
+
+            // Costo Mano de Obra
+            // Buscamos "Muro" o "Pared"
+            val labCost = costCalc.getLaborCost("Muro", netSurface)
+
+            // 5. RESULTADO FINAL
+            Result.success(
+                WallResult(
+                    netAreaM2 = netSurface,
+                    quantityBricks = actualQuantityBricks,
+                    percentageBrickWaste = percentageBrickWaste,
+                    mortarM3 = geometricMortarVolume * (1 + percentageMortarWaste),
+                    cementKg = mathMortar.cementKg,
+                    limeKg = mathMortar.limeKg,
+                    sandM3 = mathMortar.sandM3,
+                    waterLiters = mathMortar.waterLiters,
+                    percentageMortarWaste = percentageMortarWaste,
+                    mixingRatio = mortarDosing.mixingRatio,
+                    cementBagKg = cementBagWeightKg,
+                    limeBagKg = limeBagWeightKg,
+                    materialsCost = matCost,
+                    laborCost = labCost,
+                    totalCost = matCost + labCost
+                )
+            )
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

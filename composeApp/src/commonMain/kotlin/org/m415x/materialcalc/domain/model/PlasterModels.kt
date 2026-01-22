@@ -18,13 +18,16 @@
 
 package org.m415x.materialcalc.domain.model
 
+import materialscalculator.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.StringResource
+
 /**
  * Enumeración que representa los tipos de revoque estándar.
  *
- * @property displayName Nombre amigable para mostrar en la UI.
+ * @property displayNameRes Recurso de nombre amigable para mostrar en la UI.
  */
-enum class PlasterType(val displayName: String) {
-    STD_JAHARRO("Tradicional (Jaharro)"),
+enum class PlasterType(val displayNameRes: StringResource) {
+    STD_JAHARRO(Res.string.plaster_type_std_jaharro),
     // A futuro: IGNIFUGO, MONOCAPA, etc.
 }
 
@@ -60,7 +63,7 @@ data class PlasterResult(
     val thickSandKg: Double,
     val thickWaterLiters: Double,
     val thickPercentageWaste: Double,
-    val thickDosage: String,
+    val thickDosage: TextSource,
     // --- REVOQUE FINO (Enlucido) ---
     // Opción 1: Premezclado (Bolsa lista)
     val finePremixKg: Double,
@@ -68,5 +71,5 @@ data class PlasterResult(
     val fineLimeKg: Double,
     val fineSandM3: Double,
     val finePercentageWaste: Double,
-    val fineDosage: String
+    val fineDosage: TextSource
 )

@@ -46,7 +46,7 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
      * @param limeBagWeightKg Peso de la bolsa de cal en kg.
      * @param premixBagWeightKg Peso de la bolsa de fino premezcla en kg.
      * @param percentagePlasterWaste Porcentaje de desperdicio en revoque.
-     * @return Resultado del cálculo.
+     * @return Resultado del cálculo encapsulado en Result.
      */
     operator fun invoke(
         lengthMeters: Double,
@@ -60,67 +60,73 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
         limeBagWeightKg: Int,
         premixBagWeightKg: Int,
         percentagePlasterWaste: Double,
-    ): PlasterResult {
+    ): Result<PlasterResult> {
 
-        // 1. GEOMETRÍA (ÁREA NETA)
-        val netSurfaceOneSide = calculateNetSurface(
-            length = lengthMeters,
-            height = heightMeters,
-            openingsList = openingsList
-        )
+        return try {
+            // 1. GEOMETRÍA (ÁREA NETA)
+            val netSurfaceOneSide = calculateNetSurface(
+                length = lengthMeters,
+                height = heightMeters,
+                openingsList = openingsList
+            )
 
-        // Superficie Total (Aplicamos si son ambas caras)
-        // Si hay ventana, se descuenta de ambos lados, así que la lógica se mantiene:
-        // (Pared - Ventana) * 2 lados
-        val totalCalculationArea = if (isBothSides) netSurfaceOneSide * 2 else netSurfaceOneSide
+            // Superficie Total (Aplicamos si son ambas caras)
+            // Si hay ventana, se descuenta de ambos lados, así que la lógica se mantiene:
+            // (Pared - Ventana) * 2 lados
+            val totalCalculationArea = if (isBothSides) netSurfaceOneSide * 2 else netSurfaceOneSide
 
-        // CÁLCULO DE REVOQUE GRUESO (JAHARRO)
-        val geometricThickVolume = totalCalculationArea * thickThickness
+            // CÁLCULO DE REVOQUE GRUESO (JAHARRO)
+            val geometricThickVolume = totalCalculationArea * thickThickness
 
-        val mathThick = calculateWetMaterials(
-            volumeM3 = geometricThickVolume,
-            recipe = mortarDosing,
-            waste = percentagePlasterWaste,
-            cementBagWeight = cementBagWeightKg,
-            limeBagWeight = limeBagWeightKg
-        )
+            val mathThick = calculateWetMaterials(
+                volumeM3 = geometricThickVolume,
+                recipe = mortarDosing,
+                waste = percentagePlasterWaste,
+                cementBagWeight = cementBagWeightKg,
+                limeBagWeight = limeBagWeightKg
+            )
 
-        // CÁLCULO DE REVOQUE FINO (ENLUCIDO)
-        val geometricThinVolume = totalCalculationArea * thinThickness
-        // Usamos el mismo porcentaje de desperdicio que para el grueso
-        val finePercentageWaste = percentagePlasterWaste
+            // CÁLCULO DE REVOQUE FINO (ENLUCIDO)
+            val geometricThinVolume = totalCalculationArea * thinThickness
+            // Usamos el mismo porcentaje de desperdicio que para el grueso
+            val finePercentageWaste = percentagePlasterWaste
 
-        // Opción 1: Premezcla (Rendimiento ~2.5 kg/m2)
-        val premixPerformance = totalCalculationArea * 2.5
-        val totalFinePemix = premixPerformance * (1 + finePercentageWaste)
+            // Opción 1: Premezcla (Rendimiento ~2.5 kg/m2)
+            val premixPerformance = totalCalculationArea * 2.5
+            val totalFinePemix = premixPerformance * (1 + finePercentageWaste)
 
-        // Opción 2: Tradicional
-        val finePlasterRecipe = repository.getFinePlasterRecipe()
-        val mathFine = calculateWetMaterials(
-            volumeM3 = geometricThinVolume,
-            recipe = finePlasterRecipe,
-            waste = finePercentageWaste,
-            limeBagWeight = limeBagWeightKg,
-            cementBagWeight = cementBagWeightKg
-        )
+            // Opción 2: Tradicional
+            val finePlasterRecipe = repository.getFinePlasterRecipe()
+            val mathFine = calculateWetMaterials(
+                volumeM3 = geometricThinVolume,
+                recipe = finePlasterRecipe,
+                waste = finePercentageWaste,
+                limeBagWeight = limeBagWeightKg,
+                cementBagWeight = cementBagWeightKg
+            )
 
-        return PlasterResult(
-            totalAreaM2 = totalCalculationArea, // Área real a cubrir
-            cementBagKg = cementBagWeightKg,
-            limeBagKg = limeBagWeightKg,
-            premixBagKg = premixBagWeightKg,
-            thickVolumeM3 = geometricThickVolume * (1 + percentagePlasterWaste),
-            thickCementKg = mathThick.cementKg,
-            thickLimeKg = mathThick.limeKg,
-            thickSandKg = mathThick.sandM3,
-            thickWaterLiters = mathThick.waterLiters,
-            thickPercentageWaste = percentagePlasterWaste,
-            thickDosage = mortarDosing.mixingRatio,
-            finePremixKg = totalFinePemix,
-            fineLimeKg = mathFine.limeKg,
-            fineSandM3 = mathFine.sandM3,
-            finePercentageWaste = finePercentageWaste,
-            fineDosage = finePlasterRecipe.mixingRatio
-        )
+            Result.success(
+                PlasterResult(
+                    totalAreaM2 = totalCalculationArea, // Área real a cubrir
+                    cementBagKg = cementBagWeightKg,
+                    limeBagKg = limeBagWeightKg,
+                    premixBagKg = premixBagWeightKg,
+                    thickVolumeM3 = geometricThickVolume * (1 + percentagePlasterWaste),
+                    thickCementKg = mathThick.cementKg,
+                    thickLimeKg = mathThick.limeKg,
+                    thickSandKg = mathThick.sandM3,
+                    thickWaterLiters = mathThick.waterLiters,
+                    thickPercentageWaste = percentagePlasterWaste,
+                    thickDosage = mortarDosing.mixingRatio,
+                    finePremixKg = totalFinePemix,
+                    fineLimeKg = mathFine.limeKg,
+                    fineSandM3 = mathFine.sandM3,
+                    finePercentageWaste = finePercentageWaste,
+                    fineDosage = finePlasterRecipe.mixingRatio
+                )
+            )
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

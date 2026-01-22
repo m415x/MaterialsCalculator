@@ -18,7 +18,7 @@
 
 package org.m415x.materialcalc.domain.common
 
-import org.m415x.materialcalc.ui.common.roundToDecimals
+import org.m415x.materialcalc.ui.common.utils.roundToDecimals
 
 /**
  * Convierte Centímetros a Metros.

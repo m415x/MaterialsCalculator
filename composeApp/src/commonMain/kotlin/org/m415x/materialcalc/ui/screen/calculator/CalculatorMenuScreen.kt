@@ -33,7 +33,7 @@ import org.jetbrains.compose.resources.vectorResource
 import materialscalculator.composeapp.generated.resources.Res
 import materialscalculator.composeapp.generated.resources.* // importar iconos
 import org.jetbrains.compose.resources.stringResource
-import org.m415x.materialcalc.ui.common.MenuCard
+import org.m415x.materialcalc.ui.common.display.MenuCard
 
 /**
  * Pantalla principal de la calculadora.
@@ -45,7 +45,7 @@ import org.m415x.materialcalc.ui.common.MenuCard
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
+fun CalculatorMenuScreen(
     onConcreteClick: () -> Unit,
     onWallClick: () -> Unit,
     onStructureClick: () -> Unit,

@@ -24,17 +24,18 @@ import org.jetbrains.compose.resources.StringResource
 /**
  * Enumeración que representa los tipos de hormigón.
  *
+ * @property nameRes Recurso de nombre del hormigón.
  * @property resistanceKgCm2 Resistencia característica del hormigón en kg/cm².
  * @property usesRes Recurso de string que describe los usos comunes.
  * @property isStructural Indica si es apto para uso estructural.
  */
-enum class ConcreteType(val resistanceKgCm2: Int, val usesRes: StringResource, val isStructural: Boolean) {
-    H8(80, Res.string.recipe_uses_h8, false),
-    H13(130, Res.string.recipe_uses_h13, false),
-    H17(170, Res.string.recipe_uses_h17, true),
-    H21(210, Res.string.recipe_uses_h21, true),
-    H25(250, Res.string.recipe_uses_h25, true),
-    H30(300, Res.string.recipe_uses_h30, true)
+enum class ConcreteType(val nameRes: StringResource, val resistanceKgCm2: Int, val usesRes: StringResource, val isStructural: Boolean) {
+    H8(Res.string.recipe_name_h8, 80, Res.string.recipe_uses_h8, false),
+    H13(Res.string.recipe_name_h13, 130, Res.string.recipe_uses_h13, false),
+    H17(Res.string.recipe_name_h17, 170, Res.string.recipe_uses_h17, true),
+    H21(Res.string.recipe_name_h21, 210, Res.string.recipe_uses_h21, true),
+    H25(Res.string.recipe_name_h25, 250, Res.string.recipe_uses_h25, true),
+    H30(Res.string.recipe_name_h30, 300, Res.string.recipe_uses_h30, true)
 }
 
 /**
@@ -57,5 +58,5 @@ data class ConcreteResult(
     val sandM3: Double,
     val gravelM3: Double,
     val waterLiters: Double,
-    val mixingRatio: String
+    val mixingRatio: TextSource
 )

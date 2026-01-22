@@ -18,6 +18,7 @@
 
 package org.m415x.materialcalc.data.repository
 
+import materialscalculator.composeapp.generated.resources.*
 import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.domain.repository.MaterialRepository
 
@@ -39,8 +40,8 @@ class StaticMaterialRepository : MaterialRepository {
         // H8: Hormigón de limpieza (pobre). Poco cemento.
         // Usos: Contrapisos, carpetas, nivelación.
         ConcreteType.H8 to ConcreteDosing(
-            name = "H8",
-            descriptionProportion = "1:4:8 (Cem:Arena:Piedra)",
+            name = TextSource.Resource(Res.string.recipe_name_h8),
+            descriptionProportion = TextSource.Resource(Res.string.recipe_prop_h8),
             cementKg = 182.0,
             sandM3 = 0.52,
             gravelM3 = 1.04,
@@ -50,8 +51,8 @@ class StaticMaterialRepository : MaterialRepository {
 
         // H13: Hormigón simple (no estructural o estructuras muy livianas).
         ConcreteType.H13 to ConcreteDosing(
-            name = "H13",
-            descriptionProportion = "1:3:5 (Cem:Arena:Piedra)",
+            name = TextSource.Resource(Res.string.recipe_name_h13),
+            descriptionProportion = TextSource.Resource(Res.string.recipe_prop_h13),
             cementKg = 258.0,
             sandM3 = 0.55,
             gravelM3 = 0.92,
@@ -61,8 +62,8 @@ class StaticMaterialRepository : MaterialRepository {
 
         // H17: Hormigón estándar para viviendas pequeñas (bases, encadenados).
         ConcreteType.H17 to ConcreteDosing(
-            name = "H17",
-            descriptionProportion = "1:2.5:4 (Cem:Arena:Piedra)",
+            name = TextSource.Resource(Res.string.recipe_name_h17),
+            descriptionProportion = TextSource.Resource(Res.string.recipe_prop_h17),
             cementKg = 305.0,
             sandM3 = 0.54,
             gravelM3 = 0.87,
@@ -73,8 +74,8 @@ class StaticMaterialRepository : MaterialRepository {
         // H21: Hormigón ESTRUCTURAL estándar (Losas, vigas, columnas).
         // Es el más utilizado en construcción tradicional.
         ConcreteType.H21 to ConcreteDosing(
-            name = "H21",
-            descriptionProportion = "1:2:3 (Cem:Arena:Piedra)",
+            name = TextSource.Resource(Res.string.recipe_name_h21),
+            descriptionProportion = TextSource.Resource(Res.string.recipe_prop_h21),
             cementKg = 377.0, // Un H21 de obra suele ser rico (>350kg)
             sandM3 = 0.54,
             gravelM3 = 0.81,
@@ -85,8 +86,8 @@ class StaticMaterialRepository : MaterialRepository {
         // H25: Hormigón de alta resistencia.
         // Usos: Columnas muy cargadas, estructuras importantes.
         ConcreteType.H25 to ConcreteDosing(
-            name = "H25",
-            descriptionProportion = "1:1.5:2.5 (Cem:Arena:Piedra)",
+            name = TextSource.Resource(Res.string.recipe_name_h25),
+            descriptionProportion = TextSource.Resource(Res.string.recipe_prop_h25),
             cementKg = 450.0,
             sandM3 = 0.48,
             gravelM3 = 0.81,
@@ -97,8 +98,8 @@ class StaticMaterialRepository : MaterialRepository {
         // H30: Hormigón de muy alta resistencia.
         // NOTA: Difícil de lograr a mano sin aditivos fluidificantes por la poca agua.
         ConcreteType.H30 to ConcreteDosing(
-            name = "H30",
-            descriptionProportion = "1:1:2 (Cem:Arena:Piedra)",
+            name = TextSource.Resource(Res.string.recipe_name_h30),
+            descriptionProportion = TextSource.Resource(Res.string.recipe_prop_h30),
             cementKg = 554.0,
             sandM3 = 0.40,
             gravelM3 = 0.79,
@@ -112,8 +113,8 @@ class StaticMaterialRepository : MaterialRepository {
      */
     private val plasterDB = mapOf(
         PlasterType.STD_JAHARRO to MortarDosing(
-            name = PlasterType.STD_JAHARRO.displayName,
-            mixingRatio = "1/4:1:3 (Cem:Cal:Arena)",
+            name = TextSource.Resource(Res.string.recipe_name_jaharro),
+            mixingRatio = TextSource.Resource(Res.string.recipe_prop_jaharro),
             cementKg = 115.0,       // Aprox 4 bolsas por m3 (es una mezcla "bastarda", lleva menos cemento que un concreto)
             limeKg = 200.0,         // Mucha cal para plasticidad
             sandM3 = 1.1,           // Arena común
@@ -214,8 +215,8 @@ class StaticMaterialRepository : MaterialRepository {
      * @property reinforcedLimeMixture Dosificación para 1 m3 de Revoque Reforzado
      */
     private val reinforcedLimeMixture = MortarDosing(
-        name = "Mortero Reforzado",
-        mixingRatio = "1/2:1:4 (Cem:Cal:Arena)",
+        name = TextSource.Resource(Res.string.recipe_name_reinforced),
+        mixingRatio = TextSource.Resource(Res.string.recipe_prop_reinforced),
         cementKg = 170.0,
         limeKg = 150.0,
         sandM3 = 1.05,
@@ -228,8 +229,8 @@ class StaticMaterialRepository : MaterialRepository {
      * @property cementSandMixture Dosificación para 1 m3 de Mezcla Cemento-Arena (sin cal)
      */
     private val cementSandMixture = MortarDosing(
-        name = "Mortero Cementicio",
-        mixingRatio = "1:3 (Cem:Arena)",
+        name = TextSource.Resource(Res.string.recipe_name_cement),
+        mixingRatio = TextSource.Resource(Res.string.recipe_prop_cement),
         cementKg = 450.0,
         limeKg = 0.0,
         sandM3 = 1.1,
@@ -243,8 +244,8 @@ class StaticMaterialRepository : MaterialRepository {
      * @property finePlasterRecipe Dosificación para 1 m3 de Revoque Fino Tradicional (1/8 Cemento : 1 Aérea : 2 Arena Fina).
      */
     private val finePlasterRecipe = MortarDosing(
-        name = "Revoque Fino (Enlucido)",
-        mixingRatio = "1/8:1:2 (Cem:Cal:Arena)",
+        name = TextSource.Resource(Res.string.recipe_name_fine),
+        mixingRatio = TextSource.Resource(Res.string.recipe_prop_fine),
         cementKg = 90.0,        // Muy poco, solo para ligar
         limeKg = 250.0,         // Pura cal aérea
         sandM3 = 1.0,           // Arena fina (voladora)
@@ -261,7 +262,7 @@ class StaticMaterialRepository : MaterialRepository {
     /**
      * Dosificación para 1 m3 de revoque.
      */
-    fun getPlasterDosing(type: PlasterType) = plasterDB[type]
+    override fun getPlasterDosing(type: PlasterType) = plasterDB[type]
 
     /**
      * Propiedades de un ladrillo.
@@ -300,14 +301,14 @@ class StaticMaterialRepository : MaterialRepository {
      *
      * @property getThickPlasterRecipe Mezcla recomendada para revoque reforzado.
      */
-    fun getThickPlasterRecipe() = plasterDB[PlasterType.STD_JAHARRO]!!
+    override fun getThickPlasterRecipe() = plasterDB[PlasterType.STD_JAHARRO]!!
 
     /**
      * Mezcla recomendada para revoque fino.
      *
      * @property getFinePlasterRecipe Mezcla recomendada para revoque fino.
      */
-    fun getFinePlasterRecipe() = finePlasterRecipe
+    override fun getFinePlasterRecipe() = finePlasterRecipe
 
     /**
      * Función auxiliar para obtener TODOS los ladrillos (Sistema + Usuario)
@@ -319,7 +320,7 @@ class StaticMaterialRepository : MaterialRepository {
             val props = getBrickProps(type)!!
             BrickOption(
                 id = type.name,
-                name = type.brickName,
+                name = TextSource.Resource(type.brickNameRes),
                 props = props,
                 isCustom = false
             )
@@ -329,7 +330,7 @@ class StaticMaterialRepository : MaterialRepository {
         val customOptions = customBricks.map { custom ->
             BrickOption(
                 id = custom.id,
-                name = custom.name,
+                name = TextSource.Raw(custom.name),
                 props = custom.toProperties(),
                 isCustom = true
             )
@@ -342,7 +343,7 @@ class StaticMaterialRepository : MaterialRepository {
 // Clase auxiliar para la UI (Representa una opción en el dropdown/lista)
 data class BrickOption(
     val id: String,
-    val name: String,
+    val name: TextSource,
     val props: BrickProps,
     val isCustom: Boolean // Para saber si mostrar el botón de "Borrar"
 )

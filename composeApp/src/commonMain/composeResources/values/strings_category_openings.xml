@@ -21,7 +21,7 @@
     <string name="openings_title">Aberturas</string>
     <string name="openings_attenuated_title">(Puertas y Ventanas)</string>"
 
-    <!-- MESSAGE -->
+    <!-- MESSAGES -->
     <string name="openings_message_empty">Sin aberturas cargadas.</string>
     <string name="openings_message_error_int">La cantidad debe ser un número entero mayor a 0.</string>
     <string name="openings_message_error_double">El ancho y alto deben ser números válidos mayores a 0.</string>

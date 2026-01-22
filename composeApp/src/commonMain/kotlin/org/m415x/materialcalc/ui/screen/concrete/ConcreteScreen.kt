@@ -24,7 +24,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -36,10 +37,20 @@ import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.domain.common.toPresentationUnit
 import org.m415x.materialcalc.domain.model.AppSettingsState
-import org.m415x.materialcalc.domain.model.ConcreteDosing
 import org.m415x.materialcalc.domain.model.ConcreteResult
+import org.m415x.materialcalc.domain.model.asString
 import org.m415x.materialcalc.domain.usecase.CalculateConcreteUseCase
-import org.m415x.materialcalc.ui.common.*
+import org.m415x.materialcalc.ui.common.display.AppResultBottomSheet
+import org.m415x.materialcalc.ui.common.display.ErrorMessage
+import org.m415x.materialcalc.ui.common.display.PriceResultSection
+import org.m415x.materialcalc.ui.common.display.ResultRow
+import org.m415x.materialcalc.ui.common.inputs.CmInput
+import org.m415x.materialcalc.ui.common.inputs.ConcreteSelectorField
+import org.m415x.materialcalc.ui.common.inputs.NumericInput
+import org.m415x.materialcalc.ui.common.layout.InputRow
+import org.m415x.materialcalc.ui.common.layout.InputSection
+import org.m415x.materialcalc.ui.common.presenters.ConcretePresenter
+import org.m415x.materialcalc.ui.common.utils.*
 
 /**
  * Pantalla principal de la calculadora de hormigón.
@@ -53,41 +64,42 @@ fun ConcreteScreen(appSettings: AppSettingsState) {
     val appName = stringResource(Res.string.app_name)
     val calculateConcrete = remember { CalculateConcreteUseCase() }
 
-    // Usamos los valores directamente desde appSettings
-    val weightBagCement = appSettings.bagCementKg
-    val weightBagLime = appSettings.bagLimeKg
-    val wasteConcretePct = appSettings.wasteConcretePct
-    val defaultConcreteId = appSettings.defaultConcreteGenId
+    // Instanciamos el Presenter
+    val presenter = remember { ConcretePresenter() }
 
-    var width by remember { mutableStateOf("") }
-    var length by remember { mutableStateOf("") }
-    var high by remember { mutableStateOf("") }
-    var quantity by remember { mutableStateOf("1") }
+    // --- LÓGICA DE PREPARACIÓN DE DATOS (Delegada al Presenter) ---
+    val resLabel = stringResource(Res.string.recipe_section_resistance)
+    val resUnit = stringResource(Res.string.recipe_unit_kilogram_per_square_centimeters)
+    val propLabel = stringResource(Res.string.concrete_result_proportion)
+    val techLabel = stringResource(Res.string.concrete_result_technical, "")
+    val unitKg = stringResource(Res.string.unit_kilograms)
 
-    // Estado para el selector de hormigón
-    var selectedRecipeId by remember { mutableStateOf("") }
-    var selectedRecipe by remember { mutableStateOf<ConcreteDosing?>(null) }
-
-    // Efecto para actualizar la selección si el default cambia y el usuario no ha elegido nada
-    LaunchedEffect(defaultConcreteId) {
-        if (selectedRecipeId.isBlank() && defaultConcreteId.isNotBlank()) {
-            selectedRecipeId = defaultConcreteId
-        }
+    // Obtenemos la lista de opciones desde el Presenter
+    val concreteOptions = remember(appSettings.customRecipes, appSettings.hiddenRecipeIds) {
+        presenter.getOptions(
+            customRecipes = appSettings.customRecipes,
+            hiddenIds = appSettings.hiddenRecipeIds,
+            filterStructuralOnly = false,
+            resLabel = resLabel,
+            resUnit = resUnit,
+            propLabel = propLabel,
+            techLabel = techLabel,
+            unitKg = unitKg
+        )
     }
 
-    var result by remember { mutableStateOf<ConcreteResult?>(null) }
-    var errorMsg by remember { mutableStateOf<String?>(null) }
-    var showResultSheet by remember { mutableStateOf(false) }
-
-    val errorString = stringResource(Res.string.label_error)
-    val errorValidation = stringResource(Res.string.concrete_message_error_validation)
+    // --- INICIALIZACIÓN DEL STATE HOLDER ---
+    val state = rememberConcreteScreenState(
+        appSettings = appSettings,
+        calculateConcrete = calculateConcrete,
+        concreteOptions = concreteOptions
+    )
 
     val shareManager = remember { getShareManager() }
 
     val focusWidth = remember { FocusRequester() }
     val focusLength = remember { FocusRequester() }
     val focusHigh = remember { FocusRequester() }
-//    val focusQuantity = remember { FocusRequester() }
     val focusConcrete = remember { FocusRequester() }
 
     RequestFocusOnStart(focusWidth)
@@ -97,32 +109,7 @@ fun ConcreteScreen(appSettings: AppSettingsState) {
             ExtendedFloatingActionButton(
                 onClick = {
                     keyboardController?.hide()
-                    val w = width.toSafeDoubleOrNull()
-                    val l = length.toSafeDoubleOrNull()
-                    val h = high.toSafeDoubleOrNull()
-                    val q = quantity.toIntOrNull()
-
-                    if (areValidDimensions(w, l, h, q) && selectedRecipe != null) {
-                        try {
-                            result = calculateConcrete(
-                                widthMeters = w!!,
-                                lengthMeters = l!!,
-                                thicknessMeters = h!!,
-                                unitQuantity = q!!,
-                                concreteDosing = selectedRecipe!!,
-                                cementBagWeightKg = weightBagCement,
-                                limeBagWeightKg = weightBagLime,
-                                percentageConcreteWaste = wasteConcretePct / 100.0
-                            )
-                            errorMsg = null
-                            showResultSheet = true
-                        } catch (e: Exception) {
-                            errorMsg = "$errorString ${e.message}"
-                        }
-                    } else {
-                        errorMsg = errorValidation
-                        result = null
-                    }
+                    state.calculate()
                 },
                 icon = { Icon(Icons.Default.Calculate, null) },
                 text = { Text(stringResource(Res.string.button_calculate)) }
@@ -141,8 +128,8 @@ fun ConcreteScreen(appSettings: AppSettingsState) {
             InputSection(title = stringResource(Res.string.concrete_section_dimensions)) {
                 InputRow {
                     NumericInput(
-                        value = width,
-                        onValueChange = { width = it },
+                        value = state.width,
+                        onValueChange = { state.width = it },
                         label = stringResource(
                             Res.string.label_width,
                             stringResource(Res.string.unit_meters)
@@ -153,8 +140,8 @@ fun ConcreteScreen(appSettings: AppSettingsState) {
                         nextFocusRequester = focusLength
                     )
                     NumericInput(
-                        value = length,
-                        onValueChange = { length = it },
+                        value = state.length,
+                        onValueChange = { state.length = it },
                         label = stringResource(
                             Res.string.label_length,
                             stringResource(Res.string.unit_meters)
@@ -168,8 +155,8 @@ fun ConcreteScreen(appSettings: AppSettingsState) {
 
                 InputRow {
                     CmInput(
-                        value = high,
-                        onValueChange = { high = it },
+                        value = state.high,
+                        onValueChange = { state.high = it },
                         label = stringResource(
                             Res.string.label_thickness,
                             stringResource(Res.string.unit_meters)
@@ -177,72 +164,51 @@ fun ConcreteScreen(appSettings: AppSettingsState) {
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(1f),
                         focusRequester = focusHigh,
-//                        nextFocusRequester = focusQuantity
                         nextFocusRequester = focusConcrete
                     )
-//                    NumericInput(
-//                        value = quantity,
-//                        onValueChange = { quantity = it },
-//                        label = stringResource(
-//                            Res.string.label_quantity,
-//                        ),
-//                        suffix = { Text(stringResource(Res.string.unit_units)) },
-//                        modifier = Modifier.weight(1f),
-//                        onlyInteger = true,
-//                        focusRequester = focusQuantity,
-//                        nextFocusRequester = focusConcrete
-//                    )
                 }
             }
 
             InputSection(title = stringResource(Res.string.concrete_section_resistance), showDivider = false) {
-
                 ConcreteSelectorField(
-                    selectedRecipeId = selectedRecipeId,
-                    onRecipeSelected = { id, receta ->
-                        selectedRecipeId = id
-                        selectedRecipe = receta
-                    },
-                    customRecipes = appSettings.customRecipes,
-                    hiddenIds = appSettings.hiddenRecipeIds,
-                    modifier = Modifier.fillMaxWidth().focusRequester(focusConcrete),
-                    defaultRecipeId = defaultConcreteId
+                    options = state.concreteOptions,
+                    selectedOption = state.selectedOption,
+                    onOptionSelected = { state.selectedOption = it },
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusConcrete)
                 )
-
             }
 
-            ErrorMessage(errorMsg)
+            ErrorMessage(state.errorMsg)
 
             Spacer(Modifier.height(80.dp))
         }
     }
 
-    if (showResultSheet && result != null) {
-        // Generamos el texto para compartir usando el Composable
+    if (state.showResultSheet && state.result != null) {
         val shareText = rememberConcreteShareText(
-            result = result!!,
-            width = width.toSafeDoubleOrNull() ?: 0.0,
-            length = length.toSafeDoubleOrNull() ?: 0.0,
-            thickness = high.toSafeDoubleOrNull() ?: 0.0,
-            quantity = quantity.toIntOrNull() ?: 1,
-            nameConcrete = selectedRecipe?.name ?: "N/A",
-            proportionConcrete = selectedRecipe?.descriptionProportion ?: "N/A",
+            result = state.result!!,
+            width = state.width.toSafeDoubleOrNull() ?: 0.0,
+            length = state.length.toSafeDoubleOrNull() ?: 0.0,
+            thickness = state.high.toSafeDoubleOrNull() ?: 0.0,
+            quantity = state.quantity.toIntOrNull() ?: 1,
+            nameConcrete = state.selectedOption?.label?.asString() ?: "N/A",
+            proportionConcrete = state.selectedOption?.recipe?.descriptionProportion?.asString() ?: "N/A",
             appName = appName
         )
 
         AppResultBottomSheet(
-            onDismissRequest = { showResultSheet = false },
+            onDismissRequest = { state.showResultSheet = false },
             onSave = { /* TODO */ },
-            onEdit = { showResultSheet = false },
+            onEdit = { state.showResultSheet = false },
             onShare = { shareManager.shareText(shareText) }
         ) {
-            ConcreteResultContent(result!!)
+            ConcreteResultContent(state.result!!, appSettings)
         }
     }
 }
 
 @Composable
-fun ConcreteResultContent(res: ConcreteResult) {
+fun ConcreteResultContent(res: ConcreteResult, appSettings: AppSettingsState) {
     val unitM3 = stringResource(Res.string.unit_cubic_meters)
     val unitKg = stringResource(Res.string.unit_kilograms)
     val unitLt = stringResource(Res.string.unit_liters)
@@ -311,4 +277,51 @@ fun ConcreteResultContent(res: ConcreteResult) {
             unitLt
         )
     )
+
+    // --- CÁLCULO DE PRECIOS ---
+    val prices = appSettings.priceSettings
+    var materialCost = 0.0
+
+    // Cemento
+    prices.materialPrices.find { it.name.contains("Cemento", ignoreCase = true) }?.let {
+        if (it.unit.contains("bolsa", ignoreCase = true)) {
+            materialCost += it.price * res.cementBagKg
+        } else if (it.unit.contains("kg", ignoreCase = true)) {
+            materialCost += it.price * res.cementKg
+        }
+    }
+
+    // Arena
+    prices.materialPrices.find { it.name.contains("Arena", ignoreCase = true) }?.let {
+        if (it.unit.contains("m3", ignoreCase = true)) {
+            materialCost += it.price * res.sandM3
+        }
+    }
+
+    // Piedra
+    prices.materialPrices.find {
+        it.name.contains("Piedra", ignoreCase = true) || it.name.contains(
+            "Canto",
+            ignoreCase = true
+        )
+    }?.let {
+        if (it.unit.contains("m3", ignoreCase = true)) {
+            materialCost += it.price * res.gravelM3
+        }
+    }
+
+    // Mano de Obra (Hormigón)
+    var laborCost = 0.0
+    prices.laborPrices.find {
+        it.name.contains("Hormigón", ignoreCase = true) || it.name.contains(
+            "Llenado",
+            ignoreCase = true
+        )
+    }?.let {
+        if (it.unit.contains("m3", ignoreCase = true)) {
+            laborCost += it.price * res.totalVolumeM3
+        }
+    }
+
+    PriceResultSection(materialCost, laborCost)
 }

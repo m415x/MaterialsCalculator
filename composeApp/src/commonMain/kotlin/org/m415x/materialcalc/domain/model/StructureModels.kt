@@ -37,11 +37,11 @@ enum class StructureType(val labelRes: StringResource) {
 /**
  * Enumeración que representa los tipos de terminaciones de armadura.
  */
-enum class RebarTerminationType(val displayName: String) {
-    STRAIGHT("Recta"),
-    HOOK_90("Gancho 90°"),
-    HOOK_135("Gancho 135°"),
-    HOOK_180("Gancho 180°")
+enum class RebarTerminationType(val displayNameRes: StringResource) {
+    STRAIGHT(Res.string.rebar_termination_straight),
+    HOOK_90(Res.string.rebar_termination_hook_90),
+    HOOK_135(Res.string.rebar_termination_hook_135),
+    HOOK_180(Res.string.rebar_termination_hook_180)
 }
 
 /**
@@ -63,10 +63,10 @@ fun RebarTerminationType.getDefaultLengthMeters(rebarDiameterMm: Double): Double
 /**
  * Enumeración que representa los tipos de terminaciones (nudos) para el dibujo técnico.
  */
-enum class BeamColumnJointType(val displayName: String) {
-    SIMPLE_SUPPORT("Apoyo Simple"),
-    RIGID_FRAME("Nudo Rígido"),
-    CANTILEVER("Voladizo (Ménsula)")
+enum class BeamColumnJointType(val displayNameRes: StringResource) {
+    SIMPLE_SUPPORT(Res.string.joint_type_simple_support),
+    RIGID_FRAME(Res.string.joint_type_rigid_frame),
+    CANTILEVER(Res.string.joint_type_cantilever)
 }
 
 /**
@@ -96,12 +96,12 @@ enum class IronDiameter(val milimeters: Double, val linearWeightKgM: Double) {
  * @property sandM3 Cantidad de arena en m³.
  * @property gravelM3 Cantidad de piedra en m³.
  * @property waterLiters Cantidad de agua en litros.
- * @property mainDiameter Diámetro del hierro principal.
+ * @property mainDiameterMm Diámetro del hierro principal en mm.
  * @property mainIronMeters Metros de hierro principal.
  * @property mainIronKg Kilos de hierro principal.
  * @property mainIronAmount Cantidad de barras de hierro principal.
  * @property percentageMainIronWaste Porcentaje de desperdicio de hierro principal.
- * @property stirrupDiameter Diámetro del hierro de estribo.
+ * @property stirrupDiameterMm Diámetro del hierro de estribo en mm.
  * @property stirrupIronMeters Metros de hierro de estribo.
  * @property stirrupIronKg Kilos de hierro de estribo.
  * @property stirrupIronAmount Cantidad de barras de hierro de estribo.
@@ -117,15 +117,67 @@ data class StructureResult(
     val gravelM3: Double,
     val waterLiters: Double,
     // Hierro Principal
-    val mainDiameter: IronDiameter,
+    val mainDiameterMm: Double,
     val mainIronMeters: Double,
     val mainIronKg: Double,
     val mainIronAmount: Int,
     val percentageMainIronWaste: Double,
     // Estribos
-    val stirrupDiameter: IronDiameter,
+    val stirrupDiameterMm: Double,
     val stirrupIronMeters: Double,
     val stirrupIronKg: Double,
     val stirrupIronAmount: Int,
     val percentageStirrupIronWaste: Double
+)
+
+/**
+ * Representa el resultado del cálculo de una losa.
+ *
+ * @property totalWeightKg Peso total para el presupuesto
+ * @property totalMeters Metros lineales totales
+ * @property countX Cantidad de varillas en dirección X
+ * @property countY Cantidad de varillas en dirección Y
+ * @property lengthX Largo de cada varilla X (con ganchos)
+ * @property lengthY Largo de cada varilla Y (con ganchos)
+ * @property diameterX Diámetro de cada varilla X
+ * @property diameterY Diámetro de cada varilla Y
+ * @property weightX Peso de varillas en dirección X
+ * @property weightY Peso de varillas en dirección Y
+ * @property commercialBars12m Cantidad de barras de 12m a comprar
+ * @property wasteAmountKg Cuánto del peso es desperdicio
+ * @property suggestedMesh Esquema recomendado
+ * @property meshPanelsNeeded Cantidad de paneles de 2x5m necesarios
+ * @property percentageIronWaste Porcentaje de hormigón desperdiciado
+ * @property volumeConcreteM3 Volumen de hormigón en m³
+ * @property cementKg Cantidad de cemento en kg
+ * @property sandM3 Cantidad de arena en m³
+ * @property gravelM3 Cantidad de piedra en m³
+ * @property waterLiters Cantidad de agua en litros
+ * @property cementBagKg Peso de la bolsa de cemento
+ * @property percentageConcreteWaste Porcentaje de hormigón desperdiciado
+ */
+data class SlabResult(
+    val totalWeightKg: Double,
+    val totalMeters: Double,
+    val countX: Int,
+    val countY: Int,
+    val lengthX: Double,
+    val lengthY: Double,
+    val diameterX: Double,
+    val diameterY: Double,
+    val weightX: Double,
+    val weightY: Double,
+    val commercialBars12m: Int,
+    val wasteAmountKg: Double,
+    val suggestedMesh: String? = null,
+    val meshPanelsNeeded: Int? = null,
+    val percentageIronWaste: Double,
+    // Materiales de Hormigón
+    val volumeConcreteM3: Double,
+    val cementKg: Double,
+    val sandM3: Double,
+    val gravelM3: Double,
+    val waterLiters: Double,
+    val cementBagKg: Int,
+    val percentageConcreteWaste: Double
 )

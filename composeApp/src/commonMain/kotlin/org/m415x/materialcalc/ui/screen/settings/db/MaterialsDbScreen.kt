@@ -29,14 +29,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.settings_db_tab_bricks
+import materialscalculator.composeapp.generated.resources.settings_db_tab_irons
+import materialscalculator.composeapp.generated.resources.settings_db_tab_recipes
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.domain.model.AppSettingsState
 
 // Enum para las pestañas
-enum class MaterialTab(val title: String, val icon: ImageVector) {
-    BRICKS("Ladrillos", Icons.Default.Dashboard),
-    IRONS("Hierros", Icons.Default.Grid3x3),
-    RECIPES("Mezclas", Icons.Default.Science)
+enum class MaterialTab(val titleRes: StringResource, val icon: ImageVector) {
+    BRICKS(Res.string.settings_db_tab_bricks, Icons.Default.Dashboard),
+    IRONS(Res.string.settings_db_tab_irons, Icons.Default.Grid3x3),
+    RECIPES(Res.string.settings_db_tab_recipes, Icons.Default.Science)
 }
 
 @Composable
@@ -51,7 +57,7 @@ fun MaterialsDbScreen(repository: SettingsRepository, appSettings: AppSettingsSt
                     Tab(
                         selected = currentTab == tab,
                         onClick = { currentTab = tab },
-                        text = { Text(tab.title) },
+                        text = { Text(stringResource(tab.titleRes)) },
                         icon = { Icon(tab.icon, null) }
                     )
                 }

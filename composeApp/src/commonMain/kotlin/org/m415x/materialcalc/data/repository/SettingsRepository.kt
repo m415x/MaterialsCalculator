@@ -28,9 +28,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.m415x.materialcalc.domain.model.CustomBrick
-import org.m415x.materialcalc.domain.model.CustomIron
-import org.m415x.materialcalc.domain.model.CustomRecipe
+import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.ui.theme.ColorPalette
 import org.m415x.materialcalc.ui.theme.ContrastMode
 import org.m415x.materialcalc.ui.theme.ThemeMode
@@ -72,6 +70,8 @@ class SettingsRepository(private val settings: ObservableSettings) {
     private val KEY_DEF_CONCRETE_GEN = "default_concrete_general_id"
     private val KEY_DEF_CONCRETE_STR = "default_concrete_struct_id"
     private val KEY_DEF_PLASTER_ROUGH = "default_plaster_rough_id"
+    private val KEY_PRICE_MATERIALS = "price_materials_json"
+    private val KEY_PRICE_LABOR = "price_labor_json"
 
     // Serialización JSON
     private val json = Json { ignoreUnknownKeys = true }
@@ -146,6 +146,8 @@ class SettingsRepository(private val settings: ObservableSettings) {
     val hiddenIronIds: Flow<Set<String>> = getSetFlow(KEY_HIDDEN_IRONS)
     val customRecipes: Flow<List<CustomRecipe>> = getListFlow(KEY_CUSTOM_RECIPES)
     val hiddenRecipeIds: Flow<Set<String>> = getSetFlow(KEY_HIDDEN_RECIPES)
+    val materialPrices: Flow<List<MaterialPrice>> = getListFlow(KEY_PRICE_MATERIALS)
+    val laborPrices: Flow<List<LaborPrice>> = getListFlow(KEY_PRICE_LABOR)
 
     // Valores por defecto
     val defaultBrickId: Flow<String> = settings.getStringFlow(KEY_DEF_BRICK, "LADRILLON")
@@ -248,6 +250,8 @@ class SettingsRepository(private val settings: ObservableSettings) {
     fun saveDefaultConcreteGen(id: String) = settings.putString(KEY_DEF_CONCRETE_GEN, id)
     fun saveDefaultConcreteStr(id: String) = settings.putString(KEY_DEF_CONCRETE_STR, id)
     fun saveDefaultPlasterRough(id: String) = settings.putString(KEY_DEF_PLASTER_ROUGH, id)
+    fun saveMaterialPrice(item: MaterialPrice) = saveItemToList(KEY_PRICE_MATERIALS, item) { it.id }
+    fun saveLaborPrice(item: LaborPrice) = saveItemToList(KEY_PRICE_LABOR, item) { it.id }
 
     /**
      * Valores por defecto.

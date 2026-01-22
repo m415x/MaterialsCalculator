@@ -51,8 +51,8 @@ interface WetMixRecipe {
  * @property limeKg Cantidad de cal en kilogramos
  */
 data class ConcreteDosing(
-    val name: String,
-    val descriptionProportion: String,
+    val name: TextSource,
+    val descriptionProportion: TextSource,
     override val cementKg: Double,
     override val sandM3: Double,
     override val gravelM3: Double,
@@ -74,8 +74,8 @@ data class ConcreteDosing(
  * @property parts Descripción de las partes de la mezcla (ej: "1:4", "1:1:6")
  */
 data class MortarDosing(
-    val name: String,
-    val mixingRatio: String,
+    val name: TextSource,
+    val mixingRatio: TextSource,
     override val cementKg: Double,
     override val limeKg: Double,
     override val sandM3: Double,

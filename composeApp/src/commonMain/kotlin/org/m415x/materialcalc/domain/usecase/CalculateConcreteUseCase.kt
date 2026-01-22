@@ -38,7 +38,7 @@ class CalculateConcreteUseCase {
      * @param cementBagWeightKg Peso de la bolsa de cemento en kg.
      * @param limeBagWeightKg Peso de la bolsa de cal en kg.
      * @param percentageConcreteWaste Porcentaje de desperdicio de hormigón.
-     * @return Resultado del cálculo.
+     * @return Resultado del cálculo encapsulado en Result.
      */
     operator fun invoke(
         widthMeters: Double,
@@ -49,30 +49,36 @@ class CalculateConcreteUseCase {
         cementBagWeightKg: Int,
         limeBagWeightKg: Int,
         percentageConcreteWaste: Double
-    ): ConcreteResult {
+    ): Result<ConcreteResult> {
 
-        // 1. Geometría (Esta es la única responsabilidad única de este UseCase)
-        val geometricVolume = widthMeters * lengthMeters * thicknessMeters * unitQuantity
+        return try {
+            // 1. Geometría (Esta es la única responsabilidad única de este UseCase)
+            val geometricVolume = widthMeters * lengthMeters * thicknessMeters * unitQuantity
 
-        // 2. El motor hace el cálculo
-        val mathConcrete = calculateWetMaterials(
-            volumeM3 = geometricVolume,
-            recipe = concreteDosing,
-            waste = percentageConcreteWaste,
-            cementBagWeight = cementBagWeightKg,
-            limeBagWeight = limeBagWeightKg
-        )
+            // 2. El motor hace el cálculo
+            val mathConcrete = calculateWetMaterials(
+                volumeM3 = geometricVolume,
+                recipe = concreteDosing,
+                waste = percentageConcreteWaste,
+                cementBagWeight = cementBagWeightKg,
+                limeBagWeight = limeBagWeightKg
+            )
 
-        // 3. Mapeo al resultado final
-        return ConcreteResult(
-            totalVolumeM3 = geometricVolume,
-            cementKg = mathConcrete.cementKg,
-            sandM3 = mathConcrete.sandM3,
-            gravelM3 = mathConcrete.gravelM3,
-            waterLiters = mathConcrete.waterLiters,
-            cementBagKg = cementBagWeightKg,
-            percentageConcreteWaste = percentageConcreteWaste,
-            mixingRatio = concreteDosing.descriptionProportion
-        )
+            // 3. Mapeo al resultado final
+            Result.success(
+                ConcreteResult(
+                    totalVolumeM3 = geometricVolume,
+                    cementKg = mathConcrete.cementKg,
+                    sandM3 = mathConcrete.sandM3,
+                    gravelM3 = mathConcrete.gravelM3,
+                    waterLiters = mathConcrete.waterLiters,
+                    cementBagKg = cementBagWeightKg,
+                    percentageConcreteWaste = percentageConcreteWaste,
+                    mixingRatio = concreteDosing.descriptionProportion
+                )
+            )
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

@@ -27,6 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.saved_desc_coming_soon
+import materialscalculator.composeapp.generated.resources.saved_title_history
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Pantalla de historial de cálculos.
@@ -40,9 +44,9 @@ fun SavedScreen() {
     ) {
         Icon(Icons.Default.Construction, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(16.dp))
-        Text("Historial de Cálculos", style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(Res.string.saved_title_history), style = MaterialTheme.typography.headlineSmall)
         Text(
-            "Aquí podrás ver tus cálculos guardados próximamente.",
+            stringResource(Res.string.saved_desc_coming_soon),
             textAlign = TextAlign.Center
         )
     }

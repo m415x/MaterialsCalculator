@@ -28,7 +28,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -40,14 +41,22 @@ import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
 import org.m415x.materialcalc.domain.common.toPresentationUnit
-import org.m415x.materialcalc.domain.model.Aperture
 import org.m415x.materialcalc.domain.model.AppSettingsState
-import org.m415x.materialcalc.domain.model.MortarDosing
 import org.m415x.materialcalc.domain.model.PlasterResult
+import org.m415x.materialcalc.domain.model.asString
 import org.m415x.materialcalc.domain.usecase.CalculatePlasterUseCase
-import org.m415x.materialcalc.domain.utils.ConstructionConstants.formatPart
-import org.m415x.materialcalc.domain.utils.estimateProportionTxt
-import org.m415x.materialcalc.ui.common.*
+import org.m415x.materialcalc.ui.common.dialogs.AppDialog
+import org.m415x.materialcalc.ui.common.display.AppResultBottomSheet
+import org.m415x.materialcalc.ui.common.display.ErrorMessage
+import org.m415x.materialcalc.ui.common.display.PriceResultSection
+import org.m415x.materialcalc.ui.common.display.ResultRow
+import org.m415x.materialcalc.ui.common.inputs.CmInput
+import org.m415x.materialcalc.ui.common.inputs.NumericInput
+import org.m415x.materialcalc.ui.common.layout.InputRow
+import org.m415x.materialcalc.ui.common.layout.InputSection
+import org.m415x.materialcalc.ui.common.layout.OpeningsSection
+import org.m415x.materialcalc.ui.common.presenters.MortarPresenter
+import org.m415x.materialcalc.ui.common.utils.*
 
 /**
  * Pantalla principal de la calculadora de revoques.
@@ -60,108 +69,60 @@ fun PlasterScreen(appSettings: AppSettingsState) {
     val keyboardController = LocalSoftwareKeyboardController.current
 
     // Nombre de la app
-    val nombreApp = stringResource(Res.string.app_name)
+    val appName = stringResource(Res.string.app_name)
 
     val staticRepo = remember { StaticMaterialRepository() }
     val calculatePlaster = remember { CalculatePlasterUseCase(staticRepo) }
 
-    // Usamos los valores directamente desde appSettings
-    val defaultPlasterId = appSettings.defaultPlasterId
-    val customRecipes = appSettings.customRecipes
-    val pesoBolsaCemento = appSettings.bagCementKg
-    val pesoBolsaCal = appSettings.bagLimeKg
-    val pesoBolsaPremezcla = appSettings.bagPremixKg
-    val espesorFinoMm = appSettings.fineThicknessMm
-    val desperdicioRevoquePct = appSettings.wastePlasterPct
+    // Instanciamos el Presenter
+    val mortarPresenter = remember { MortarPresenter() }
 
-    // Estados Inputs
-    var largo by remember { mutableStateOf("") }
-    var alto by remember { mutableStateOf("") }
-    val aberturas = remember { mutableStateListOf<Aperture>() }
-    var espesorGrueso by remember { mutableStateOf("0.02") } // Valor por defecto sugerido
-    var ambasCaras by remember { mutableStateOf(false) } // Switch
+    // --- B. LISTA DE MEZCLAS (Usando Presenter) ---
+    // Obtenemos la lista de opciones UI usando el Presenter
+    // Nota: PlasterScreen usa mezclas tipo "PLASTER" y "MORTAR"
+    // El presenter actual filtra por un solo tipo. 
+    // Para mantener la funcionalidad original (mostrar ambos), deberíamos llamar al presenter dos veces o modificarlo.
+    // Como solución rápida y limpia, llamamos dos veces y unimos, ya que el presenter devuelve listas puras.
+    val labelCem = stringResource(Res.string.abbr_cement)
+    val labelLime = stringResource(Res.string.abbr_lime)
+    val labelSand = stringResource(Res.string.abbr_sand)
+    val labelKg = stringResource(Res.string.unit_kilograms)
+    val labelRatio = stringResource(Res.string.abbr_water_cement_ratio)
+    val labelStdJaharro = stringResource(Res.string.plaster_type_std_jaharro)
 
-    // Selección de Mezcla
-    var selectedMezcla by remember { mutableStateOf<MortarDosing?>(null) }
-
-    // --- B. LISTA DE MEZCLAS ---
-    val opcionesMezcla = remember(customRecipes) {
-        val list = mutableListOf<MortarOption>()
-
-        fun crearOpcion(id: String, nombre: String, receta: MortarDosing): MortarOption {
-            val proporcionTexto = receta.estimateProportionTxt()
-            val detalleTecnico = buildString {
-                append("${receta.cementKg.toInt()} kg Cem")
-                if (receta.limeKg > 0) append(" + ${receta.limeKg.toInt()} kg Cal")
-                if (receta.waterCementRatio > 0) {
-                    append(" (A/C:${receta.waterCementRatio})")
-                }
-            }
-            val descripcionFinal = "$proporcionTexto\n$detalleTecnico"
-            return MortarOption(id, nombre, descripcionFinal, receta)
-        }
-
-        val mezclaReforzada = staticRepo.getThickPlasterRecipe()
-        list.add(MortarOption("STD_THICK", mezclaReforzada.name, mezclaReforzada.mixingRatio, mezclaReforzada))
-
-        customRecipes
-            .filter { it.type == "PLASTER" || it.type == "MORTAR" } // Permitimos morteros también
-            .forEach { custom ->
-                val partesTexto = if (custom.isProportion) {
-                    buildString {
-                        append(formatPart(custom.partCement))
-                        if (custom.partLime > 0) append(":${formatPart(custom.partLime)}")
-                        append(":${formatPart(custom.partSand)}")
-                        append(" (Cem")
-                        if (custom.partLime > 0) append(":Cal")
-                        append(":Arena)")
-                    }
-                } else null
-
-                val dosis = MortarDosing(
-                    name = custom.name,
-                    mixingRatio = custom.name,
-                    cementKg = custom.cementKg,
-                    limeKg = custom.limeKg,
-                    sandM3 = custom.sandM3,
-                    waterCementRatio = custom.waterCementRatio,
-                    waterLiters = if (custom.waterCementRatio > 0) custom.cementKg * custom.waterCementRatio else 240.0, // Fallback si no hay ratio
-                    parts = partesTexto
-                )
-                list.add(crearOpcion(custom.id, custom.name, receta = dosis))
-            }
-        list
+    val recipeOptions = remember(appSettings.customRecipes, appSettings.hiddenRecipeIds) {
+        val plasters = mortarPresenter.getOptions(
+            appSettings.customRecipes,
+            appSettings.hiddenRecipeIds,
+            filterType = "PLASTER",
+            labelCem = labelCem,
+            labelLime = labelLime,
+            labelSand = labelSand,
+            labelKg = labelKg,
+            labelRatio = labelRatio,
+            labelStdJaharro = labelStdJaharro
+        )
+        plasters
     }
 
-    // Inicializar selección con default
-    LaunchedEffect(defaultPlasterId, opcionesMezcla) {
-        if (selectedMezcla == null) {
-            val defaultOption = opcionesMezcla.find { it.id == defaultPlasterId }
-                ?: opcionesMezcla.firstOrNull() // Fallback al primero (Reforzado)
-            selectedMezcla = defaultOption?.data
-        }
-    }
-
-    var showMezclaDialog by remember { mutableStateOf(false) }
-
-    // Estados Resultados
-    var resultado by remember { mutableStateOf<PlasterResult?>(null) }
-    var errorMsg by remember { mutableStateOf<String?>(null) }
-
-    // Para controlar la visibilidad del Modal
-    var showResultSheet by remember { mutableStateOf(false) }
+    // --- INICIALIZACIÓN DEL STATE HOLDER ---
+    val state = rememberPlasterScreenState(
+        appSettings = appSettings,
+        calculatePlaster = calculatePlaster,
+        recipeOptions = recipeOptions
+    )
 
     val shareManager = remember { getShareManager() }
 
     // Focos
-    val focusLargo = remember { FocusRequester() }
-    val focusAlto = remember { FocusRequester() }
-    val focusEspesor = remember { FocusRequester() }
-    val focusAberturaAncho =
+    val focusLength = remember { FocusRequester() }
+    val focusHeight = remember { FocusRequester() }
+    val focusThickness = remember { FocusRequester() }
+    val focusOpeningWith =
         remember { FocusRequester() } // Foco puente pertenecerá al input "Ancho" dentro de OpeningsSection
 
     // Auto-Foco al abrir
-    RequestFocusOnStart(focusLargo)
+    RequestFocusOnStart(focusLength)
 
     Scaffold(
         // El FAB vive aquí, donde tiene acceso a las variables 'largo' y 'alto'
@@ -169,37 +130,7 @@ fun PlasterScreen(appSettings: AppSettingsState) {
             ExtendedFloatingActionButton(
                 onClick = {
                     keyboardController?.hide()
-
-                    val l = largo.toSafeDoubleOrNull()
-                    val a = alto.toSafeDoubleOrNull()
-                    // Nota: espesorGrueso viene del CmInput como "2.00", toSafeDouble lo lee directo como 2.0
-                    val e = espesorGrueso.toSafeDoubleOrNull()
-
-                    if (areValidDimensions(l, a, e) && selectedMezcla != null) {
-                        try {
-                            resultado = calculatePlaster(
-                                lengthMeters = l!!,
-                                heightMeters = a!!,
-                                thickThickness = e!!,
-                                // CONVERTIMOS MM A METROS (/1000)
-                                thinThickness = espesorFinoMm / 1000.0,
-                                isBothSides = ambasCaras,
-                                openingsList = aberturas.toList(),
-                                mortarDosing = selectedMezcla!!,
-                                cementBagWeightKg = pesoBolsaCemento,
-                                limeBagWeightKg = pesoBolsaCal,
-                                premixBagWeightKg = pesoBolsaPremezcla,
-                                // CONVERTIMOS PORCENTAJE A DECIMAL (/100)
-                                percentagePlasterWaste = desperdicioRevoquePct / 100.0
-                            )
-                            errorMsg = null
-                            showResultSheet = true
-                        } catch (e: Exception) {
-                            errorMsg = "Error: ${e.message}"
-                        }
-                    } else {
-                        errorMsg = "Verifica las dimensiones."
-                    }
+                    state.calculate()
                 },
                 icon = { Icon(Icons.Default.Calculate, null) },
                 text = { Text(stringResource(Res.string.button_calculate)) }
@@ -215,39 +146,45 @@ fun PlasterScreen(appSettings: AppSettingsState) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            InputSection(title = "Dimensiones del Muro") {
+            InputSection(title = stringResource(Res.string.plaster_section_dimensions)) {
                 InputRow {
                     NumericInput(
-                        value = largo,
-                        onValueChange = { largo = it },
-                        label = "Largo (m)",
-                        suffix = { Text("m") },
+                        value = state.length,
+                        onValueChange = { state.length = it },
+                        label = stringResource(Res.string.plaster_label_length, stringResource(Res.string.unit_meters)),
+                        suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(1f),
-                        focusRequester = focusLargo,
-                        nextFocusRequester = focusAlto
+                        focusRequester = focusLength,
+                        nextFocusRequester = focusHeight
                     )
                     NumericInput(
-                        value = alto,
-                        onValueChange = { alto = it },
-                        label = "Alto (m)",
-                        suffix = { Text("m") },
+                        value = state.height,
+                        onValueChange = { state.height = it },
+                        label = stringResource(Res.string.plaster_label_height, stringResource(Res.string.unit_meters)),
+                        suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(1f),
-                        focusRequester = focusAlto,
-                        nextFocusRequester = focusAberturaAncho
+                        focusRequester = focusHeight,
+                        nextFocusRequester = focusOpeningWith
                     )
                 }
             }
 
-            InputSection(title = "Aberturas", attenuatedTitle = "(Puertas y Ventanas)") {
+            InputSection(
+                title = stringResource(Res.string.plaster_section_openings),
+                attenuatedTitle = stringResource(Res.string.plaster_section_openings_attenuated)
+            ) {
                 OpeningsSection(
-                    aberturas = aberturas,
-                    focusRequesterAncho = focusAberturaAncho,
-                    nextFocusRequesterAlto = focusEspesor
+                    openings = state.openings,
+                    onAddOpening = { state.addOpening(it) },
+                    onRemoveOpening = { state.removeOpening(it) },
+                    onEditOpening = { index, newOpening -> state.updateOpening(index, newOpening) },
+                    focusRequesterWidth = focusOpeningWith,
+                    nextFocusRequesterHeight = focusThickness
                 )
             }
 
-            InputSection(title = "Revoque Grueso", showDivider = false) {
-                if (selectedMezcla != null) {
+            InputSection(title = stringResource(Res.string.plaster_section_thick), showDivider = false) {
+                if (state.selectMortar != null) {
                     Card(
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
@@ -267,18 +204,18 @@ fun PlasterScreen(appSettings: AppSettingsState) {
                             Spacer(Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    selectedMezcla!!.name,
+                                    state.selectMortar!!.name.asString(),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
-                                    selectedMezcla!!.mixingRatio,
+                                    state.selectMortar!!.mixingRatio.asString(),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
-                            if (opcionesMezcla.size > 1) {
-                                TextButton(onClick = { showMezclaDialog = true }) {
+                            if (state.recipeOptions.size > 1) {
+                                TextButton(onClick = { state.showMixDialog = true }) {
                                     Text(stringResource(Res.string.button_change))
                                 }
                             }
@@ -288,13 +225,16 @@ fun PlasterScreen(appSettings: AppSettingsState) {
 
                 InputRow(horizontalArrangement = Arrangement.SpaceBetween) {
                     CmInput(
-                        value = espesorGrueso,
-                        onValueChange = { espesorGrueso = it },
-                        label = "Espesor (m)",
+                        value = state.thickThickness,
+                        onValueChange = { state.thickThickness = it },
+                        label = stringResource(
+                            Res.string.plaster_label_thickness,
+                            stringResource(Res.string.unit_meters)
+                        ),
                         placeholder = "0.02",
-                        suffix = { Text("m") },
+                        suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(1f),
-                        focusRequester = focusEspesor,
+                        focusRequester = focusThickness,
                         onDone = { keyboardController?.hide() }
                     )
 
@@ -306,47 +246,50 @@ fun PlasterScreen(appSettings: AppSettingsState) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Ambas caras", style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                "x2 Sup.",
+                                stringResource(Res.string.plaster_label_both_sides),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                stringResource(Res.string.plaster_label_x2_sup),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         Switch(
-                            checked = ambasCaras,
-                            onCheckedChange = { ambasCaras = it }
+                            checked = state.bothSides,
+                            onCheckedChange = { state.bothSides = it }
                         )
                     }
                 }
             }
 
-            ErrorMessage(errorMsg)
+            ErrorMessage(state.errorMsg)
 
             Spacer(modifier = Modifier.height(80.dp))
         }
     }
 
-    if (showMezclaDialog) {
+    if (state.showMixDialog) {
         AppDialog(
-            onDismissRequest = { showMezclaDialog = false },
-            title = { Text("Elegir Mezcla") },
+            onDismissRequest = { state.showMixDialog = false },
+            title = { Text(stringResource(Res.string.plaster_dialog_choose_mix)) },
             content = {
                 LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
-                    items(opcionesMezcla) { opcion ->
+                    items(state.recipeOptions) { option ->
                         Row(
                             modifier = Modifier.fillMaxWidth().clickable {
-                                selectedMezcla = opcion.data
-                                showMezclaDialog = false
+                                state.selectMortar = option.data
+                                state.showMixDialog = false
                             }.padding(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            RadioButton(selected = (opcion.data == selectedMezcla), onClick = null)
+                            RadioButton(selected = (option.data == state.selectMortar), onClick = null)
                             Spacer(Modifier.width(8.dp))
                             Column {
-                                Text(opcion.name, style = MaterialTheme.typography.bodyLarge)
+                                Text(option.name.asString(), style = MaterialTheme.typography.bodyLarge)
                                 Text(
-                                    opcion.description,
+                                    "${option.proportion.asString()}\n${option.technical}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     lineHeight = 14.sp
@@ -358,29 +301,29 @@ fun PlasterScreen(appSettings: AppSettingsState) {
                 }
             },
             actions = {
-                TextButton(onClick = { showMezclaDialog = false }) { Text(stringResource(Res.string.button_cancel)) }
+                TextButton(onClick = { state.showMixDialog = false }) { Text(stringResource(Res.string.button_cancel)) }
             }
         )
     }
 
     // --- MODAL DE RESULTADOS ---
-    if (showResultSheet && resultado != null) {
+    if (state.showResultSheet && state.result != null) {
         val shareText = rememberPlasterShareText(
-            result = resultado!!,
-            length = largo.toSafeDoubleOrNull() ?: 0.0,
-            height = alto.toSafeDoubleOrNull() ?: 0.0,
-            thicknessMeters = espesorGrueso.toSafeDoubleOrNull() ?: 0.0,
-            bothSides = ambasCaras,
-            appName = nombreApp
+            result = state.result!!,
+            length = state.length.toSafeDoubleOrNull() ?: 0.0,
+            height = state.height.toSafeDoubleOrNull() ?: 0.0,
+            thicknessMeters = state.thickThickness.toSafeDoubleOrNull() ?: 0.0,
+            bothSides = state.bothSides,
+            appName = appName
         )
 
         AppResultBottomSheet(
-            onDismissRequest = { showResultSheet = false },
+            onDismissRequest = { state.showResultSheet = false },
             onSave = { /* ... */ },
-            onEdit = { showResultSheet = false },
+            onEdit = { state.showResultSheet = false },
             onShare = { shareManager.shareText(shareText) }
         ) {
-            PlasterResultContent(resultado!!)
+            PlasterResultContent(state.result!!, appSettings)
         }
     }
 }
@@ -391,9 +334,9 @@ fun PlasterScreen(appSettings: AppSettingsState) {
  * @param res Resultado del cálculo.
  */
 @Composable
-fun PlasterResultContent(res: PlasterResult) {
+fun PlasterResultContent(res: PlasterResult, appSettings: AppSettingsState) {
     Text(
-        "Superficie Total: ${res.totalAreaM2.roundToDecimals(2)} m²",
+        stringResource(Res.string.plaster_result_total_area, res.totalAreaM2.roundToDecimals(2)),
         fontWeight = FontWeight.Bold,
         fontSize = 18.sp
     )
@@ -402,19 +345,19 @@ fun PlasterResultContent(res: PlasterResult) {
 
     // Sección GRUESO
     Text(
-        "1. Revoque Grueso (Jaharro)",
+        stringResource(Res.string.plaster_result_thick_title),
         fontWeight = FontWeight.Bold,
         fontSize = 18.sp
     )
     Text(
-        "(Incluye ${(res.thickPercentageWaste * 100).toInt()}% desperdicio)",
+        stringResource(Res.string.plaster_result_waste_included, (res.thickPercentageWaste * 100).toInt()),
         style = MaterialTheme.typography.bodySmall
     )
 
     Spacer(modifier = Modifier.height(8.dp))
 
     ResultRow(
-        "Cemento",
+        stringResource(Res.string.plaster_result_cement),
         res.thickCementKg.toPresentationUnit(
             res.cementBagKg,
             Res.string.unit_bag,
@@ -423,7 +366,7 @@ fun PlasterResultContent(res: PlasterResult) {
     )
 
     ResultRow(
-        "Cal Hidratada",
+        stringResource(Res.string.plaster_result_lime),
         res.thickLimeKg.toPresentationUnit(
             res.limeBagKg,
             Res.string.unit_bag,
@@ -432,37 +375,45 @@ fun PlasterResultContent(res: PlasterResult) {
     )
 
     ResultRow(
-        "Arena Común",
-        "${res.thickSandKg.roundToDecimals(2)} m³"
+        stringResource(Res.string.plaster_result_sand),
+        stringResource(
+            Res.string.concrete_result_volume_m3,
+            res.thickSandKg.roundToDecimals(2),
+            stringResource(Res.string.unit_cubic_meters)
+        )
     )
 
     ResultRow(
-        "Agua",
-        "${res.thickWaterLiters.roundToDecimals(1)} Lt"
+        stringResource(Res.string.plaster_result_water),
+        stringResource(
+            Res.string.concrete_result_volume_liters,
+            res.thickWaterLiters.roundToDecimals(1),
+            stringResource(Res.string.unit_liters)
+        )
     )
 
     Spacer(modifier = Modifier.height(16.dp))
 
     // Sección FINO
     Text(
-        "2. Revoque Fino (Enlucido)",
+        stringResource(Res.string.plaster_result_fine_title),
         fontWeight = FontWeight.Bold,
         fontSize = 18.sp
     )
     Text(
-        "(Incluye ${(res.finePercentageWaste * 100).toInt()}% desperdicio)",
+        stringResource(Res.string.plaster_result_waste_included, (res.finePercentageWaste * 100).toInt()),
         style = MaterialTheme.typography.bodySmall
     )
 
     Spacer(modifier = Modifier.height(8.dp))
 
-    Text("Elige una opción:", style = MaterialTheme.typography.labelLarge)
+    Text(stringResource(Res.string.plaster_result_choose_option), style = MaterialTheme.typography.labelLarge)
 
     Spacer(modifier = Modifier.height(8.dp))
 
     // Opción A
     ResultRow(
-        "A) Premezcla",
+        stringResource(Res.string.plaster_result_option_a),
         res.finePremixKg.toPresentationUnit(
             res.premixBagKg,
             Res.string.unit_bag,
@@ -474,7 +425,7 @@ fun PlasterResultContent(res: PlasterResult) {
 
     // Opción B
     ResultRow(
-        "B) Cal Aérea",
+        stringResource(Res.string.plaster_result_option_b),
         res.fineLimeKg.toPresentationUnit(
             res.limeBagKg,
             Res.string.unit_bag,
@@ -483,7 +434,59 @@ fun PlasterResultContent(res: PlasterResult) {
     )
 
     ResultRow(
-        "   Arena Fina",
-        "${res.fineSandM3.roundToDecimals(2)} m³"
+        stringResource(Res.string.plaster_result_fine_sand),
+        stringResource(
+            Res.string.concrete_result_volume_m3,
+            res.fineSandM3.roundToDecimals(2),
+            stringResource(Res.string.unit_cubic_meters)
+        )
     )
+
+    // --- CÁLCULO DE PRECIOS ---
+    val prices = appSettings.priceSettings
+    var materialCost = 0.0
+    
+    // Cemento
+    prices.materialPrices.find { it.name.contains("Cemento", ignoreCase = true) }?.let {
+        if (it.unit.contains("bolsa", ignoreCase = true)) {
+            materialCost += it.price * res.cementBagKg
+        } else if (it.unit.contains("kg", ignoreCase = true)) {
+            materialCost += it.price * res.thickCementKg
+        }
+    }
+    
+    // Cal
+    if (res.thickLimeKg > 0 || res.fineLimeKg > 0) {
+        prices.materialPrices.find { it.name.contains("Cal", ignoreCase = true) }?.let {
+             if (it.unit.contains("bolsa", ignoreCase = true)) {
+                materialCost += it.price * res.limeBagKg
+            } else if (it.unit.contains("kg", ignoreCase = true)) {
+                materialCost += it.price * (res.thickLimeKg + res.fineLimeKg)
+            }
+        }
+    }
+    
+    // Arena
+    prices.materialPrices.find { it.name.contains("Arena", ignoreCase = true) }?.let {
+        if (it.unit.contains("m3", ignoreCase = true)) {
+            materialCost += it.price * (res.thickSandKg + res.fineSandM3)
+        }
+    }
+    
+    // Premezcla (Opción A) - Sumamos si hay precio, asumiendo que se elige A
+    prices.materialPrices.find { it.name.contains("Premezcla", ignoreCase = true) || it.name.contains("Fino", ignoreCase = true) }?.let {
+        if (it.unit.contains("bolsa", ignoreCase = true)) {
+            materialCost += it.price * res.premixBagKg
+        }
+    }
+
+    // Mano de Obra (Revoque)
+    var laborCost = 0.0
+    prices.laborPrices.find { it.name.contains("Revoque", ignoreCase = true) || it.name.contains("Jaharro", ignoreCase = true) }?.let {
+        if (it.unit.contains("m2", ignoreCase = true)) {
+            laborCost += it.price * res.totalAreaM2
+        }
+    }
+
+    PriceResultSection(materialCost, laborCost)
 }

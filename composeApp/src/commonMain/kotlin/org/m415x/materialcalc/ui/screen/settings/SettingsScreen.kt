@@ -34,6 +34,7 @@ import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.domain.model.AppSettingsState
 import org.m415x.materialcalc.ui.screen.settings.appearance.AppearanceSubScreen
 import org.m415x.materialcalc.ui.screen.settings.db.MaterialsDbScreen
+import org.m415x.materialcalc.ui.screen.settings.db.PricesTabContent
 import org.m415x.materialcalc.ui.screen.settings.global.GlobalParamsSubScreen
 import org.m415x.materialcalc.ui.theme.ColorPalette
 import org.m415x.materialcalc.ui.theme.ContrastMode
@@ -102,9 +103,7 @@ fun SettingsScreen(
 
 
             SettingsSection.PRICES -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Próximamente: Precios")
-                }
+                PricesTabContent(repository, appSettings)
             }
             else -> {}
         }

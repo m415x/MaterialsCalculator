@@ -63,10 +63,10 @@ Conecta un dispositivo o emulador y ejecuta:
 
 Este proyecto es software libre: puedes redistribuirlo y/o modificarlo bajo los términos de la **GNU General Public License v3.0 (GPLv3)**. Consulta el archivo [LICENSE](./LICENSE) para más detalles.
 
-_**Copyright (C) 2025 M415X**_
+_**Copyright (C) 2026 M415X**_
 
 ---
 
 ## Estado del Proyecto
 
-Actualmente en fase **Beta** (`1.1.0-beta.2`). El motor de cálculo de armaduras está siendo integrado para soportar normativas de doblado de hierro internacionales.
+Actualmente en fase **Beta** (`1.2.0-beta.3`). El motor de precios está siendo integrado.

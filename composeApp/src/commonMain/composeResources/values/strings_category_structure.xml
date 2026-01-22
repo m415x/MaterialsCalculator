@@ -17,7 +17,86 @@
   -->
 
 <resources>
+    <!-- CATEGORY: STRUCTURE -->
+    <string name="structure_title">Armaduras</string>
+
+    <!-- TYPES -->
     <string name="structure_type_beam">Viga</string>
     <string name="structure_type_column">Columna</string>
     <string name="structure_type_slab">Losa</string>
+
+    <!-- SECTIONS -->
+    <string name="structure_section_type">Tipo de Estructura</string>
+    <string name="structure_section_dimensions">Dimensiones de la %1$s</string>
+    <string name="structure_section_armature">Armadura</string>
+    <string name="structure_section_terminations">Terminaciones</string>
+    <string name="structure_section_concrete">Hormigón</string>
+    <string name="structure_section_column_shape">Forma de la Columna</string>
+    <string name="structure_section_slab_dimensions">Dimensiones de la Losa</string>
+    <string name="structure_section_armature_config">Configuración de Armadura</string>
+
+    <!-- LABELS -->
+    <string name="structure_label_rectangular">Rectangular</string>
+    <string name="structure_label_circular">Circular</string>
+    <string name="structure_label_diameter">Diámetro (%1$s)</string>
+    <string name="structure_label_side_a">Lado A (%1$s)</string>
+    <string name="structure_label_side_b">Lado B (%1$s)</string>
+    <string name="structure_label_total_length">Largo Total (%1$s)</string>
+    <string name="structure_label_rods_quantity">Cant. varillas</string>
+    <string name="structure_label_main_iron">Hierro Principal</string>
+    <string name="structure_label_stirrup_spacing">Separados cada (%1$s)</string>
+    <string name="structure_label_stirrups">Estribos</string>
+    <string name="structure_label_start_end">Extremo Inicial</string>
+    <string name="structure_label_end_end">Extremo Final</string>
+    <string name="structure_label_hook_start">Largo Gancho Inicial (%1$s)</string>
+    <string name="structure_label_hook_end">Largo Gancho Final (%1$s)</string>
+    <string name="structure_label_hook">Largo Gancho (%1$s)</string>
+    <string name="structure_label_width_x">Ancho (X)</string>
+    <string name="structure_label_length_y">Largo (Y)</string>
+    <string name="structure_label_armature_x">Armadura Eje X (Ancho)</string>
+    <string name="structure_label_armature_y">Armadura Eje Y (Largo)</string>
+    <string name="structure_label_sep_x">Sep. X (%1$s)</string>
+    <string name="structure_label_sep_y">Sep. Y (%1$s)</string>
+    <string name="structure_label_iron_x">Hierro X</string>
+    <string name="structure_label_iron_y">Hierro Y</string>
+    <string name="structure_label_terminations_both">(Ambos ejes)</string>
+
+    <!-- RESULTS -->
+    <string name="structure_result_concrete">Hormigón (%1$s)</string>
+    <string name="structure_result_waste_included">(Incluye %1$d% desperdicio)</string>
+    <string name="structure_result_cement">Cemento</string>
+    <string name="structure_result_sand">Arena</string>
+    <string name="structure_result_gravel">Piedra</string>
+    <string name="structure_result_water">Agua</string>
+    <string name="structure_result_iron_steel">Acero / Hierro (%1$s)</string>
+    <string name="structure_result_main">Principal (Ø %1$s mm)</string>
+    <string name="structure_result_stirrups">Estribos (Ø %1$s mm)</string>
+    <string name="structure_result_tip_main">- %1$d varilla%2$s de Ø %3$s mm de 12 m.</string>
+    <string name="structure_result_tip_stirrup">- %1$d varilla%2$s de Ø %3$s mm de 12 m.</string>
+    <string name="structure_result_mesh">Malla Sima</string>
+    <string name="structure_result_mesh_type">Tipo</string>
+    <string name="structure_result_mesh_panels">Paneles (2.4x6 m)</string>
+    <string name="structure_result_iron_x">Hierros en X (Ø %1$s mm)</string>
+    <string name="structure_result_iron_y">Hierros en Y (Ø %1$s mm)</string>
+    <string name="structure_result_iron_generic">Hierro Ø %1$s mm</string>
+    <string name="structure_result_detail_title">Detalle de Armado:</string>
+    <string name="structure_result_detail_x">- Eje X: %1$d varillas de %2$s m</string>
+    <string name="structure_result_detail_y">- Eje Y: %1$d varillas de %2$s m</string>
+    <string name="structure_result_weight_kg">%1$s kg</string>
+    <string name="structure_result_weight_rods">%1$s kg | aprox. %2$d varillas</string>
+    <string name="structure_result_tip_intro">Necesitas aprox:</string>
+
+    <!-- REBAR TERMINATION TYPES -->
+    <string name="rebar_termination_straight">Recta</string>
+    <string name="rebar_termination_hook_90">Gancho 90°</string>
+    <string name="rebar_termination_hook_135">Gancho 135°</string>
+    <string name="rebar_termination_hook_180">Gancho 180°</string>
+
+    <!-- JOINT TYPES -->
+    <string name="joint_type_simple_support">Apoyo Simple</string>
+    <string name="joint_type_rigid_frame">Nudo Rígido</string>
+    <string name="joint_type_cantilever">Voladizo (Ménsula)</string>
+
+    <!-- MESSAGES -->
+    <string name="structure_warning_cirsoc">Atención: Según el CIRSOC 201, la separación no debe superar los 30 cm para evitar fisuración excesiva.</string>
 </resources>

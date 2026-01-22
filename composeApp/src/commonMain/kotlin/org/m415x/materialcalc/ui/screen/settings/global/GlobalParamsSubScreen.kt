@@ -21,20 +21,24 @@ package org.m415x.materialcalc.ui.screen.settings.global
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import materialscalculator.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.SettingsRepository.Defaults
 import org.m415x.materialcalc.domain.model.AppSettingsState
-import org.m415x.materialcalc.ui.common.BrickSelectorField
-import org.m415x.materialcalc.ui.common.ConcreteSelectorField
-import org.m415x.materialcalc.ui.common.MortarSelectorField
+import org.m415x.materialcalc.ui.common.inputs.*
+import org.m415x.materialcalc.ui.common.presenters.BrickPresenter
+import org.m415x.materialcalc.ui.common.presenters.ConcretePresenter
+import org.m415x.materialcalc.ui.common.presenters.MortarPresenter
 import org.m415x.materialcalc.ui.screen.settings.EditDoubleSetting
 import org.m415x.materialcalc.ui.screen.settings.EditIntegerSetting
 import org.m415x.materialcalc.ui.screen.settings.EditPercentSetting
@@ -48,6 +52,11 @@ import org.m415x.materialcalc.ui.screen.settings.EditPercentSetting
 @Composable
 fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettingsState) {
     val scope = rememberCoroutineScope()
+
+    // Instanciamos los Presenters
+    val brickPresenter = remember { BrickPresenter() }
+    val concretePresenter = remember { ConcretePresenter() }
+    val mortarPresenter = remember { MortarPresenter() }
 
     // --- DATOS PARA LAS LISTAS (Fusión) ---
     val customBricks = appSettings.customBricks
@@ -76,20 +85,93 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
     val defConcStrId = appSettings.defaultConcreteStrId
     val defPlasterId = appSettings.defaultPlasterId
 
+    // --- PREPARACIÓN DE DATOS (State Hoisting) ---
+    val brickOptions = remember(customBricks, hiddenBricks) {
+        brickPresenter.getOptions(customBricks, hiddenBricks)
+    }
+
+    // Resolvemos strings para ConcretePresenter
+    val resLabel = stringResource(Res.string.recipe_section_resistance)
+    val resUnit = stringResource(Res.string.recipe_unit_kilogram_per_square_centimeters)
+    val propLabel = stringResource(Res.string.concrete_result_proportion)
+    val techLabel = stringResource(Res.string.concrete_result_technical, "")
+    val unitKg = stringResource(Res.string.unit_kilograms)
+
+    val concreteGenOptions = remember(customRecipes, hiddenRecipes) {
+        concretePresenter.getOptions(
+            customRecipes, hiddenRecipes,
+            filterStructuralOnly = false,
+            resLabel, resUnit, propLabel, techLabel, unitKg
+        )
+    }
+
+    val concreteStrOptions = remember(customRecipes, hiddenRecipes) {
+        concretePresenter.getOptions(
+            customRecipes, hiddenRecipes,
+            filterStructuralOnly = true,
+            resLabel, resUnit, propLabel, techLabel, unitKg
+        )
+    }
+
+    val labelCem = stringResource(Res.string.abbr_cement)
+    val labelLime = stringResource(Res.string.abbr_lime)
+    val labelSand = stringResource(Res.string.abbr_sand)
+    val labelKg = stringResource(Res.string.unit_kilograms)
+    val labelRatio = stringResource(Res.string.abbr_water_cement_ratio)
+    val labelStdJaharro = stringResource(Res.string.plaster_type_std_jaharro)
+
+    val plasterOptions = remember(customRecipes, hiddenRecipes) {
+        mortarPresenter.getOptions(
+            customRecipes,
+            hiddenRecipes,
+            filterType = "PLASTER",
+            labelCem = labelCem,
+            labelLime = labelLime,
+            labelSand = labelSand,
+            labelKg = labelKg,
+            labelRatio = labelRatio,
+            labelStdJaharro = labelStdJaharro
+        )
+    }
+
+    // Estados para las selecciones (Objetos completos)
+    var selectedBrick by remember { mutableStateOf<BrickOptionUi?>(null) }
+    var selectedConcGen by remember { mutableStateOf<ConcreteOptionUi?>(null) }
+    var selectedConcStr by remember { mutableStateOf<ConcreteOptionUi?>(null) }
+    var selectedPlaster by remember { mutableStateOf<MortarOptionUi?>(null) }
+
+    // Inicialización de selecciones
+    LaunchedEffect(defBrickId, brickOptions) {
+        if (selectedBrick == null) selectedBrick =
+            brickOptions.find { it.id == defBrickId } ?: brickOptions.firstOrNull()
+    }
+    LaunchedEffect(defConcGenId, concreteGenOptions) {
+        if (selectedConcGen == null) selectedConcGen =
+            concreteGenOptions.find { it.id == defConcGenId } ?: concreteGenOptions.firstOrNull()
+    }
+    LaunchedEffect(defConcStrId, concreteStrOptions) {
+        if (selectedConcStr == null) selectedConcStr =
+            concreteStrOptions.find { it.id == defConcStrId } ?: concreteStrOptions.firstOrNull()
+    }
+    LaunchedEffect(defPlasterId, plasterOptions) {
+        if (selectedPlaster == null) selectedPlaster =
+            plasterOptions.find { it.id == defPlasterId } ?: plasterOptions.firstOrNull()
+    }
+
     // Definimos los FocusRequesters necesarios
-    val focusCemento = remember { FocusRequester() }
-    val focusCal = remember { FocusRequester() }
-    val focusPremezclado = remember { FocusRequester() }
-    val focusBalde = remember { FocusRequester() }
-    val focusCarretilla = remember { FocusRequester() }
+    val focusCement = remember { FocusRequester() }
+    val focusLime = remember { FocusRequester() }
+    val focusPremix = remember { FocusRequester() }
+    val focusBucket = remember { FocusRequester() }
+    val focusBarrow = remember { FocusRequester() }
     val focusMixer = remember { FocusRequester() }
-    val focusFino = remember { FocusRequester() }
-    val focusHormigon = remember { FocusRequester() }
-    val focusMortero = remember { FocusRequester() }
-    val focusLadrillo = remember { FocusRequester() }
-    val focusRevoque = remember { FocusRequester() }
-    val focusHierro = remember { FocusRequester() }
-    val focusEstribo = remember { FocusRequester() }
+    val focusFine = remember { FocusRequester() }
+    val focusConcrete = remember { FocusRequester() }
+    val focusMortar = remember { FocusRequester() }
+    val focusBrick = remember { FocusRequester() }
+    val focusPlaster = remember { FocusRequester() }
+    val focusIron = remember { FocusRequester() }
+    val focusStirrup = remember { FocusRequester() }
 
     Column(
         modifier = Modifier
@@ -100,7 +182,7 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
     ) {
         // --- SECCIÓN 1: MATERIALES PREDETERMINADOS ---
         Text(
-            "Valores Predeterminados",
+            stringResource(Res.string.settings_params_default_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary
         )
@@ -109,227 +191,202 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 // Selector Ladrillo
                 BrickSelectorField(
-                    selectedBrickId = defBrickId,
-                    onBrickSelected = { opt -> scope.launch { repository.saveDefaultBrick(opt.id) } },
-                    customBricks = customBricks,
-                    hiddenIds = hiddenBricks,
+                    options = brickOptions,
+                    selectedOption = selectedBrick,
+                    onOptionSelected = { opt ->
+                        selectedBrick = opt
+                        scope.launch { repository.saveDefaultBrick(opt.id) }
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 ConcreteSelectorField(
-                    selectedRecipeId = defConcGenId,
-                    onRecipeSelected = { id, _ -> scope.launch { repository.saveDefaultConcreteGen(id) } },
-                    customRecipes = customRecipes,
-                    hiddenIds = hiddenRecipes,
-                    modifier = Modifier.fillMaxWidth(),
-                    label = "Hormigón General (Pisos/Losas)"
+                    label = stringResource(Res.string.settings_params_concrete_gen_label),
+                    options = concreteGenOptions,
+                    selectedOption = selectedConcGen,
+                    onOptionSelected = { opt ->
+                        selectedConcGen = opt
+                        scope.launch { repository.saveDefaultConcreteGen(opt.id) }
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 ConcreteSelectorField(
-                    selectedRecipeId = defConcStrId,
-                    onRecipeSelected = { id, _ -> scope.launch { repository.saveDefaultConcreteStr(id) } },
-                    customRecipes = customRecipes,
-                    hiddenIds = hiddenRecipes,
-                    modifier = Modifier.fillMaxWidth(),
-                    filterStructuralOnly = true,
-                    label = "Hormigón Estructural (Vigas/Columnas)"
+                    label = stringResource(Res.string.settings_params_concrete_str_label),
+                    options = concreteStrOptions,
+                    selectedOption = selectedConcStr,
+                    onOptionSelected = { opt ->
+                        selectedConcStr = opt
+                        scope.launch { repository.saveDefaultConcreteStr(opt.id) }
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 MortarSelectorField(
-                    selectedRecipeId = defPlasterId,
-                    onRecipeSelected = { id, _ -> scope.launch { repository.saveDefaultPlasterRough(id) } },
-                    customRecipes = customRecipes,
-                    hiddenIds = hiddenRecipes,
-                    modifier = Modifier.fillMaxWidth(),
-                    filterType = "PLASTER",
-                    label = "Mezcla Revoque Grueso"
+                    label = stringResource(Res.string.settings_params_plaster_rough_label),
+                    options = plasterOptions,
+                    selectedOption = selectedPlaster,
+                    onOptionSelected = { opt ->
+                        selectedPlaster = opt
+                        scope.launch { repository.saveDefaultPlasterRough(opt.id) }
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
-// TODO
-//                AppDropdown(
-//                    label = "Hierro Principal",
-//                    selectedText = ,
-//                    options = ,
-//                    onSelect = { opt -> scope.launch {  } }
-//                ) { option -> }
-//                AppDropdown(
-//                    label = "Hierro Estribos",
-//                    selectedText = ,
-//                    options = ,
-//                    onSelect = { opt -> scope.launch {  } }
-//                ) { option -> }
-//                AppDropdown(
-//                    label = "Hierro Malla",
-//                    selectedText = ,
-//                    options = ,
-//                    onSelect = { opt -> scope.launch {  } }
-//                ) { option -> }
             }
         }
 
-        Text("Presentación de Materiales", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.settings_params_presentation_title), style = MaterialTheme.typography.titleMedium)
 
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
             Column(modifier = Modifier.padding(16.dp)) {
                 EditIntegerSetting(
-                    label = "Cemento",
+                    label = stringResource(Res.string.settings_params_cement_label),
                     value = cementWeight,
                     defaultValue = Defaults.DEFAULT_BAG_CEMENT,
-                    suffix = "kg",
+                    suffix = stringResource(Res.string.unit_kilograms),
                     onSave = { scope.launch { repository.saveBagWeight("cement", it) } },
-                    focusRequester = focusCemento,
-                    nextFocusRequester = focusCal
+                    focusRequester = focusCement,
+                    nextFocusRequester = focusLime
                 )
 
                 EditIntegerSetting(
-                    label = "Cal",
+                    label = stringResource(Res.string.settings_params_lime_label),
                     value = limeWeight,
                     defaultValue = Defaults.DEFAULT_BAG_LIME,
-                    suffix = "kg",
+                    suffix = stringResource(Res.string.unit_kilograms),
                     onSave = { scope.launch { repository.saveBagWeight("lime", it) } },
-                    focusRequester = focusCal,
-                    nextFocusRequester = focusPremezclado
+                    focusRequester = focusLime,
+                    nextFocusRequester = focusPremix
                 )
 
                 EditIntegerSetting(
-                    label = "Premezclado Fino",
+                    label = stringResource(Res.string.settings_params_premix_label),
                     value = premixWeight,
                     defaultValue = Defaults.DEFAULT_BAG_PREMIX,
-                    suffix = "kg",
+                    suffix = stringResource(Res.string.unit_kilograms),
                     onSave = { scope.launch { repository.saveBagWeight("premix", it) } },
-                    focusRequester = focusPremezclado,
-                    nextFocusRequester = focusBalde
+                    focusRequester = focusPremix,
+                    nextFocusRequester = focusBucket
                 )
             }
         }
 
-        Text("Equivalencias de Obra", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.settings_params_equivalences_title), style = MaterialTheme.typography.titleMedium)
 
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
             Column(modifier = Modifier.padding(16.dp)) {
                 EditDoubleSetting(
-                    label = "Balde",
+                    label = stringResource(Res.string.settings_params_bucket_label),
                     value = bucketVol,
                     defaultValue = Defaults.DEFAULT_BUCKET_VOL,
-                    suffix = "Lt",
+                    suffix = stringResource(Res.string.unit_liters),
                     onSave = { scope.launch { repository.saveVolumeCapacity("bucket", it) } },
-                    focusRequester = focusBalde,
-                    nextFocusRequester = focusCarretilla
+                    focusRequester = focusBucket,
+                    nextFocusRequester = focusBarrow
                 )
                 EditDoubleSetting(
-                    label = "Carretilla",
+                    label = stringResource(Res.string.settings_params_barrow_label),
                     value = barrowVol,
                     defaultValue = Defaults.DEFAULT_BARROW_VOL,
-                    suffix = "Lt",
+                    suffix = stringResource(Res.string.unit_liters),
                     onSave = { scope.launch { repository.saveVolumeCapacity("barrow", it) } },
-                    focusRequester = focusCarretilla,
+                    focusRequester = focusBarrow,
                     nextFocusRequester = focusMixer
                 )
                 EditDoubleSetting(
-                    label = "Hormigonera",
+                    label = stringResource(Res.string.settings_params_mixer_label),
                     value = mixerVol,
                     defaultValue = Defaults.DEFAULT_MIXER_VOL,
-                    suffix = "Lt",
+                    suffix = stringResource(Res.string.unit_liters),
                     onSave = { scope.launch { repository.saveVolumeCapacity("mixer", it) } },
                     focusRequester = focusMixer,
-                    nextFocusRequester = focusFino
+                    nextFocusRequester = focusFine
                 )
             }
         }
 
-        Text("Configuración Técnica", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.settings_params_technical_title), style = MaterialTheme.typography.titleMedium)
 
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
             Column(modifier = Modifier.padding(16.dp)) {
                 EditDoubleSetting(
-                    label = "Espesor Revoque Fino",
+                    label = stringResource(Res.string.settings_params_fine_thickness_label),
                     value = fineThick,
                     defaultValue = Defaults.DEFAULT_THICKNESS_FINE,
-                    suffix = "mm",
+                    suffix = stringResource(Res.string.unit_millimeters),
                     onSave = { scope.launch { repository.saveFineThickness(it) } },
-                    focusRequester = focusFino,
-                    nextFocusRequester = focusHormigon
+                    focusRequester = focusFine,
+                    nextFocusRequester = focusConcrete
                 )
-// TODO
-//                EditDoubleSetting(
-//                    label = "Separación máxima entre columnas",
-//                    value = ,
-//                    defaultValue = ,
-//                    suffix = ,
-//                    onSave = { scope.launch {  } },
-//                    focusRequester = ,
-//                    nextFocusRequester =
-//                )
             }
         }
 
-//        HorizontalDivider()
-
-        Text("Desperdicios / Márgenes (%)", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.settings_params_waste_title), style = MaterialTheme.typography.titleMedium)
         Text(
-            "Porcentaje extra que se sumará al cálculo para cubrir roturas y pérdidas.",
+            stringResource(Res.string.settings_params_waste_desc),
             style = MaterialTheme.typography.labelSmall
         )
 
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
             Column(modifier = Modifier.padding(16.dp)) {
                 EditPercentSetting(
-                    label = "Hormigón",
+                    label = stringResource(Res.string.settings_params_waste_concrete),
                     value = wConcrete,
                     defaultValue = Defaults.DEFAULT_WASTE_CONCRETE,
                     onSave = { nuevoValor ->
                         scope.launch { repository.saveWaste("concrete", nuevoValor) }
                     },
-                    focusRequester = focusHormigon,
-                    nextFocusRequester = focusMortero
+                    focusRequester = focusConcrete,
+                    nextFocusRequester = focusMortar
                 )
                 EditPercentSetting(
-                    label = "Mortero",
+                    label = stringResource(Res.string.settings_params_waste_mortar),
                     value = wMortar,
                     defaultValue = Defaults.DEFAULT_WASTE_MORTAR,
                     onSave = { nuevoValor ->
                         scope.launch { repository.saveWaste("mortar", nuevoValor) }
                     },
-                    focusRequester = focusMortero,
-                    nextFocusRequester = focusLadrillo
+                    focusRequester = focusMortar,
+                    nextFocusRequester = focusBrick
                 )
                 EditPercentSetting(
-                    label = "Ladrillos",
+                    label = stringResource(Res.string.settings_params_waste_bricks),
                     value = wBrick,
                     defaultValue = Defaults.DEFAULT_WASTE_BRICK,
                     onSave = { nuevoValor ->
                         scope.launch { repository.saveWaste("bricks", nuevoValor) }
                     },
-                    focusRequester = focusLadrillo,
-                    nextFocusRequester = focusRevoque
+                    focusRequester = focusBrick,
+                    nextFocusRequester = focusPlaster
                 )
                 EditPercentSetting(
-                    label = "Revoques",
+                    label = stringResource(Res.string.settings_params_waste_plaster),
                     value = wPlaster,
                     defaultValue = Defaults.DEFAULT_WASTE_PLASTER,
                     onSave = { nuevoValor ->
                         scope.launch { repository.saveWaste("plaster", nuevoValor) }
                     },
-                    focusRequester = focusRevoque,
-                    nextFocusRequester = focusHierro
+                    focusRequester = focusPlaster,
+                    nextFocusRequester = focusIron
                 )
                 EditPercentSetting(
-                    label = "Hierro Principal",
+                    label = stringResource(Res.string.settings_params_waste_iron_main),
                     value = wIronMain,
                     defaultValue = Defaults.DEFAULT_WASTE_IRON_MAIN,
                     onSave = { nuevoValor ->
                         scope.launch { repository.saveWaste("iron_main", nuevoValor) }
                     },
-                    focusRequester = focusHierro,
-                    nextFocusRequester = focusEstribo
+                    focusRequester = focusIron,
+                    nextFocusRequester = focusStirrup
                 )
                 EditPercentSetting(
-                    label = "Estribos",
+                    label = stringResource(Res.string.settings_params_waste_iron_stirrup),
                     value = wIronStirrup,
                     defaultValue = Defaults.DEFAULT_WASTE_IRON_STIRRUP,
                     onSave = { nuevoValor ->
                         scope.launch { repository.saveWaste("iron_stirrup", nuevoValor) }
                     },
-                    focusRequester = focusEstribo,
+                    focusRequester = focusStirrup,
                     onDone = {}
                 )
             }

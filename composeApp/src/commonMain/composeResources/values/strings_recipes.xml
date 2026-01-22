@@ -28,4 +28,35 @@
     <string name="recipe_uses_h21">Vigas, losas y estructuras estándar</string>
     <string name="recipe_uses_h25">Estructuras de alta carga</string>
     <string name="recipe_uses_h30">Pavimentos y grandes estructuras</string>
+
+    <!-- RECIPES: NAMES & PROPORTIONS -->
+    <string name="recipe_name_h8">H8</string>
+    <string name="recipe_prop_h8">1:4:8 (Cem:Arena:Piedra)</string>
+
+    <string name="recipe_name_h13">H13</string>
+    <string name="recipe_prop_h13">1:3:5 (Cem:Arena:Piedra)</string>
+
+    <string name="recipe_name_h17">H17</string>
+    <string name="recipe_prop_h17">1:2.5:4 (Cem:Arena:Piedra)</string>
+
+    <string name="recipe_name_h21">H21</string>
+    <string name="recipe_prop_h21">1:2:3 (Cem:Arena:Piedra)</string>
+
+    <string name="recipe_name_h25">H25</string>
+    <string name="recipe_prop_h25">1:1.5:2.5 (Cem:Arena:Piedra)</string>
+
+    <string name="recipe_name_h30">H30</string>
+    <string name="recipe_prop_h30">1:1:2 (Cem:Arena:Piedra)</string>
+
+    <string name="recipe_name_jaharro">Jaharro (Grueso)</string>
+    <string name="recipe_prop_jaharro">1/4:1:3 (Cem:Cal:Arena)</string>
+
+    <string name="recipe_name_reinforced">Mortero Reforzado</string>
+    <string name="recipe_prop_reinforced">1/2:1:4 (Cem:Cal:Arena)</string>
+
+    <string name="recipe_name_cement">Mortero Cementicio</string>
+    <string name="recipe_prop_cement">1:3 (Cem:Arena)</string>
+
+    <string name="recipe_name_fine">Revoque Fino (Enlucido)</string>
+    <string name="recipe_prop_fine">1/8:1:2 (Cem:Cal:Arena)</string>
 </resources>

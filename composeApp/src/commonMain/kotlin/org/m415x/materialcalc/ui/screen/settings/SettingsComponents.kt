@@ -18,59 +18,29 @@
 
 package org.m415x.materialcalc.ui.screen.settings
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.animation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachMoney
-import androidx.compose.material.icons.filled.Construction
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import materialscalculator.composeapp.generated.resources.Res
-import materialscalculator.composeapp.generated.resources.about_version
-import materialscalculator.composeapp.generated.resources.app_name
-import materialscalculator.composeapp.generated.resources.settings_item_about_title
-import materialscalculator.composeapp.generated.resources.settings_item_appearance_title
-import materialscalculator.composeapp.generated.resources.settings_item_params_title
-import materialscalculator.composeapp.generated.resources.settings_item_materials_title
-import materialscalculator.composeapp.generated.resources.settings_item_prices_title
-import materialscalculator.composeapp.generated.resources.settings_section_database
-import materialscalculator.composeapp.generated.resources.settings_section_general
-import materialscalculator.composeapp.generated.resources.settings_section_info
-import materialscalculator.composeapp.generated.resources.settings_item_about_desc
-import materialscalculator.composeapp.generated.resources.settings_item_appearance_desc
-import materialscalculator.composeapp.generated.resources.settings_item_params_desc
-import materialscalculator.composeapp.generated.resources.settings_item_materials_desc
-import materialscalculator.composeapp.generated.resources.settings_item_prices_desc
+import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.domain.utils.PlatformInfo
-
-import org.m415x.materialcalc.ui.common.AboutAppDialog
-import org.m415x.materialcalc.ui.common.NumericInput
+import org.m415x.materialcalc.ui.common.dialogs.AboutAppDialog
+import org.m415x.materialcalc.ui.common.inputs.CmInput
+import org.m415x.materialcalc.ui.common.inputs.NumericInput
+import org.m415x.materialcalc.ui.common.utils.toSafeDoubleOrNull
 
 /**
  * Menú principal de configuración.
@@ -187,13 +157,45 @@ fun SettingsCategoryTitle(text: String) {
     )
 }
 
-/**
- * Entrada numérica para enteros.
- *
- * @param value El valor actual.
- * @param label El texto del label.
- * @param onSave La función de guardado.
- */
+@Composable
+fun BaseEditSetting(
+    label: String,
+    isModified: Boolean,
+    onReset: () -> Unit,
+    inputContent: @Composable RowScope.() -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+    ) {
+        // 1. Etiqueta
+        Text(
+            text = label,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        // 2. Botón Reset
+        AnimatedVisibility(
+            visible = isModified,
+            enter = fadeIn() + expandHorizontally(),
+            exit = fadeOut() + shrinkHorizontally()
+        ) {
+            IconButton(onClick = onReset) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = stringResource(Res.string.settings_params_reset_desc),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        // 3. El Input (se inyecta desde afuera)
+        inputContent()
+    }
+}
+
 @Composable
 fun EditIntegerSetting(
     value: Int,
@@ -207,63 +209,26 @@ fun EditIntegerSetting(
 ) {
     var text by remember(value) { mutableStateOf(value.toString()) }
 
-    // Detectamos si el valor actual difiere del default
-    val isModified = value != defaultValue
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 4.dp)
+    BaseEditSetting(
+        label = label,
+        isModified = value != defaultValue,
+        onReset = { onSave(defaultValue) }
     ) {
-        // 1. Texto descriptivo a la izquierda
-        Text(
-            text = label,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        // 2. Botón de Reset (Solo visible si se modificó)
-        // Usamos AnimatedVisibility para que aparezca/desaparezca suavemente
-        AnimatedVisibility(visible = isModified) {
-            IconButton(
-                onClick = {
-                    onSave(defaultValue) // Guardamos el default
-                    text = defaultValue.toString() // Actualizamos el input visualmente
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh, // Ícono de flecha circular
-                    contentDescription = "Restablecer",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-
         NumericInput(
             value = text,
             onValueChange = {
                 text = it
-                // Guardado automático si es válido
                 it.toIntOrNull()?.let { num -> onSave(num) }
             },
-            label = "", // Sin label flotante porque ya tenemos texto a la izquierda
-            modifier = Modifier.width(100.dp),
-
-            suffix = { if (suffix != null) Text(suffix) },
+            label = "",
+            modifier = Modifier.width(110.dp),
+            suffix = { suffix?.let { Text(it, style = MaterialTheme.typography.labelSmall) } },
             focusRequester = focusRequester,
-            nextFocusRequester = nextFocusRequester,
-            onDone = onDone
+            nextFocusRequester = nextFocusRequester
         )
     }
 }
 
-/**
- * Entrada numérica para doubles.
- *
- * @param value El valor actual.
- * @param label El texto del label.
- * @param onSave La función de guardado.
- */
 @Composable
 fun EditDoubleSetting(
     value: Double,
@@ -277,52 +242,22 @@ fun EditDoubleSetting(
 ) {
     var text by remember(value) { mutableStateOf(value.toString()) }
 
-    // Detectamos si el valor actual difiere del default
-    val isModified = value != defaultValue
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 4.dp)
+    BaseEditSetting(
+        label = label,
+        isModified = value != defaultValue,
+        onReset = { onSave(defaultValue) }
     ) {
-        // 1. Texto descriptivo a la izquierda
-        Text(
-            text = label,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        // 2. Botón de Reset (Solo visible si se modificó)
-        // Usamos AnimatedVisibility para que aparezca/desaparezca suavemente
-        AnimatedVisibility(visible = isModified) {
-            IconButton(
-                onClick = {
-                    onSave(defaultValue) // Guardamos el default
-                    text = defaultValue.toString() // Actualizamos el input visualmente
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh, // Ícono de flecha circular
-                    contentDescription = "Restablecer",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-
-        // Input numérico reutilizable (Ahora con Suffix!)
         NumericInput(
             value = text,
             onValueChange = {
                 text = it
                 it.toDoubleOrNull()?.let { num -> onSave(num) }
             },
-            label = "", // Sin label flotante porque ya tenemos texto a la izquierda
-            modifier = Modifier.width(100.dp),
-
-            suffix = { if (suffix != null) Text(suffix) },
+            label = "",
+            modifier = Modifier.width(110.dp),
+            suffix = { suffix?.let { Text(it, style = MaterialTheme.typography.labelSmall) } },
             focusRequester = focusRequester,
-            nextFocusRequester = nextFocusRequester,
-            onDone = onDone
+            nextFocusRequester = nextFocusRequester
         )
     }
 }
@@ -366,7 +301,7 @@ fun EditPercentSetting(
             ) {
                 Icon(
                     imageVector = Icons.Default.Refresh, // Ícono de flecha circular
-                    contentDescription = "Restablecer",
+                    contentDescription = stringResource(Res.string.settings_params_reset_desc),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
                 )
@@ -384,6 +319,60 @@ fun EditPercentSetting(
             modifier = Modifier.width(100.dp),
 
             suffix = { Text("%") },
+            focusRequester = focusRequester,
+            nextFocusRequester = nextFocusRequester,
+            onDone = onDone
+        )
+    }
+}
+
+@Composable
+fun EditPriceSetting(
+    label: String,
+    value: Double,
+    defaultValue: Double = 0.0,
+    unit: String,
+    onSave: (Double) -> Unit,
+    focusRequester: FocusRequester? = null,
+    nextFocusRequester: FocusRequester? = null,
+    onDone: (() -> Unit)? = null
+) {
+    // Usamos una función de formateo que imite lo que hace el CmInput
+    val formattedInitialValue = remember(value) {
+        if (value == 0.0) "0.0"
+        else {
+            // Convertimos el Double (0.5) a Long (50) para evitar problemas de precisión
+            val cents = (value * 100).toLong()
+            val padded = cents.toString().padStart(3, '0')
+            // Reconstruimos el String con el punto manual: "0.50"
+            "${padded.dropLast(2)}.${padded.takeLast(2)}"
+        }
+    }
+
+    var text by remember(value) { mutableStateOf(formattedInitialValue) }
+
+    BaseEditSetting(
+        label = label,
+        isModified = value != defaultValue,
+        onReset = { onSave(defaultValue) }
+    ) {
+        CmInput(
+            value = text,
+            onValueChange = { newValue ->
+                text = newValue
+                onSave(newValue.toSafeDoubleOrNull() ?: 0.0)
+            },
+            label = "",
+            modifier = Modifier.width(180.dp),
+            prefix = {
+                Text(
+                    "$",
+                    modifier = Modifier.padding(end = 4.dp),
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            },
+            suffix = { Text("/$unit", style = MaterialTheme.typography.labelSmall) },
             focusRequester = focusRequester,
             nextFocusRequester = nextFocusRequester,
             onDone = onDone

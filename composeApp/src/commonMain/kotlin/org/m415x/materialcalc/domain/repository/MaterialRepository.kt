@@ -55,4 +55,26 @@ interface MaterialRepository {
      * @return Peso del hierro por metro.
      */
     fun getIronWeightPerMeter(diameter: IronDiameter): Double
+
+    /**
+     * Obtiene la dosificación del revoque para el tipo especificado.
+     *
+     * @param type Tipo de revoque.
+     * @return Dosificación del revoque.
+     */
+    fun getPlasterDosing(type: PlasterType): MortarDosing?
+
+    /**
+     * Obtiene la receta recomendada para revoque grueso (Jaharro).
+     *
+     * @return Dosificación del revoque grueso.
+     */
+    fun getThickPlasterRecipe(): MortarDosing
+
+    /**
+     * Obtiene la receta recomendada para revoque fino (Enlucido).
+     *
+     * @return Dosificación del revoque fino.
+     */
+    fun getFinePlasterRecipe(): MortarDosing
 }

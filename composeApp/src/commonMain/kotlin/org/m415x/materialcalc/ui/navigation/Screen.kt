@@ -23,10 +23,8 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
-import org.jetbrains.compose.resources.StringResource
-
-import materialscalculator.composeapp.generated.resources.Res
 import materialscalculator.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * Enumeración que representa las pantallas de la aplicación.

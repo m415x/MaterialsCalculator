@@ -25,10 +25,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.WindowCompat
 import com.russhwolf.settings.SharedPreferencesSettings
-
 import org.m415x.materialcalc.data.repository.SettingsRepository
-import org.m415x.materialcalc.ui.common.ActivityProvider
-import org.m415x.materialcalc.ui.common.AndroidContext
+import org.m415x.materialcalc.ui.common.utils.ActivityProvider
+import org.m415x.materialcalc.ui.common.utils.AndroidContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

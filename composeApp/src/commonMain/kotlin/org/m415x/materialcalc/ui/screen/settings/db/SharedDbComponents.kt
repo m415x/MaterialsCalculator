@@ -30,19 +30,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import materialscalculator.composeapp.generated.resources.Res
-import materialscalculator.composeapp.generated.resources.button_cancel
-import materialscalculator.composeapp.generated.resources.button_remove
+import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
-import org.m415x.materialcalc.ui.common.AppDialog
-import org.m415x.materialcalc.ui.common.PrimaryBadge
+import org.m415x.materialcalc.domain.model.TextSource
+import org.m415x.materialcalc.domain.model.asString
+import org.m415x.materialcalc.ui.common.dialogs.AppDialog
+import org.m415x.materialcalc.ui.common.display.PrimaryBadge
 
 // --- MODELO GENÉRICO PARA LA LISTA ---
 // Usamos este modelo para que la LazyColumn sea igual para todos
 data class MaterialUiModel(
     val id: String,
-    val title: String,
-    val subtitle: String,
+    val title: TextSource,
+    val subtitle: TextSource,
     val isCustom: Boolean,
     val originalData: Any? = null, // Guardamos el objeto real (CustomBrick/CustomIron) aquí para editarlo
     val type: String? = null // Tipo de mezcla (CONCRETE, MORTAR, PLASTER)
@@ -88,19 +88,23 @@ fun UniversalMaterialItem(
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        item.title.asString(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                     if (item.type != null) {
                         val badgeText = when (item.type) {
-                            "CONCRETE" -> "Hormigón"
-                            "MORTAR" -> "Mortero"
-                            "PLASTER" -> "Revoque"
+                            "CONCRETE" -> stringResource(Res.string.concrete_title)
+                            "MORTAR" -> stringResource(Res.string.wall_label_mortar)
+                            "PLASTER" -> stringResource(Res.string.plaster_title)
                             else -> item.type
                         }
-                        PrimaryBadge(text = badgeText)
+                        PrimaryBadge(text = badgeText ?: "")
                     }
                 }
                 Text(
-                    item.subtitle,
+                    item.subtitle.asString(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -109,10 +113,14 @@ fun UniversalMaterialItem(
             IconButton(onClick = onEdit) {
                 // Si es custom editamos, si es fábrica copiamos
                 val icon = if (item.isCustom) Icons.Default.Edit else Icons.Default.ContentCopy
-                Icon(icon, "Editar", tint = MaterialTheme.colorScheme.primary)
+                Icon(icon, stringResource(Res.string.button_edit), tint = MaterialTheme.colorScheme.primary)
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, "Borrar/Ocultar", tint = MaterialTheme.colorScheme.error)
+                Icon(
+                    Icons.Default.Delete,
+                    stringResource(Res.string.button_remove),
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
         }
     }
@@ -129,11 +137,11 @@ fun DeleteOrHideDialog(
     
     AppDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (isStatic) "Ocultar Material" else "Eliminar Material") },
+        title = { Text(if (isStatic) stringResource(Res.string.settings_db_hide_title) else stringResource(Res.string.settings_db_delete_title)) },
         content = {
             Text(
-                if (isStatic) "Este es un material de fábrica. Se ocultará de la lista pero podrás restaurarlo luego."
-                else "Se eliminará '${item.title}' permanentemente."
+                if (isStatic) stringResource(Res.string.settings_db_hide_msg)
+                else stringResource(Res.string.settings_db_delete_msg, item.title.asString())
             )
         },
         actions = {
@@ -143,7 +151,7 @@ fun DeleteOrHideDialog(
                 onClick = onConfirm,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {
-                Text(if (isStatic) "Ocultar" else stringResource(Res.string.button_remove))
+                Text(if (isStatic) stringResource(Res.string.button_hide) else stringResource(Res.string.button_remove))
             }
         }
     )

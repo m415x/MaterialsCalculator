@@ -32,16 +32,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import materialscalculator.composeapp.generated.resources.Res
-import materialscalculator.composeapp.generated.resources.button_cancel
-import materialscalculator.composeapp.generated.resources.button_close
-import materialscalculator.composeapp.generated.resources.button_save
+import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
 import org.m415x.materialcalc.domain.model.CustomIron
 import org.m415x.materialcalc.domain.model.IronDiameter
-import org.m415x.materialcalc.ui.common.*
+import org.m415x.materialcalc.domain.model.TextSource
+import org.m415x.materialcalc.ui.common.dialogs.AppDialog
+import org.m415x.materialcalc.ui.common.inputs.AppInput
+import org.m415x.materialcalc.ui.common.inputs.NumericInput
+import org.m415x.materialcalc.ui.common.utils.RequestFocusOnStart
+import org.m415x.materialcalc.ui.common.utils.roundToDecimals
+import org.m415x.materialcalc.ui.common.utils.toSafeDoubleOrNull
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -53,15 +56,15 @@ fun IronsTabContent(repository: SettingsRepository) {
     val staticRepo = remember { StaticMaterialRepository() }
 
     // 1. Fusionar en MaterialUiModel (SOLUCION DEL ERROR)
-    val uiList = remember(customIrons, hiddenIds) {
+    /*val uiList = remember(customIrons, hiddenIds) {
         val list = mutableListOf<MaterialUiModel>()
 
         // Custom
         list.addAll(customIrons.map {
             MaterialUiModel(
                 id = it.id,
-                title = it.name,
-                subtitle = "Ø ${it.diameterMm} mm | ${it.linearWeight} kg/m",
+                title = TextSource.Raw(it.name),
+                subtitle = TextSource.Raw("Ø ${it.diameterMm} mm | ${it.linearWeight} kg/m"),
                 isCustom = true,
                 originalData = it // Guardamos el CustomIron aquí
             )
@@ -70,24 +73,65 @@ fun IronsTabContent(repository: SettingsRepository) {
         // Static
         IronDiameter.entries.forEach { type ->
             if (type.name !in hiddenIds) {
-                val peso = staticRepo.getIronWeightPerMeter(type)
+                val weight = staticRepo.getIronWeightPerMeter(type)
                 list.add(MaterialUiModel(
                     id = type.name,
-                    title = "Hierro Ø ${type.milimeters} mm",
-                    subtitle = "$peso kg/m",
+                    title = TextSource.Raw("Hierro Ø ${type.milimeters} mm"),
+                    subtitle = TextSource.Raw("$weight kg/m"),
                     isCustom = false,
                     // Creamos copia custom temporal
                     originalData = CustomIron(
                         id = "",
                         name = "Hierro Ø ${type.milimeters} mm",
                         diameterMm = type.milimeters,
-                        linearWeight = peso
+                        linearWeight = weight
                     )
                 ))
             }
         }
-        list.sortedBy { it.title }
-    }
+        list.sortedBy { it.id } // Ordenar por ID o nombre
+    }*/
+
+    // RE-IMPLEMENTACIÓN CON buildList para usar stringResource
+    val unitMm = stringResource(Res.string.unit_millimeters)
+    val unitKgM = stringResource(Res.string.unit_kg_m)
+
+    val uiListCorrected = buildList {
+        // Custom
+        customIrons.forEach {
+            add(
+                MaterialUiModel(
+                    id = it.id,
+                    title = TextSource.Raw(it.name),
+                    subtitle = TextSource.Raw("Ø ${it.diameterMm} $unitMm | ${it.linearWeight} $unitKgM"),
+                    isCustom = true,
+                    originalData = it
+                )
+            )
+        }
+
+        // Static
+        IronDiameter.entries.forEach { type ->
+            if (type.name !in hiddenIds) {
+                val weight = staticRepo.getIronWeightPerMeter(type)
+                add(
+                    MaterialUiModel(
+                        id = type.name,
+                        title = TextSource.Raw("Ø ${type.milimeters} $unitMm"),
+                        subtitle = TextSource.Raw("$weight $unitKgM"),
+                        isCustom = false,
+                        originalData = CustomIron(
+                            id = "",
+                            name = "Ø ${type.milimeters} $unitMm",
+                            diameterMm = type.milimeters,
+                            linearWeight = weight
+                        )
+                    )
+                )
+            }
+        }
+    }.sortedBy { it.id }
+
 
     var showEditor by remember { mutableStateOf(false) }
     var ironToEdit by remember { mutableStateOf<CustomIron?>(null) }
@@ -103,7 +147,7 @@ fun IronsTabContent(repository: SettingsRepository) {
                     showEditor = true
                 },
                 icon = { Icon(Icons.Default.Add, null) },
-                text = { Text("Nuevo") }
+                text = { Text(stringResource(Res.string.button_new)) }
             )
         }
     ) { padding ->
@@ -123,27 +167,27 @@ fun IronsTabContent(repository: SettingsRepository) {
                 ) {
                     Icon(Icons.Default.Restore, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Restaurar materiales de fábrica(${hiddenIds.size})")
+                    Text(stringResource(Res.string.settings_db_restore_factory, hiddenIds.size))
                 }
             } else {
                 Text(
-                    "Gestiona los hierros disponibles en la calculadora.",
+                    stringResource(Res.string.settings_db_irons_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
 
-            if (uiList.isEmpty()) {
+            if (uiListCorrected.isEmpty()) {
                 Box(Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
-                    Text("No hay hierros disponibles.")
+                    Text(stringResource(Res.string.settings_db_empty))
                 }
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    items(uiList) { item ->
+                    items(uiListCorrected) { item ->
                         UniversalMaterialItem(
                             item = item,
                             onEdit = {
@@ -205,14 +249,14 @@ fun RestoreIronsDialog(
 ) {
     AppDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Restaurar Hierros") },
+        title = { Text(stringResource(Res.string.settings_db_restore_title)) },
         content = {
             LazyColumn(
                 modifier = Modifier.heightIn(max = 300.dp) // Limitar altura
             ) {
                 items(hiddenIds.toList()) { id ->
                     // Buscamos el nombre legible usando el Enum
-                    val nombre = try {
+                    val name = try {
                         IronDiameter.valueOf(id).milimeters.toString()
                     } catch (e: Exception) {
                         id
@@ -226,8 +270,12 @@ fun RestoreIronsDialog(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(nombre, style = MaterialTheme.typography.bodyLarge)
-                        Icon(Icons.Default.Restore, "Restaurar", tint = MaterialTheme.colorScheme.primary)
+                        Text(name, style = MaterialTheme.typography.bodyLarge)
+                        Icon(
+                            Icons.Default.Restore,
+                            stringResource(Res.string.button_restore),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                     HorizontalDivider()
                 }
@@ -249,11 +297,11 @@ fun IronEditorDialog(
     // Inicializamos valores (Convertimos Metros a String MM para inputs)
     var name by remember { mutableStateOf(ironToEdit?.name ?: "") }
 
-    var diam by remember {
+    var diameter by remember {
         mutableStateOf(ironToEdit?.diameterMm?.let { if (it == 0.0) "" else it.toString() } ?: "")
     }
 
-    var pesoMetro by remember { mutableStateOf((ironToEdit?.linearWeight ?: 0.0).toString()) }
+    var linearWeight by remember { mutableStateOf((ironToEdit?.linearWeight ?: 0.0).toString()) }
 
     // Estado para saber si el usuario ha editado manualmente el peso
     // Si estamos editando uno existente, asumimos que ya fue editado (o calculado) y no lo tocamos automáticamente
@@ -261,66 +309,66 @@ fun IronEditorDialog(
     var isWeightManuallyEdited by remember { mutableStateOf(ironToEdit != null) }
 
     // Efecto para calcular el peso automáticamente
-    LaunchedEffect(diam) {
+    LaunchedEffect(diameter) {
         if (!isWeightManuallyEdited) {
-            val d = diam.toSafeDoubleOrNull()
+            val d = diameter.toSafeDoubleOrNull()
             if (d != null && d > 0) {
                 // Fórmula: (d^2) / 162.2
                 val calculatedWeight = (d * d) / 162.2
-                pesoMetro = calculatedWeight.roundToDecimals(3).replace(',', '.')
+                linearWeight = calculatedWeight.roundToDecimals(3).replace(',', '.')
             }
         }
     }
 
-    val isFormValid = name.isNotBlank() && diam.isNotBlank() && pesoMetro.isNotBlank()
+    val isFormValid = name.isNotBlank() && diameter.isNotBlank() && linearWeight.isNotBlank()
 
     // Definimos los FocusRequesters necesarios
-    val focusNombreHierro = remember { FocusRequester() }
-    val focusDiametroHierro = remember { FocusRequester() }
-    val focusPesoHierro = remember { FocusRequester() }
+    val focusIronName = remember { FocusRequester() }
+    val focusIronDiameter = remember { FocusRequester() }
+    val focusIronWeight = remember { FocusRequester() }
 
     // Auto-Foco al abrir
-    RequestFocusOnStart(focusNombreHierro)
+    RequestFocusOnStart(focusIronName)
 
     AppDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (ironToEdit == null) "Nuevo Hierro" else "Editar Hierro") },
+        title = { Text(if (ironToEdit == null) stringResource(Res.string.settings_db_iron_new) else stringResource(Res.string.settings_db_iron_edit)) },
         content = {
             AppInput(
                 value = name,
                 onValueChange = { name = it },
-                label = "Nombre del hierro",
-                focusRequester = focusNombreHierro,
-                nextFocusRequester = focusDiametroHierro
+                label = stringResource(Res.string.settings_db_iron_name),
+                focusRequester = focusIronName,
+                nextFocusRequester = focusIronDiameter
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 NumericInput(
-                    value = diam,
+                    value = diameter,
                     onValueChange = {
-                        diam = it
+                        diameter = it
                         // Si cambiamos el diámetro, permitimos que se recalcule el peso si no fue editado manualmente
                         // O podríamos resetear isWeightManuallyEdited a false para forzar el recálculo
                         // Pero lo mejor es: si el usuario escribe en diam, recalculamos.
                         // Si el usuario escribe en peso, dejamos de recalcular.
                         isWeightManuallyEdited = false
                     },
-                    label = "Diámetro",
-                    suffix = { Text("mm") },
+                    label = stringResource(Res.string.settings_db_iron_diameter),
+                    suffix = { Text(stringResource(Res.string.unit_millimeters)) },
                     modifier = Modifier.weight(1f),
-                    focusRequester = focusDiametroHierro,
-                    nextFocusRequester = focusPesoHierro
+                    focusRequester = focusIronDiameter,
+                    nextFocusRequester = focusIronWeight
                 )
                 NumericInput(
-                    value = pesoMetro,
+                    value = linearWeight,
                     onValueChange = {
-                        pesoMetro = it
+                        linearWeight = it
                         isWeightManuallyEdited = true // El usuario tocó el peso, dejamos de calcular
                     },
-                    label = "Peso/Metro",
-                    suffix = { Text("kg/m") },
+                    label = stringResource(Res.string.settings_db_iron_weight),
+                    suffix = { Text(stringResource(Res.string.unit_kg_m)) },
                     modifier = Modifier.weight(1f),
-                    focusRequester = focusPesoHierro,
+                    focusRequester = focusIronWeight,
                     onDone = {}
                 )
             }
@@ -331,8 +379,8 @@ fun IronEditorDialog(
             Button(
                 enabled = isFormValid,
                 onClick = {
-                    val d = diam.toSafeDoubleOrNull() ?: 0.0
-                    val peso = pesoMetro.toSafeDoubleOrNull() ?: 0.0
+                    val d = diameter.toSafeDoubleOrNull() ?: 0.0
+                    val w = linearWeight.toSafeDoubleOrNull() ?: 0.0
 
                     // Verificamos si es nulo O ESTÁ VACÍO.
                     val finalId = if (ironToEdit?.id.isNullOrBlank()) {
@@ -345,7 +393,7 @@ fun IronEditorDialog(
                         id = finalId,
                         name = name,
                         diameterMm = d,
-                        linearWeight = peso
+                        linearWeight = w
                     )
                     onSave(newIron)
                 }

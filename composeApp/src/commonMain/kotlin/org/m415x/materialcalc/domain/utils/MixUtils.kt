@@ -20,6 +20,7 @@ package org.m415x.materialcalc.domain.utils
 
 import org.m415x.materialcalc.domain.model.ConcreteDosing
 import org.m415x.materialcalc.domain.model.MortarDosing
+import org.m415x.materialcalc.domain.model.TextSource
 import org.m415x.materialcalc.domain.utils.ConstructionConstants.APPARENT_CEMENT_DENSITY
 import org.m415x.materialcalc.domain.utils.ConstructionConstants.APPARENT_LIME_DENSITY
 import org.m415x.materialcalc.domain.utils.ConstructionConstants.formatPart
@@ -28,45 +29,50 @@ import org.m415x.materialcalc.domain.utils.ConstructionConstants.formatPart
  * Convierte la dosificación técnica de hormigón a proporción volumétrica (1:3:3).
  *
  * @param ConcreteDosing Objeto que contiene la dosificación en kg y m³.
- * @return Una cadena de texto representando la proporción volumétrica (ej: "1:3:3 (Cem:Arena:Piedra)").
+ * @return Un TextSource representando la proporción volumétrica.
  */
-fun ConcreteDosing.estimateProportionTxt(): String {
+fun ConcreteDosing.estimateProportionTxt(): TextSource {
     // 1. SI TENEMOS EL DATO ORIGINAL, LO USAMOS (Prioridad Absoluta)
-    if (descriptionProportion.isNotBlank()) return descriptionProportion
+    // Si es un recurso, lo devolvemos tal cual. Si es Raw y no está vacío, también.
+    if (descriptionProportion is TextSource.Resource) return descriptionProportion
+    if (descriptionProportion is TextSource.Raw && descriptionProportion.text.isNotBlank()) return descriptionProportion
 
     // 2. Calcular volumen aparente del cemento (el "1" de la fórmula)
     val cementVolume = this.cementKg / APPARENT_CEMENT_DENSITY
 
-    if (cementVolume <= 0.001) return "Sin Cemento"
+    if (cementVolume <= 0.001) return TextSource.Raw("Sin Cemento")
 
     // 3. Calcular partes relativas
     // Como arenaM3 y piedraM3 ya son volumen, solo dividimos por el volumen del cemento
     val sandPart = this.sandM3 / cementVolume
     val gravelPart = this.gravelM3 / cementVolume
 
-    return buildString {
+    val text = buildString {
         append("1") // Cemento
         append(":${formatPart(sandPart)}")
         append(":${formatPart(gravelPart)}")
         append(" (Cem:Arena:Piedra)")
     }
+    return TextSource.Raw(text)
 }
 
 /**
  * Intenta convertir la dosificación técnica (kg) a una proporción volumétrica legible (1:3).
  *
  * @param MortarDosing Objeto que contiene la dosificación en kg.
- * @return Una cadena de texto representando la proporción volumétrica (ej: "1:3 (Cem:Arena)").
+ * @return Un TextSource representando la proporción volumétrica.
  */
-fun MortarDosing.estimateProportionTxt(): String {
+fun MortarDosing.estimateProportionTxt(): TextSource {
     // 1. SI TENEMOS EL DATO ORIGINAL, LO USAMOS (Prioridad Absoluta)
-    if (!parts.isNullOrBlank()) return parts
+    // Nota: MortarDosing.mixingRatio es el equivalente a descriptionProportion
+    if (mixingRatio is TextSource.Resource) return mixingRatio
+    if (mixingRatio is TextSource.Raw && mixingRatio.text.isNotBlank()) return mixingRatio
 
     // 2. Si no (ej: receta vieja o manual), usamos la estimación matemática
     val cementVolume = this.cementKg / APPARENT_CEMENT_DENSITY
 
     // Si no hay cemento, es raro, devolvemos vacío o manejo especial
-    if (cementVolume <= 0.001) return "Sin Cemento"
+    if (cementVolume <= 0.001) return TextSource.Raw("Sin Cemento")
 
     // 3. Normalizamos dividiendo todo por el volumen del cemento (El cemento es el "1")
     val cementPart = 1.0
@@ -74,7 +80,7 @@ fun MortarDosing.estimateProportionTxt(): String {
     val sandPart = this.sandM3 / cementVolume // La arena ya está en m3
     // val parteAgua = ... (Generalmente no se pone en el 1:3:3, es a ojo)
 
-    return buildString {
+    val text = buildString {
         append(formatPart(cementPart))
 
         if (limePart > 0.1) {
@@ -88,4 +94,5 @@ fun MortarDosing.estimateProportionTxt(): String {
         if (limePart > 0.1) append(":Cal")
         append(":Arena)")
     }
+    return TextSource.Raw(text)
 }

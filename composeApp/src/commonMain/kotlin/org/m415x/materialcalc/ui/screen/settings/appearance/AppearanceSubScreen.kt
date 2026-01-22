@@ -49,8 +49,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
-import org.m415x.materialcalc.ui.common.AppInput
+import materialscalculator.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
+import org.m415x.materialcalc.ui.common.inputs.AppInput
 import org.m415x.materialcalc.ui.theme.ColorPalette
 import org.m415x.materialcalc.ui.theme.ContrastMode
 import org.m415x.materialcalc.ui.theme.ThemeMode
@@ -81,7 +82,7 @@ fun AppearanceSubScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Personalización Visual", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.settings_appearance_title), style = MaterialTheme.typography.titleMedium)
 
         Column {
             // Selector de Tema (Claro / Oscuro / Sistema)
@@ -104,7 +105,7 @@ fun AppearanceSubScreen(
         }
 
         Text(
-            text = "El modo de alto contraste ayuda a mejorar la visibilidad bajo la luz directa del sol.",
+            text = stringResource(Res.string.settings_appearance_contrast_info),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 8.dp)
@@ -124,9 +125,9 @@ fun ThemeModeSelector(currentTheme: ThemeMode, onThemeChange: (ThemeMode) -> Uni
     var expanded by remember { mutableStateOf(false) }
 
     ListItem(
-        headlineContent = { Text("Tema de la aplicación") },
+        headlineContent = { Text(stringResource(Res.string.settings_appearance_theme_label)) },
         supportingContent = {
-            Text("Define si usar modo claro, oscuro o del sistema.", style = MaterialTheme.typography.labelSmall)
+            Text(stringResource(Res.string.settings_appearance_theme_desc), style = MaterialTheme.typography.labelSmall)
         },
         trailingContent = {
             ExposedDropdownMenuBox(
@@ -173,9 +174,9 @@ fun ColorPaletteSelector(currentPalette: ColorPalette, onPaletteChange: (ColorPa
     var expanded by remember { mutableStateOf(false) }
 
     ListItem(
-        headlineContent = { Text("Paleta de Colores") },
+        headlineContent = { Text(stringResource(Res.string.settings_appearance_palette_label)) },
         supportingContent = {
-            Text("Elige el estilo visual de la aplicación.", style = MaterialTheme.typography.labelSmall)
+            Text(stringResource(Res.string.settings_appearance_palette_desc), style = MaterialTheme.typography.labelSmall)
         },
         leadingContent = { Icon(Icons.Default.Palette, null) },
         trailingContent = {
@@ -222,10 +223,10 @@ fun ContrastModeSwitch(currentContrast: ContrastMode, onContrastChange: (Contras
     val isHighContrast = currentContrast == ContrastMode.HighContrast
 
     ListItem(
-        headlineContent = { Text("Modo Alto Contraste") },
+        headlineContent = { Text(stringResource(Res.string.settings_appearance_contrast_label)) },
         supportingContent = {
             Text(
-                "Mejora la legibilidad en condiciones de mucha luz exterior.",
+                stringResource(Res.string.settings_appearance_contrast_desc),
                 style = MaterialTheme.typography.labelSmall
             )
         },
@@ -244,10 +245,10 @@ fun ContrastModeSwitch(currentContrast: ContrastMode, onContrastChange: (Contras
 @Composable
 fun OutdoorModeSwitch(isChecked: Boolean, onDataChange: (Boolean) -> Unit) {
     ListItem(
-        headlineContent = { Text("Modo Exterior") },
+        headlineContent = { Text(stringResource(Res.string.settings_appearance_outdoor_label)) },
         supportingContent = {
             Text(
-                "Fuerza el brillo al máximo para ver bajo el sol.",
+                stringResource(Res.string.settings_appearance_outdoor_desc),
                 style = MaterialTheme.typography.labelSmall
             )
         },

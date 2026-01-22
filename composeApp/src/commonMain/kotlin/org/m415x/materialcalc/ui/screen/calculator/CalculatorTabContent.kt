@@ -44,34 +44,11 @@ fun CalculatorTabContent(
     AnimatedContent(
         targetState = currentScreen,
         label = "CalculatorNavAnimation",
-        transitionSpec = {
-            // LÓGICA DE DIRECCIÓN:
-            // Si el destino es HOME, estamos volviendo (Back).
-            // Si el destino NO es Home, estamos entrando a un detalle (Forward).
-            if (targetState == Screen.Home) {
-                // BACK: Entra por izquierda, sale por derecha
-                slideInHorizontally(
-                    initialOffsetX = { -it },
-                    animationSpec = tween(300)
-                ) togetherWith slideOutHorizontally(
-                    targetOffsetX = { it },
-                    animationSpec = tween(300)
-                )
-            } else {
-                // FORWARD: Entra por derecha, sale por izquierda
-                slideInHorizontally(
-                    initialOffsetX = { it },
-                    animationSpec = tween(300)
-                ) togetherWith slideOutHorizontally(
-                    targetOffsetX = { -it },
-                    animationSpec = tween(300)
-                )
-            }
-        }
+        transitionSpec = { calculatorTransitionSpec(targetState) }
     ) { targetScreen ->
         // Renderizamos la pantalla correspondiente
         when (targetScreen) {
-            is Screen.Home -> HomeScreen(
+            is Screen.Home -> CalculatorMenuScreen(
                 onConcreteClick = { onNavigate(Screen.Concrete) },
                 onWallClick = { onNavigate(Screen.Wall) },
                 onStructureClick = { onNavigate(Screen.Structure) },
@@ -84,5 +61,34 @@ fun CalculatorTabContent(
             is Screen.Plaster -> PlasterScreen(appSettings)
             else -> {}
         }
+    }
+}
+
+/**
+ * Define la especificación de transición para la navegación de la calculadora.
+ * Extraída para mejorar la legibilidad y evitar recomposiciones innecesarias de la definición.
+ */
+private fun calculatorTransitionSpec(targetState: Screen): ContentTransform {
+    // LÓGICA DE DIRECCIÓN:
+    // Si el destino es HOME, estamos volviendo (Back).
+    // Si el destino NO es Home, estamos entrando a un detalle (Forward).
+    return if (targetState == Screen.Home) {
+        // BACK: Entra por izquierda, sale por derecha
+        slideInHorizontally(
+            initialOffsetX = { -it },
+            animationSpec = tween(300)
+        ) togetherWith slideOutHorizontally(
+            targetOffsetX = { it },
+            animationSpec = tween(300)
+        )
+    } else {
+        // FORWARD: Entra por derecha, sale por izquierda
+        slideInHorizontally(
+            initialOffsetX = { it },
+            animationSpec = tween(300)
+        ) togetherWith slideOutHorizontally(
+            targetOffsetX = { -it },
+            animationSpec = tween(300)
+        )
     }
 }

@@ -68,5 +68,8 @@ data class AppSettingsState(
     // Elementos Ocultos (IDs)
     val hiddenBrickIds: Set<String> = emptySet(),
     val hiddenIronIds: Set<String> = emptySet(),
-    val hiddenRecipeIds: Set<String> = emptySet()
+    val hiddenRecipeIds: Set<String> = emptySet(),
+
+    // Precios
+    val priceSettings: PriceSettings = PriceSettings()
 )

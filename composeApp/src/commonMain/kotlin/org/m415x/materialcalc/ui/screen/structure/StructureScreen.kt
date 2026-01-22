@@ -26,9 +26,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -42,7 +42,14 @@ import org.m415x.materialcalc.data.repository.StaticMaterialRepository
 import org.m415x.materialcalc.domain.common.toPresentationUnit
 import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.domain.usecase.CalculateStructureUseCase
-import org.m415x.materialcalc.ui.common.*
+import org.m415x.materialcalc.ui.common.display.*
+import org.m415x.materialcalc.ui.common.inputs.*
+import org.m415x.materialcalc.ui.common.layout.InputColumn
+import org.m415x.materialcalc.ui.common.layout.InputRow
+import org.m415x.materialcalc.ui.common.layout.InputSection
+import org.m415x.materialcalc.ui.common.presenters.ConcretePresenter
+import org.m415x.materialcalc.ui.common.presenters.IronPresenter
+import org.m415x.materialcalc.ui.common.utils.*
 import kotlin.math.ceil
 
 /**
@@ -54,101 +61,49 @@ import kotlin.math.ceil
 @Composable
 fun StructureScreen(appSettings: AppSettingsState) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    val nombreApp = stringResource(Res.string.app_name)
+    val appName = stringResource(Res.string.app_name)
     val repository = remember { StaticMaterialRepository() }
-    val calcularEstructura = remember { CalculateStructureUseCase(repository) }
+    val calculateStructure = remember { CalculateStructureUseCase(repository) }
 
-    // Usamos los valores directamente desde appSettings
-    val cementBagWeightKg = appSettings.bagCementKg
-    val limeBagWeightKg = appSettings.bagLimeKg
-    val wConcrete = appSettings.wasteConcretePct
-    val wIronMain = appSettings.wasteIronMainPct
-    val wStirrup = appSettings.wasteIronStirrupPct
-    val defaultConcreteId = appSettings.defaultConcreteStrId
+    // Instanciamos los Presenters
+    val concretePresenter = remember { ConcretePresenter() }
+    val ironPresenter = remember { IronPresenter() }
 
-    var selectedStructureType by remember { mutableStateOf(StructureType.BEAM) }
+    // --- PREPARACIÓN DE DATOS DE HORMIGÓN ---
+    val resLabel = stringResource(Res.string.recipe_section_resistance)
+    val resUnit = stringResource(Res.string.recipe_unit_kilogram_per_square_centimeters)
+    val propLabel = stringResource(Res.string.concrete_result_proportion)
+    val techLabel = stringResource(Res.string.concrete_result_technical, "")
+    val unitKg = stringResource(Res.string.unit_kilograms)
 
-    // Estados elevados para Vigas y Columnas
-    var isCircular by remember { mutableStateOf(false) }
-    var largo by remember { mutableStateOf("") }
-    var ladoA by remember { mutableStateOf("") }
-    var ladoB by remember { mutableStateOf("") }
-
-    // Estado para el selector de hormigón
-    var selectedRecipeId by remember { mutableStateOf("") }
-    var selectedRecipe by remember { mutableStateOf<ConcreteDosing?>(null) }
-
-    // Efecto para actualizar la selección si el default cambia y el usuario no ha elegido nada
-    LaunchedEffect(defaultConcreteId) {
-        if (selectedRecipeId.isBlank() && defaultConcreteId.isNotBlank()) {
-            selectedRecipeId = defaultConcreteId
-        }
+    val concreteOptions = remember(appSettings.customRecipes, appSettings.hiddenRecipeIds) {
+        concretePresenter.getOptions(
+            customRecipes = appSettings.customRecipes,
+            hiddenIds = appSettings.hiddenRecipeIds,
+            filterStructuralOnly = true,
+            resLabel = resLabel,
+            resUnit = resUnit,
+            propLabel = propLabel,
+            techLabel = techLabel,
+            unitKg = unitKg
+        )
     }
 
-    // Estados para hierros (ahora usan IDs para el selector)
-    var selectedHierroMainId by remember { mutableStateOf("") }
-    var selectedHierroMain by remember { mutableStateOf(IronDiameter.HIERRO_10) }
-    var cantidadVarillas by remember { mutableStateOf("4") }
-
-    var selectedEstriboId by remember { mutableStateOf("") }
-    var selectedEstribo by remember { mutableStateOf(IronDiameter.HIERRO_6) }
-    var separacionEstriboCm by remember { mutableStateOf("0.20") }
-
-    // Inicializar valores por defecto para hierros si están vacíos
-    LaunchedEffect(Unit) {
-        if (selectedHierroMainId.isBlank()) {
-            selectedHierroMainId = IronDiameter.HIERRO_10.name
-            selectedHierroMain = IronDiameter.HIERRO_10
-        }
-        if (selectedEstriboId.isBlank()) {
-            selectedEstriboId = IronDiameter.HIERRO_6.name
-            selectedEstribo = IronDiameter.HIERRO_6
-        }
+    // --- PREPARACIÓN DE DATOS DE HIERRO ---
+    val ironOptions = remember(appSettings.customIrons, appSettings.hiddenIronIds) {
+        ironPresenter.getOptions(
+            customIrons = appSettings.customIrons,
+            hiddenIds = appSettings.hiddenIronIds
+        )
     }
 
-    // Estados para controlar la terminación de la armadura en cada extremo (elevados)
-    var selectedStartTermination by remember { mutableStateOf(RebarTerminationType.STRAIGHT) }
-    var selectedEndTermination by remember { mutableStateOf(RebarTerminationType.STRAIGHT) }
-
-    // Estados para la longitud de los ganchos (si aplica) (elevados)
-    var startHookLength by remember { mutableStateOf("") }
-    var endHookLength by remember { mutableStateOf("") }
-
-    // Estados para Losa (elevados)
-    var slabWidth by remember { mutableStateOf("") }
-    var slabLength by remember { mutableStateOf("") }
-    var slabThickness by remember { mutableStateOf("") }
-    var isManualRebar by remember { mutableStateOf(true) }
-    var selectedMeshId by remember { mutableStateOf("q131") }
-    var separationX by remember { mutableStateOf("15") }
-    var separationY by remember { mutableStateOf("15") }
-
-    // Estados para hierros de losa (ahora usan IDs para el selector)
-    var selectedPhiXId by remember { mutableStateOf("") }
-    var selectedPhiX by remember { mutableStateOf(IronDiameter.HIERRO_8) }
-    var selectedPhiYId by remember { mutableStateOf("") }
-    var selectedPhiY by remember { mutableStateOf(IronDiameter.HIERRO_8) }
-
-    // Inicializar valores por defecto para hierros de losa si están vacíos
-    LaunchedEffect(Unit) {
-        if (selectedPhiXId.isBlank()) {
-            selectedPhiXId = IronDiameter.HIERRO_8.name
-            selectedPhiX = IronDiameter.HIERRO_8
-        }
-        if (selectedPhiYId.isBlank()) {
-            selectedPhiYId = IronDiameter.HIERRO_8.name
-            selectedPhiY = IronDiameter.HIERRO_8
-        }
-    }
-
-    var selectedSlabTermination by remember { mutableStateOf(RebarTerminationType.STRAIGHT) }
-    var slabHookLength by remember { mutableStateOf("") }
-
-
-    var resultado by remember { mutableStateOf<StructureResult?>(null) }
-    var slabResult by remember { mutableStateOf<SlabResult?>(null) }
-    var errorMsg by remember { mutableStateOf<String?>(null) }
-    var showResultSheet by remember { mutableStateOf(false) }
+    // --- INICIALIZACIÓN DEL STATE HOLDER ---
+    val state = rememberStructureScreenState(
+        appSettings = appSettings,
+        calculateStructure = calculateStructure,
+        concreteOptions = concreteOptions,
+        ironOptions = ironOptions
+    )
 
     val shareManager = remember { getShareManager() }
 
@@ -157,112 +112,7 @@ fun StructureScreen(appSettings: AppSettingsState) {
             ExtendedFloatingActionButton(
                 onClick = {
                     keyboardController?.hide()
-
-                    if (selectedStructureType == StructureType.SLAB) {
-                        val w = slabWidth.toSafeDoubleOrNull()
-                        val l = slabLength.toSafeDoubleOrNull()
-                        val t = slabThickness.toSafeDoubleOrNull()
-                        val sepX = separationX.toSafeDoubleOrNull()
-                        val sepY = separationY.toSafeDoubleOrNull()
-                        val hookL = slabHookLength.toSafeDoubleOrNull() ?: 0.0
-
-                        if (w != null && l != null && t != null && (isManualRebar && sepX != null && sepY != null || !isManualRebar)) {
-                            try {
-                                val tipoParaCalculo = try {
-                                    ConcreteType.valueOf(selectedRecipeId)
-                                } catch (e: Exception) {
-                                    ConcreteType.H21
-                                }
-
-                                slabResult = if (isManualRebar) {
-                                    calcularEstructura.calculateSlab(
-                                        widthX = w,
-                                        lengthY = l,
-                                        thickness = t,
-                                        sepXcm = sepX!!,
-                                        sepYcm = sepY!!,
-                                        phiX = selectedPhiX,
-                                        phiY = selectedPhiY,
-                                        wastePct = wIronMain / 100.0,
-                                        hookLengthMeters = hookL,
-                                        concreteType = tipoParaCalculo,
-                                        cementBagWeightKg = cementBagWeightKg,
-                                        limeBagWeightKg = limeBagWeightKg,
-                                        percentageConcreteWaste = wConcrete / 100.0
-                                    )
-                                } else {
-                                    calcularEstructura.calculateSlabWithMesh(
-                                        widthX = w,
-                                        lengthY = l,
-                                        thickness = t,
-                                        meshId = selectedMeshId,
-                                        concreteType = tipoParaCalculo,
-                                        cementBagWeightKg = cementBagWeightKg,
-                                        limeBagWeightKg = limeBagWeightKg,
-                                        percentageConcreteWaste = wConcrete / 100.0
-                                    )
-                                }
-                                errorMsg = null
-                                showResultSheet = true
-                            } catch (e: Exception) {
-                                errorMsg = "Error: ${e.message}"
-                            }
-                        } else {
-                            errorMsg = "Verifica todos los campos numéricos."
-                            slabResult = null
-                        }
-                        return@ExtendedFloatingActionButton
-                    }
-
-                    val l = largo.toSafeDoubleOrNull()
-                    val a = ladoA.toSafeDoubleOrNull()
-                    val b = if (isCircular) 1.0 else ladoB.toSafeDoubleOrNull()
-                    val cantVarillas = cantidadVarillas.toIntOrNull()
-                    val sepCm = separacionEstriboCm.toSafeDoubleOrNull()
-                    val startHook = startHookLength.toSafeDoubleOrNull() ?: 0.0
-                    val endHook = endHookLength.toSafeDoubleOrNull() ?: 0.0
-
-                    if (areValidDimensions(l, a, b, cantVarillas, sepCm)) {
-                        try {
-                            val tipoParaCalculo = try {
-                                ConcreteType.valueOf(selectedRecipeId)
-                            } catch (e: Exception) {
-                                ConcreteType.H21 // Fallback seguro
-                            }
-
-                            // Buscar si el hierro seleccionado es custom
-                            val customMainIron = appSettings.customIrons.find { it.id == selectedHierroMainId }
-                            val customStirrupIron = appSettings.customIrons.find { it.id == selectedEstriboId }
-
-                            resultado = calcularEstructura(
-                                lengthMeters = l!!,
-                                sideAMeters = a!!,
-                                sideBMeters = if (isCircular) 0.0 else b!!,
-                                isCircular = isCircular,
-                                concreteType = tipoParaCalculo,
-                                mainIronDiameter = selectedHierroMain,
-                                mainIronQuantity = cantVarillas!!,
-                                stirrupIronDiameter = selectedEstribo,
-                                stirrupSpacingMeters = sepCm!!,
-                                cementBagWeightKg = cementBagWeightKg,
-                                limeBagWeightKg = limeBagWeightKg,
-                                percentageCementWaste = wConcrete / 100.0,
-                                percentageMainIronWaste = wIronMain / 100.0,
-                                percentageStirrupIronWaste = wStirrup / 100.0,
-                                customMainIron = customMainIron,
-                                customStirrupIron = customStirrupIron,
-                                startHookLengthMeters = startHook,
-                                endHookLengthMeters = endHook
-                            )
-                            errorMsg = null
-                            showResultSheet = true
-                        } catch (e: Exception) {
-                            errorMsg = "Error: ${e.message}"
-                        }
-                    } else {
-                        errorMsg = "Verifica todos los campos numéricos (deben ser mayores a 0)."
-                        resultado = null
-                    }
+                    state.calculate()
                 },
                 icon = { Icon(Icons.Default.Calculate, null) },
                 text = { Text(stringResource(Res.string.button_calculate)) }
@@ -278,160 +128,80 @@ fun StructureScreen(appSettings: AppSettingsState) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            InputSection(title = "Tipo de Estructura") {
+            InputSection(title = stringResource(Res.string.structure_section_type)) {
                 InputRow {
                     StructureType.entries.forEach { type ->
                         FilterChip(
-                            selected = selectedStructureType == type,
-                            onClick = {
-                                selectedStructureType = type
-                                if (type == StructureType.BEAM) {
-                                    isCircular = false
-                                }
-                            },
+                            selected = state.selectedStructureType == type,
+                            onClick = { state.onStructureTypeChange(type) },
                             label = { Text(stringResource(type.labelRes)) },
                         )
                     }
                 }
             }
 
-            when (selectedStructureType) {
+            when (state.selectedStructureType) {
                 StructureType.SLAB -> {
-                    SlabInputs(
-                        width = slabWidth,
-                        onWidthChange = { slabWidth = it },
-                        length = slabLength,
-                        onLengthChange = { slabLength = it },
-                        thickness = slabThickness,
-                        onThicknessChange = { slabThickness = it },
-                        isManualRebar = isManualRebar,
-                        onIsManualRebarChange = { isManualRebar = it },
-                        selectedMeshId = selectedMeshId,
-                        onSelectedMeshIdChange = { selectedMeshId = it },
-                        separationX = separationX,
-                        onSeparationXChange = { separationX = it },
-                        separationY = separationY,
-                        onSeparationYChange = { separationY = it },
-                        selectedPhiXId = selectedPhiXId,
-                        onSelectedPhiXChange = { id, iron ->
-                            selectedPhiXId = id
-                            selectedPhiX = iron
-                        },
-                        selectedPhiYId = selectedPhiYId,
-                        onSelectedPhiYChange = { id, iron ->
-                            selectedPhiYId = id
-                            selectedPhiY = iron
-                        },
-                        selectedTermination = selectedSlabTermination,
-                        onTerminationChange = { selectedSlabTermination = it },
-                        hookLength = slabHookLength,
-                        onHookLengthChange = { slabHookLength = it },
-                        selectedRecipeId = selectedRecipeId,
-                        onRecipeSelected = { id, recipe ->
-                            selectedRecipeId = id
-                            selectedRecipe = recipe
-                        },
-                        appSettings = appSettings,
-                        defaultConcreteId = defaultConcreteId
-                    )
+                    SlabInputs(state = state)
                 }
 
                 StructureType.BEAM, StructureType.COLUMN -> {
-                    BeamColumnInputs(
-                        structureType = selectedStructureType,
-                        isCircular = isCircular,
-                        onIsCircularChange = { isCircular = it },
-                        ladoA = ladoA,
-                        onLadoAChange = { ladoA = it },
-                        ladoB = ladoB,
-                        onLadoBChange = { ladoB = it },
-                        largo = largo,
-                        onLargoChange = { largo = it },
-                        cantidadVarillas = cantidadVarillas,
-                        onCantidadVarillasChange = { cantidadVarillas = it },
-                        selectedHierroMainId = selectedHierroMainId,
-                        onSelectedHierroMainChange = { id, iron ->
-                            selectedHierroMainId = id
-                            selectedHierroMain = iron
-                        },
-                        separacionEstriboCm = separacionEstriboCm,
-                        onSeparacionEstriboCmChange = { separacionEstriboCm = it },
-                        selectedEstriboId = selectedEstriboId,
-                        onSelectedEstriboChange = { id, iron ->
-                            selectedEstriboId = id
-                            selectedEstribo = iron
-                        },
-                        selectedRecipeId = selectedRecipeId,
-                        onRecipeSelected = { id, recipe ->
-                            selectedRecipeId = id
-                            selectedRecipe = recipe
-                        },
-                        appSettings = appSettings,
-                        defaultConcreteId = defaultConcreteId,
-                        selectedStartTermination = selectedStartTermination,
-                        onStartTerminationChange = { selectedStartTermination = it },
-                        selectedEndTermination = selectedEndTermination,
-                        onEndTerminationChange = { selectedEndTermination = it },
-                        startHookLength = startHookLength,
-                        onStartHookLengthChange = { startHookLength = it },
-                        endHookLength = endHookLength,
-                        onEndHookLengthChange = { endHookLength = it }
-                    )
+                    BeamColumnInputs(state = state)
                 }
             }
 
-            ErrorMessage(errorMsg)
+            ErrorMessage(state.errorMsg)
 
             Spacer(modifier = Modifier.height(80.dp))
         }
     }
 
-    if (showResultSheet) {
-        if (selectedStructureType == StructureType.SLAB && slabResult != null) {
+    if (state.showResultSheet) {
+        if (state.selectedStructureType == StructureType.SLAB && state.slabResult != null) {
             val slabShareText = rememberSlabShareText(
-                result = slabResult!!,
-                width = slabWidth.toSafeDoubleOrNull() ?: 0.0,
-                length = slabLength.toSafeDoubleOrNull() ?: 0.0,
-                thickness = slabThickness.toSafeDoubleOrNull() ?: 0.0,
+                result = state.slabResult!!,
+                width = state.slabWidth.toSafeDoubleOrNull() ?: 0.0,
+                length = state.slabLength.toSafeDoubleOrNull() ?: 0.0,
+                thickness = state.slabThickness.toSafeDoubleOrNull() ?: 0.0,
                 concreteType = try {
-                    ConcreteType.valueOf(selectedRecipeId)
+                    ConcreteType.valueOf(state.selectedConcreteOption?.id ?: "")
                 } catch (e: Exception) {
                     ConcreteType.H21
                 },
-                appName = nombreApp
+                appName = appName
             )
 
             AppResultBottomSheet(
-                onDismissRequest = { showResultSheet = false },
+                onDismissRequest = { state.showResultSheet = false },
                 onSave = { /* ... */ },
-                onEdit = { showResultSheet = false },
+                onEdit = { state.showResultSheet = false },
                 onShare = { shareManager.shareText(slabShareText) }
             ) {
-                SlabResultContent(slabResult!!)
+                SlabResultContent(state.slabResult!!, appSettings)
             }
-        } else if (resultado != null) {
+        } else if (state.result != null) {
             val shareText = rememberStructureShareText(
-                result = resultado!!,
-                length = largo.toSafeDoubleOrNull() ?: 0.0,
-                sideA = ladoA.toSafeDoubleOrNull() ?: 0.0,
-                sideB = ladoB.toSafeDoubleOrNull() ?: 0.0,
-                isCircular = isCircular,
+                result = state.result!!,
+                length = state.length.toSafeDoubleOrNull() ?: 0.0,
+                sideA = state.sideA.toSafeDoubleOrNull() ?: 0.0,
+                sideB = state.sideB.toSafeDoubleOrNull() ?: 0.0,
+                isCircular = state.isCircular,
                 concreteType = try {
-                    ConcreteType.valueOf(selectedRecipeId)
+                    ConcreteType.valueOf(state.selectedConcreteOption?.id ?: "")
                 } catch (e: Exception) {
                     ConcreteType.H21
                 },
-                stirrupSpacingCm = separacionEstriboCm.toSafeDoubleOrNull()?.times(100) ?: 20.0,
-                appName = nombreApp
+                stirrupSpacingCm = state.stirrupSpacingM.toSafeDoubleOrNull()?.times(100) ?: 20.0,
+                appName = appName
             )
 
             AppResultBottomSheet(
-                onDismissRequest = { showResultSheet = false },
+                onDismissRequest = { state.showResultSheet = false },
                 onSave = { /* ... */ },
-                onEdit = { showResultSheet = false },
+                onEdit = { state.showResultSheet = false },
                 onShare = { shareManager.shareText(shareText) }
             ) {
-                StructureResultContent(resultado!!)
+                StructureResultContent(state.result!!, appSettings)
             }
         }
     }
@@ -439,187 +209,122 @@ fun StructureScreen(appSettings: AppSettingsState) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BeamColumnInputs(
-    structureType: StructureType,
-    isCircular: Boolean,
-    onIsCircularChange: (Boolean) -> Unit,
-    ladoA: String,
-    onLadoAChange: (String) -> Unit,
-    ladoB: String,
-    onLadoBChange: (String) -> Unit,
-    largo: String,
-    onLargoChange: (String) -> Unit,
-    cantidadVarillas: String,
-    onCantidadVarillasChange: (String) -> Unit,
-    selectedHierroMainId: String,
-    onSelectedHierroMainChange: (String, IronDiameter) -> Unit,
-    separacionEstriboCm: String,
-    onSeparacionEstriboCmChange: (String) -> Unit,
-    selectedEstriboId: String,
-    onSelectedEstriboChange: (String, IronDiameter) -> Unit,
-    selectedRecipeId: String,
-    onRecipeSelected: (String, ConcreteDosing?) -> Unit,
-    appSettings: AppSettingsState,
-    defaultConcreteId: String,
-    // Nuevos parámetros para terminaciones
-    selectedStartTermination: RebarTerminationType,
-    onStartTerminationChange: (RebarTerminationType) -> Unit,
-    selectedEndTermination: RebarTerminationType,
-    onEndTerminationChange: (RebarTerminationType) -> Unit,
-    startHookLength: String,
-    onStartHookLengthChange: (String) -> Unit,
-    endHookLength: String,
-    onEndHookLengthChange: (String) -> Unit
-) {
-    val structureName = if (structureType == StructureType.BEAM) "Viga" else "Columna"
+fun BeamColumnInputs(state: StructureScreenState) {
+    val structureName =
+        if (state.selectedStructureType == StructureType.BEAM) stringResource(Res.string.structure_type_beam) else stringResource(
+            Res.string.structure_type_column
+        )
 
-    val focusLadoA = remember { FocusRequester() }
-    val focusLadoB = remember { FocusRequester() }
-    val focusLargo = remember { FocusRequester() }
-    val focusCantidadVarillas = remember { FocusRequester() }
-    val focusSeparacionEstribos = remember { FocusRequester() }
+    val focusSideA = remember { FocusRequester() }
+    val focusSideB = remember { FocusRequester() }
+    val focusLength = remember { FocusRequester() }
+    val focusQuantityRods = remember { FocusRequester() }
+    val focusStirrupSpacing = remember { FocusRequester() }
 
-    // Obtenemos el diámetro del hierro principal seleccionado
-    // Necesitamos encontrar el objeto IronDiameter correspondiente al ID seleccionado
-    // Si es un hierro custom, intentamos mapearlo o usar un valor por defecto
-    val currentMainIronDiameterMm = remember(selectedHierroMainId, appSettings.customIrons) {
-        val custom = appSettings.customIrons.find { it.id == selectedHierroMainId }
-        if (custom != null) {
-            custom.diameterMm
-        } else {
-            try {
-                IronDiameter.valueOf(selectedHierroMainId).milimeters
-            } catch (e: Exception) {
-                10.0 // Default 10mm
-            }
-        }
-    }
+    RequestFocusOnStart(focusSideA)
 
-    // Actualizar longitudes de gancho cuando cambia el tipo de terminación o el diámetro del hierro
-    LaunchedEffect(selectedStartTermination, currentMainIronDiameterMm) {
-        if (selectedStartTermination != RebarTerminationType.STRAIGHT) {
-            val defaultLen = selectedStartTermination.getDefaultLengthMeters(currentMainIronDiameterMm)
-            onStartHookLengthChange(defaultLen.roundToDecimals(2).toString())
-        } else {
-            onStartHookLengthChange("")
-        }
-    }
-
-    LaunchedEffect(selectedEndTermination, currentMainIronDiameterMm) {
-        if (selectedEndTermination != RebarTerminationType.STRAIGHT) {
-            val defaultLen = selectedEndTermination.getDefaultLengthMeters(currentMainIronDiameterMm)
-            onEndHookLengthChange(defaultLen.roundToDecimals(2).toString())
-        } else {
-            onEndHookLengthChange("")
-        }
-    }
-
-
-    RequestFocusOnStart(focusLadoA)
-
-    if (structureType == StructureType.COLUMN) {
-        InputSection(title = "Forma de la Columna") {
+    if (state.selectedStructureType == StructureType.COLUMN) {
+        InputSection(title = stringResource(Res.string.structure_section_column_shape)) {
             InputRow {
                 RadioButtonRow(
-                    selected = !isCircular,
-                    text = "Rectangular",
-                    onClick = { onIsCircularChange(false) })
+                    selected = !state.isCircular,
+                    text = stringResource(Res.string.structure_label_rectangular),
+                    onClick = { state.isCircular = false })
                 Spacer(modifier = Modifier.width(16.dp))
                 RadioButtonRow(
-                    selected = isCircular,
-                    text = "Circular",
-                    onClick = { onIsCircularChange(true) })
+                    selected = state.isCircular,
+                    text = stringResource(Res.string.structure_label_circular),
+                    onClick = { state.isCircular = true })
             }
         }
     }
 
-    InputSection(title = "Dimensiones de la $structureName") {
+    InputSection(title = stringResource(Res.string.structure_section_dimensions, structureName)) {
         InputRow {
             CmInput(
-                value = ladoA,
-                onValueChange = onLadoAChange,
-                label = if (isCircular) "Diámetro (m)" else "Lado A (m)",
-                suffix = { Text("m") },
+                value = state.sideA,
+                onValueChange = { state.sideA = it },
+                label = if (state.isCircular) stringResource(
+                    Res.string.structure_label_diameter,
+                    stringResource(Res.string.unit_meters)
+                ) else stringResource(Res.string.structure_label_side_a, stringResource(Res.string.unit_meters)),
+                suffix = { Text(stringResource(Res.string.unit_meters)) },
                 modifier = Modifier.weight(1f),
-                focusRequester = focusLadoA,
-                nextFocusRequester = if (!isCircular) focusLadoB else focusLargo
+                focusRequester = focusSideA,
+                nextFocusRequester = if (!state.isCircular) focusSideB else focusLength
             )
-            if (!isCircular) {
+            if (!state.isCircular) {
                 CmInput(
-                    value = ladoB,
-                    onValueChange = onLadoBChange,
-                    label = "Lado B (m)",
-                    suffix = { Text("m") },
+                    value = state.sideB,
+                    onValueChange = { state.sideB = it },
+                    label = stringResource(Res.string.structure_label_side_b, stringResource(Res.string.unit_meters)),
+                    suffix = { Text(stringResource(Res.string.unit_meters)) },
                     modifier = Modifier.weight(1f),
-                    focusRequester = focusLadoB,
-                    nextFocusRequester = focusLargo
+                    focusRequester = focusSideB,
+                    nextFocusRequester = focusLength
                 )
             }
         }
         NumericInput(
-            value = largo,
-            onValueChange = onLargoChange,
-            label = "Largo Total (m)",
-            suffix = { Text("m") },
+            value = state.length,
+            onValueChange = { state.length = it },
+            label = stringResource(Res.string.structure_label_total_length, stringResource(Res.string.unit_meters)),
+            suffix = { Text(stringResource(Res.string.unit_meters)) },
             modifier = Modifier.fillMaxWidth(),
-            focusRequester = focusLargo,
-            nextFocusRequester = focusCantidadVarillas
+            focusRequester = focusLength,
+            nextFocusRequester = focusQuantityRods
         )
     }
 
-    InputSection(title = "Armadura") {
+    InputSection(title = stringResource(Res.string.structure_section_armature)) {
         InputRow {
-            NumericInput(
-                value = cantidadVarillas,
-                onValueChange = onCantidadVarillasChange,
-                label = "Cant. varillas",
-                suffix = { Text("U") },
-                modifier = Modifier.weight(0.5f),
-                focusRequester = focusCantidadVarillas,
-                nextFocusRequester = null // El siguiente es un dropdown, no tiene focusRequester
-            )
-
             IronSelectorField(
-                selectedIronId = selectedHierroMainId,
-                onIronSelected = onSelectedHierroMainChange,
-                customIrons = appSettings.customIrons,
-                hiddenIds = appSettings.hiddenIronIds,
+                options = state.ironOptions,
+                selectedOption = state.selectedMainIron,
+                onOptionSelected = { state.onMainIronChange(it) },
                 modifier = Modifier.weight(0.5f),
-                defaultIronId = IronDiameter.HIERRO_10.name,
-                label = "Hierro Principal",
+                label = stringResource(Res.string.structure_label_main_iron),
                 customLabel = Res.string.label_custom_c
+            )
+            NumericInput(
+                value = state.quantityIronRods,
+                onValueChange = { state.quantityIronRods = it },
+                label = stringResource(Res.string.structure_label_rods_quantity),
+                suffix = { Text(stringResource(Res.string.unit_units)) },
+                modifier = Modifier.weight(0.5f),
+                focusRequester = focusQuantityRods,
+                nextFocusRequester = focusStirrupSpacing
             )
         }
 
         InputRow {
-            CmInput(
-                value = separacionEstriboCm,
-                onValueChange = onSeparacionEstriboCmChange,
-                label = "Estribo cada (m)",
-                suffix = { Text("m") },
-                modifier = Modifier.weight(0.5f),
-                focusRequester = focusSeparacionEstribos,
-                nextFocusRequester = null // El siguiente es un dropdown
-            )
-
             IronSelectorField(
-                selectedIronId = selectedEstriboId,
-                onIronSelected = onSelectedEstriboChange,
-                customIrons = appSettings.customIrons,
-                hiddenIds = appSettings.hiddenIronIds,
+                options = state.ironOptions,
+                selectedOption = state.selectedStirrup,
+                onOptionSelected = { state.selectedStirrup = it },
                 modifier = Modifier.weight(0.5f),
-                defaultIronId = IronDiameter.HIERRO_6.name,
-                label = "Estribos",
+                label = stringResource(Res.string.structure_label_stirrups),
                 customLabel = Res.string.label_custom_c
+            )
+            CmInput(
+                value = state.stirrupSpacingM,
+                onValueChange = { state.stirrupSpacingM = it },
+                label = stringResource(
+                    Res.string.structure_label_stirrup_spacing,
+                    stringResource(Res.string.unit_meters)
+                ),
+                suffix = { Text(stringResource(Res.string.unit_meters)) },
+                modifier = Modifier.weight(0.5f),
+                focusRequester = focusStirrupSpacing,
+                nextFocusRequester = null
             )
         }
     }
 
-    InputSection(title = "Terminaciones") {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    InputSection(title = stringResource(Res.string.structure_section_terminations)) {
+        InputColumn(title = TextSource.Resource(Res.string.structure_label_start_end)) {
             // --- Extremo Inicial ---
-            Text("Extremo Inicial", style = MaterialTheme.typography.labelLarge)
-            Row(
+            InputRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
@@ -627,31 +332,34 @@ fun BeamColumnInputs(
             ) {
                 RebarTerminationType.entries.forEach { type ->
                     FilterChip(
-                        selected = (type == selectedStartTermination),
-                        onClick = { onStartTerminationChange(type) },
-                        label = { Text(type.displayName) },
+                        selected = (type == state.selectedStartTermination),
+                        onClick = { state.onStartTerminationChange(type) },
+                        label = { Text(stringResource(type.displayNameRes)) },
                         leadingIcon = {
                             RebarShapeIcon(
                                 type = type,
-                                color = if (type == selectedStartTermination) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface
+                                color = if (type == state.selectedStartTermination) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     )
                 }
             }
-            if (selectedStartTermination != RebarTerminationType.STRAIGHT) {
+            if (state.selectedStartTermination != RebarTerminationType.STRAIGHT) {
                 CmInput(
-                    value = startHookLength,
-                    onValueChange = onStartHookLengthChange,
-                    label = "Largo Gancho Inicial (m)",
-                    suffix = { Text("m") },
+                    value = state.startHookLength,
+                    onValueChange = { state.startHookLength = it },
+                    label = stringResource(
+                        Res.string.structure_label_hook_start,
+                        stringResource(Res.string.unit_meters)
+                    ),
+                    suffix = { Text(stringResource(Res.string.unit_meters)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-
+        }
+        InputColumn(title = TextSource.Resource(Res.string.structure_label_end_end)) {
             // --- Extremo Final ---
-            Text("Extremo Final", style = MaterialTheme.typography.labelLarge)
-            Row(
+            InputRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
@@ -659,72 +367,42 @@ fun BeamColumnInputs(
             ) {
                 RebarTerminationType.entries.forEach { type ->
                     FilterChip(
-                        selected = (type == selectedEndTermination),
-                        onClick = { onEndTerminationChange(type) },
-                        label = { Text(type.displayName) },
+                        selected = (type == state.selectedEndTermination),
+                        onClick = { state.onEndTerminationChange(type) },
+                        label = { Text(stringResource(type.displayNameRes)) },
                         leadingIcon = {
                             RebarShapeIcon(
                                 type = type,
-                                color = if (type == selectedEndTermination) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface
+                                color = if (type == state.selectedEndTermination) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     )
                 }
             }
-            if (selectedEndTermination != RebarTerminationType.STRAIGHT) {
+            if (state.selectedEndTermination != RebarTerminationType.STRAIGHT) {
                 CmInput(
-                    value = endHookLength,
-                    onValueChange = onEndHookLengthChange,
-                    label = "Largo Gancho Final (m)",
-                    suffix = { Text("m") },
+                    value = state.endHookLength,
+                    onValueChange = { state.endHookLength = it },
+                    label = stringResource(Res.string.structure_label_hook_end, stringResource(Res.string.unit_meters)),
+                    suffix = { Text(stringResource(Res.string.unit_meters)) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
         }
     }
 
-    InputSection(title = "Hormigón", showDivider = false) {
+    InputSection(title = stringResource(Res.string.structure_section_concrete), showDivider = false) {
         ConcreteSelectorField(
-            selectedRecipeId = selectedRecipeId,
-            onRecipeSelected = onRecipeSelected,
-            customRecipes = appSettings.customRecipes,
-            hiddenIds = appSettings.hiddenRecipeIds,
-            modifier = Modifier.fillMaxWidth(),
-            defaultRecipeId = defaultConcreteId,
-            filterStructuralOnly = true
+            options = state.concreteOptions,
+            selectedOption = state.selectedConcreteOption,
+            onOptionSelected = { state.selectedConcreteOption = it },
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
 
 @Composable
-fun SlabInputs(
-    width: String,
-    onWidthChange: (String) -> Unit,
-    length: String,
-    onLengthChange: (String) -> Unit,
-    thickness: String,
-    onThicknessChange: (String) -> Unit,
-    isManualRebar: Boolean,
-    onIsManualRebarChange: (Boolean) -> Unit,
-    selectedMeshId: String,
-    onSelectedMeshIdChange: (String) -> Unit,
-    separationX: String,
-    onSeparationXChange: (String) -> Unit,
-    separationY: String,
-    onSeparationYChange: (String) -> Unit,
-    selectedPhiXId: String,
-    onSelectedPhiXChange: (String, IronDiameter) -> Unit,
-    selectedPhiYId: String,
-    onSelectedPhiYChange: (String, IronDiameter) -> Unit,
-    selectedTermination: RebarTerminationType,
-    onTerminationChange: (RebarTerminationType) -> Unit,
-    hookLength: String,
-    onHookLengthChange: (String) -> Unit,
-    selectedRecipeId: String,
-    onRecipeSelected: (String, ConcreteDosing?) -> Unit,
-    appSettings: AppSettingsState,
-    defaultConcreteId: String
-) {
+fun SlabInputs(state: StructureScreenState) {
     val focusWidth = remember { FocusRequester() }
     val focusLength = remember { FocusRequester() }
     val focusThickness = remember { FocusRequester() }
@@ -733,148 +411,102 @@ fun SlabInputs(
 
     RequestFocusOnStart(focusWidth)
 
-    // Obtenemos el diámetro del hierro seleccionado para X e Y
-    val currentPhiXDiameterMm = remember(selectedPhiXId, appSettings.customIrons) {
-        val custom = appSettings.customIrons.find { it.id == selectedPhiXId }
-        if (custom != null) {
-            custom.diameterMm
-        } else {
-            try {
-                IronDiameter.valueOf(selectedPhiXId).milimeters
-            } catch (e: Exception) {
-                8.0 // Default 8mm
-            }
-        }
-    }
-
-    val currentPhiYDiameterMm = remember(selectedPhiYId, appSettings.customIrons) {
-        val custom = appSettings.customIrons.find { it.id == selectedPhiYId }
-        if (custom != null) {
-            custom.diameterMm
-        } else {
-            try {
-                IronDiameter.valueOf(selectedPhiYId).milimeters
-            } catch (e: Exception) {
-                8.0 // Default 8mm
-            }
-        }
-    }
-
-    // Actualizar longitud de gancho automáticamente
-    // Usamos el diámetro mayor entre X e Y para ser conservadores
-    val maxDiameter = maxOf(currentPhiXDiameterMm, currentPhiYDiameterMm)
-    LaunchedEffect(selectedTermination, maxDiameter) {
-        if (selectedTermination != RebarTerminationType.STRAIGHT) {
-            val defaultLen = selectedTermination.getDefaultLengthMeters(maxDiameter)
-            onHookLengthChange(defaultLen.roundToDecimals(2).toString())
-        } else {
-            onHookLengthChange("")
-        }
-    }
-
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        InputSection(title = "Dimensiones de la Losa") {
+        InputSection(title = stringResource(Res.string.structure_section_slab_dimensions)) {
             InputRow {
                 NumericInput(
-                    value = width,
-                    onValueChange = onWidthChange,
-                    label = "Ancho (X)",
-                    suffix = { Text("m") },
+                    value = state.slabWidth,
+                    onValueChange = { state.slabWidth = it },
+                    label = stringResource(Res.string.structure_label_width_x),
+                    suffix = { Text(stringResource(Res.string.unit_meters)) },
                     modifier = Modifier.weight(1f),
                     focusRequester = focusWidth,
                     nextFocusRequester = focusLength
                 )
                 NumericInput(
-                    value = length,
-                    onValueChange = onLengthChange,
-                    label = "Largo (Y)",
-                    suffix = { Text("m") },
+                    value = state.slabLength,
+                    onValueChange = { state.slabLength = it },
+                    label = stringResource(Res.string.structure_label_length_y),
+                    suffix = { Text(stringResource(Res.string.unit_meters)) },
                     modifier = Modifier.weight(1f),
                     focusRequester = focusLength,
                     nextFocusRequester = focusThickness
                 )
             }
             CmInput(
-                value = thickness,
-                onValueChange = onThicknessChange,
-                label = "Espesor (m)",
-                suffix = { Text("m") },
+                value = state.slabThickness,
+                onValueChange = { state.slabThickness = it },
+                label = stringResource(Res.string.label_thickness, stringResource(Res.string.unit_meters)),
+                suffix = { Text(stringResource(Res.string.unit_meters)) },
                 modifier = Modifier.fillMaxWidth(),
                 focusRequester = focusThickness,
-                nextFocusRequester = if (isManualRebar) focusSepX else null
+                nextFocusRequester = if (state.isManualRebar) focusSepX else null
             )
         }
 
-        InputSection(title = "Configuración de Armadura") {
+        InputSection(title = stringResource(Res.string.structure_section_armature_config)) {
             MeshSelectorField(
-                selectedMeshId = selectedMeshId,
-                onMeshSelected = onSelectedMeshIdChange,
-                isManualRebar = isManualRebar,
-                onModeToggle = onIsManualRebarChange
+                selectedMeshId = state.selectedMeshId,
+                onMeshSelected = { state.selectedMeshId = it },
+                isManualRebar = state.isManualRebar,
+                onModeToggle = { state.isManualRebar = it }
             )
-            if (isManualRebar) {
+            if (state.isManualRebar) {
                 // Configuración Eje X
-                Text(
-                    "Armadura Eje X (Ancho)",
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-                InputRow {
+                InputRow(title = TextSource.Resource(Res.string.structure_label_armature_x)) {
+                    IronSelectorField(
+                        options = state.ironOptions,
+                        selectedOption = state.selectedPhiX,
+                        onOptionSelected = { state.onPhiXChange(it) },
+                        modifier = Modifier.weight(0.5f),
+                        label = stringResource(Res.string.structure_label_iron_x),
+                        customLabel = Res.string.label_custom_c
+                    )
                     CmInput(
-                        value = separationX,
-                        onValueChange = onSeparationXChange,
-                        label = "Sep. X (m)",
-                        suffix = { Text("m") },
+                        value = state.separationX,
+                        onValueChange = { state.separationX = it },
+                        label = stringResource(
+                            Res.string.structure_label_sep_x,
+                            stringResource(Res.string.unit_meters)
+                        ),
+                        suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(0.5f),
                         focusRequester = focusSepX,
                         nextFocusRequester = focusSepY
                     )
-
-                    IronSelectorField(
-                        selectedIronId = selectedPhiXId,
-                        onIronSelected = onSelectedPhiXChange,
-                        customIrons = appSettings.customIrons,
-                        hiddenIds = appSettings.hiddenIronIds,
-                        modifier = Modifier.weight(0.5f),
-                        defaultIronId = IronDiameter.HIERRO_8.name,
-                        label = "Hierro X",
-                        customLabel = Res.string.label_custom_c
-                    )
                 }
 
                 // Configuración Eje Y
-                Text(
-                    "Armadura Eje Y (Largo)",
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-                InputRow {
+                InputRow(title = TextSource.Resource(Res.string.structure_label_armature_y)) {
+                    IronSelectorField(
+                        options = state.ironOptions,
+                        selectedOption = state.selectedPhiY,
+                        onOptionSelected = { state.onPhiYChange(it) },
+                        modifier = Modifier.weight(0.5f),
+                        label = stringResource(Res.string.structure_label_iron_y),
+                        customLabel = Res.string.label_custom_c
+                    )
                     CmInput(
-                        value = separationY,
-                        onValueChange = onSeparationYChange,
-                        label = "Sep. Y (m)",
-                        suffix = { Text("m") },
+                        value = state.separationY,
+                        onValueChange = { state.separationY = it },
+                        label = stringResource(
+                            Res.string.structure_label_sep_y,
+                            stringResource(Res.string.unit_meters)
+                        ),
+                        suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(0.5f),
                         focusRequester = focusSepY,
                         nextFocusRequester = null
-                    )
-
-                    IronSelectorField(
-                        selectedIronId = selectedPhiYId,
-                        onIronSelected = onSelectedPhiYChange,
-                        customIrons = appSettings.customIrons,
-                        hiddenIds = appSettings.hiddenIronIds,
-                        modifier = Modifier.weight(0.5f),
-                        defaultIronId = IronDiameter.HIERRO_8.name,
-                        label = "Hierro Y",
-                        customLabel = Res.string.label_custom_c
                     )
                 }
             }
         }
 
-        if (isManualRebar) {
-            InputSection(title = "Terminaciones (Ambos ejes)") {
+        if (state.isManualRebar) {
+            InputSection(
+                title = stringResource(Res.string.structure_section_terminations),
+                attenuatedTitle = stringResource(Res.string.structure_label_terminations_both)
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(
                         modifier = Modifier
@@ -884,24 +516,27 @@ fun SlabInputs(
                     ) {
                         RebarTerminationType.entries.forEach { type ->
                             FilterChip(
-                                selected = (type == selectedTermination),
-                                onClick = { onTerminationChange(type) },
-                                label = { Text(type.displayName) },
+                                selected = (type == state.selectedSlabTermination),
+                                onClick = { state.onSlabTerminationChange(type) },
+                                label = { Text(stringResource(type.displayNameRes)) },
                                 leadingIcon = {
                                     RebarShapeIcon(
                                         type = type,
-                                        color = if (type == selectedTermination) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface
+                                        color = if (type == state.selectedSlabTermination) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             )
                         }
                     }
-                    if (selectedTermination != RebarTerminationType.STRAIGHT) {
+                    if (state.selectedSlabTermination != RebarTerminationType.STRAIGHT) {
                         CmInput(
-                            value = hookLength,
-                            onValueChange = onHookLengthChange,
-                            label = "Largo Gancho (m)",
-                            suffix = { Text("m") },
+                            value = state.slabHookLength,
+                            onValueChange = { state.slabHookLength = it },
+                            label = stringResource(
+                                Res.string.structure_label_hook,
+                                stringResource(Res.string.unit_meters)
+                            ),
+                            suffix = { Text(stringResource(Res.string.unit_meters)) },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -909,42 +544,19 @@ fun SlabInputs(
             }
         }
 
-        InputSection(title = "Hormigón", showDivider = false) {
+        InputSection(title = stringResource(Res.string.structure_section_concrete), showDivider = false) {
             ConcreteSelectorField(
-                selectedRecipeId = selectedRecipeId,
-                onRecipeSelected = onRecipeSelected,
-                customRecipes = appSettings.customRecipes,
-                hiddenIds = appSettings.hiddenRecipeIds,
-                modifier = Modifier.fillMaxWidth(),
-                defaultRecipeId = defaultConcreteId,
-                filterStructuralOnly = true
+                options = state.concreteOptions,
+                selectedOption = state.selectedConcreteOption,
+                onOptionSelected = { state.selectedConcreteOption = it },
+                modifier = Modifier.fillMaxWidth()
             )
         }
 
-        val sepX = separationX.toSafeDoubleOrNull() ?: 0.0
-        val sepY = separationY.toSafeDoubleOrNull() ?: 0.0
-        if (isManualRebar && (sepX > 30 || sepY > 30)) {
-            SlabWarning(30.0)
-        }
-    }
-}
-
-@Composable
-fun SlabWarning(separationCm: Double) {
-    if (separationCm > 30.0) {
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-        ) {
-            Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = "Atención: Según el CIRSOC 201, la separación no debe superar los 30 cm para evitar fisuración excesiva.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
-            }
+        val sepX = state.separationX.toSafeDoubleOrNull() ?: 0.0
+        val sepY = state.separationY.toSafeDoubleOrNull() ?: 0.0
+        if (state.isManualRebar && (sepX > 0.3 || sepY > 0.3)) {
+            WarningMessage(TextSource.Resource(Res.string.structure_warning_cirsoc))
         }
     }
 }
@@ -973,22 +585,22 @@ fun RadioButtonRow(selected: Boolean, text: String, onClick: () -> Unit) {
  * @param res Resultado del cálculo.
  */
 @Composable
-fun StructureResultContent(res: StructureResult) {
+fun StructureResultContent(res: StructureResult, appSettings: AppSettingsState) {
     // Sección Hormigón
     Text(
-        "Hormigón (${res.volumeConcreteM3.roundToDecimals(2)} m³)",
+        stringResource(Res.string.structure_result_concrete, res.volumeConcreteM3.roundToDecimals(2)),
         fontWeight = FontWeight.Bold,
         fontSize = 18.sp
     )
     Text(
-        "(Incluye ${(res.percentageConcreteWaste * 100).toInt()}% desperdicio)",
+        stringResource(Res.string.structure_result_waste_included, (res.percentageConcreteWaste * 100).toInt()),
         style = MaterialTheme.typography.bodySmall
     )
 
     Spacer(modifier = Modifier.height(8.dp))
 
     ResultRow(
-        label = "Cemento",
+        label = stringResource(Res.string.structure_result_cement),
         value = res.cementKg.toPresentationUnit(
             res.cementBagKg,
             Res.string.unit_bag,
@@ -997,46 +609,75 @@ fun StructureResultContent(res: StructureResult) {
     )
 
     ResultRow(
-        label = "Arena",
-        value = "${res.sandM3.roundToDecimals(2)} m³"
+        label = stringResource(Res.string.structure_result_sand),
+        value = stringResource(
+            Res.string.concrete_result_volume_m3,
+            res.sandM3.roundToDecimals(2),
+            stringResource(Res.string.unit_cubic_meters)
+        )
     )
 
     ResultRow(
-        label = "Piedra",
-        value = "${res.gravelM3.roundToDecimals(2)} m³"
+        label = stringResource(Res.string.structure_result_gravel),
+        value = stringResource(
+            Res.string.concrete_result_volume_m3,
+            res.gravelM3.roundToDecimals(2),
+            stringResource(Res.string.unit_cubic_meters)
+        )
     )
 
     ResultRow(
-        label = "Agua",
-        value = "${res.waterLiters.roundToDecimals(1)} Lt"
+        label = stringResource(Res.string.structure_result_water),
+        value = stringResource(
+            Res.string.concrete_result_volume_liters,
+            res.waterLiters.roundToDecimals(1),
+            stringResource(Res.string.unit_liters)
+        )
     )
 
     Spacer(modifier = Modifier.height(16.dp))
 
     // Sección Hierro
     Text(
-        "Acero / Hierro (${(res.mainIronKg + res.stirrupIronKg).roundToDecimals(1)} kg)",
+        stringResource(Res.string.structure_result_iron_steel, (res.mainIronKg + res.stirrupIronKg).roundToDecimals(1)),
         fontWeight = FontWeight.Bold,
         fontSize = 18.sp
     )
     Text(
-        "(Incluye ${((res.percentageMainIronWaste + res.percentageStirrupIronWaste) * 50).toInt()}% desperdicio)",
+        stringResource(
+            Res.string.structure_result_waste_included,
+            ((res.percentageMainIronWaste + res.percentageStirrupIronWaste) * 50).toInt()
+        ),
         style = MaterialTheme.typography.bodySmall
     )
 
     Spacer(modifier = Modifier.height(8.dp))
 
     ResultRow(
-        label = "Principal (Ø ${res.mainDiameter.milimeters} mm)",
-        value = "${res.mainIronMeters.roundToDecimals(1)} m"
+        label = stringResource(Res.string.structure_result_main, res.mainDiameterMm),
+        value = stringResource(
+            Res.string.concrete_result_volume_m3,
+            res.mainIronMeters.roundToDecimals(1),
+            stringResource(Res.string.unit_meters)
+        )
     )
-    Text("(${res.mainIronKg.roundToDecimals(1)} kg)", style = MaterialTheme.typography.bodySmall)
+    Text(
+        stringResource(Res.string.structure_result_weight_kg, res.mainIronKg.roundToDecimals(1)),
+        style = MaterialTheme.typography.bodySmall
+    )
 
     ResultRow(
-        label = "Estribos (Ø ${res.stirrupDiameter.milimeters} mm)",
-        value = "${res.stirrupIronMeters.roundToDecimals(1)} m"
+        label = stringResource(Res.string.structure_result_stirrups, res.stirrupDiameterMm),
+        value = stringResource(
+            Res.string.concrete_result_volume_m3,
+            res.stirrupIronMeters.roundToDecimals(1),
+            stringResource(Res.string.unit_meters)
+        )
     )
-    Text("(${res.stirrupIronKg.roundToDecimals(1)} kg)", style = MaterialTheme.typography.bodySmall)
+    Text(
+        stringResource(Res.string.structure_result_weight_kg, res.stirrupIronKg.roundToDecimals(1)),
+        style = MaterialTheme.typography.bodySmall
+    )
 
     Spacer(modifier = Modifier.height(8.dp))
 
@@ -1046,34 +687,123 @@ fun StructureResultContent(res: StructureResult) {
             Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = """
-                    Necesitas aprox: 
-                     - ${res.mainIronAmount} varilla${if (res.mainIronAmount != 1) "s" else ""} de Ø ${res.mainDiameter.milimeters} mm de 12 m.
-                     - ${res.stirrupIronAmount} varilla${if (res.stirrupIronAmount != 1) "s" else ""} de Ø ${res.stirrupDiameter.milimeters} mm de 12 m.
-                """.trimIndent(),
+                text = stringResource(Res.string.structure_result_tip_intro) + "\n" +
+                        stringResource(
+                            Res.string.structure_result_tip_main,
+                            res.mainIronAmount,
+                            if (res.mainIronAmount != 1) "s" else "",
+                            res.mainDiameterMm
+                        ) + "\n" +
+                        stringResource(
+                            Res.string.structure_result_tip_stirrup,
+                            res.stirrupIronAmount,
+                            if (res.stirrupIronAmount != 1) "s" else "",
+                            res.stirrupDiameterMm
+                        ),
                 style = MaterialTheme.typography.labelSmall
             )
         }
     }
+
+    // --- CÁLCULO DE PRECIOS ---
+    val prices = appSettings.priceSettings
+    var materialCost = 0.0
+
+    // Cemento
+    prices.materialPrices.find { it.name.contains("Cemento", ignoreCase = true) }?.let {
+        if (it.unit.contains("bolsa", ignoreCase = true)) {
+            materialCost += it.price * res.cementBagKg
+        } else if (it.unit.contains("kg", ignoreCase = true)) {
+            materialCost += it.price * res.cementKg
+        }
+    }
+
+    // Arena
+    prices.materialPrices.find { it.name.contains("Arena", ignoreCase = true) }?.let {
+        if (it.unit.contains("m3", ignoreCase = true)) {
+            materialCost += it.price * res.sandM3
+        }
+    }
+
+    // Piedra
+    prices.materialPrices.find {
+        it.name.contains("Piedra", ignoreCase = true) || it.name.contains(
+            "Canto",
+            ignoreCase = true
+        )
+    }?.let {
+        if (it.unit.contains("m3", ignoreCase = true)) {
+            materialCost += it.price * res.gravelM3
+        }
+    }
+
+    // Hierro Principal
+    prices.materialPrices.find {
+        it.name.contains(
+            "Hierro",
+            ignoreCase = true
+        ) && it.name.contains(res.mainDiameterMm.toString())
+    }?.let {
+        if (it.unit.contains("barra", ignoreCase = true) || it.unit.contains("varilla", ignoreCase = true)) {
+            // Asumimos barra de 12m
+            materialCost += it.price * (res.mainIronMeters / 12.0)
+        } else if (it.unit.contains("kg", ignoreCase = true)) {
+            materialCost += it.price * res.mainIronKg
+        }
+    }
+
+    // Hierro Estribos
+    prices.materialPrices.find {
+        it.name.contains(
+            "Hierro",
+            ignoreCase = true
+        ) && it.name.contains(res.stirrupDiameterMm.toString())
+    }?.let {
+        if (it.unit.contains("barra", ignoreCase = true) || it.unit.contains("varilla", ignoreCase = true)) {
+            materialCost += it.price * (res.stirrupIronMeters / 12.0)
+        } else if (it.unit.contains("kg", ignoreCase = true)) {
+            materialCost += it.price * res.stirrupIronKg
+        }
+    }
+
+    // Mano de Obra (Viga/Columna)
+    var laborCost = 0.0
+    prices.laborPrices.find {
+        it.name.contains("Viga", ignoreCase = true) || it.name.contains(
+            "Columna",
+            ignoreCase = true
+        )
+    }?.let {
+        if (it.unit.contains("ml", ignoreCase = true) || it.unit.contains("m", ignoreCase = true)) {
+            // Asumimos que el largo es lo que se cobra
+            // No tenemos el largo directo en StructureResult, pero podemos estimarlo del volumen o pasarlo
+            // Para simplificar, usamos volumen si es m3, o nada si es ml porque falta el dato
+            if (it.unit.contains("m3", ignoreCase = true)) {
+                laborCost += it.price * res.volumeConcreteM3
+            }
+        }
+    }
+
+    PriceResultSection(materialCost, laborCost)
 }
 
 @Composable
-fun SlabResultContent(res: SlabResult) {
+fun SlabResultContent(res: SlabResult, appSettings: AppSettingsState) {
     // Sección Hormigón
     Text(
-        "Hormigón (${res.volumeConcreteM3.roundToDecimals(2)} m³)",
+        stringResource(Res.string.structure_result_concrete, res.volumeConcreteM3.roundToDecimals(2)),
         fontWeight = FontWeight.Bold,
         fontSize = 18.sp
     )
     Text(
-        "(Incluye ${(res.percentageConcreteWaste * 100).toInt()}% desperdicio)",
+        stringResource(Res.string.structure_result_waste_included, (res.percentageConcreteWaste * 100).toInt()),
         style = MaterialTheme.typography.bodySmall
     )
 
     Spacer(modifier = Modifier.height(8.dp))
 
     ResultRow(
-        label = "Cemento",
+        label = stringResource(Res.string.structure_result_cement),
         value = res.cementKg.toPresentationUnit(
             res.cementBagKg,
             Res.string.unit_bag,
@@ -1082,18 +812,30 @@ fun SlabResultContent(res: SlabResult) {
     )
 
     ResultRow(
-        label = "Arena",
-        value = "${res.sandM3.roundToDecimals(2)} m³"
+        label = stringResource(Res.string.structure_result_sand),
+        value = stringResource(
+            Res.string.concrete_result_volume_m3,
+            res.sandM3.roundToDecimals(2),
+            stringResource(Res.string.unit_cubic_meters)
+        )
     )
 
     ResultRow(
-        label = "Piedra",
-        value = "${res.gravelM3.roundToDecimals(2)} m³"
+        label = stringResource(Res.string.structure_result_gravel),
+        value = stringResource(
+            Res.string.concrete_result_volume_m3,
+            res.gravelM3.roundToDecimals(2),
+            stringResource(Res.string.unit_cubic_meters)
+        )
     )
 
     ResultRow(
-        label = "Agua",
-        value = "${res.waterLiters.roundToDecimals(1)} Lt"
+        label = stringResource(Res.string.structure_result_water),
+        value = stringResource(
+            Res.string.concrete_result_volume_liters,
+            res.waterLiters.roundToDecimals(1),
+            stringResource(Res.string.unit_liters)
+        )
     )
 
     Spacer(modifier = Modifier.height(16.dp))
@@ -1101,29 +843,29 @@ fun SlabResultContent(res: SlabResult) {
     // Sección Hierro
     if (res.suggestedMesh != null) {
         Text(
-            "Malla Sima",
+            stringResource(Res.string.structure_result_mesh),
             fontWeight = FontWeight.Bold,
             fontSize = 18.sp
         )
         Spacer(modifier = Modifier.height(8.dp))
         ResultRow(
-            label = "Tipo",
+            label = stringResource(Res.string.structure_result_mesh_type),
             value = res.suggestedMesh
         )
         if (res.meshPanelsNeeded != null) {
             ResultRow(
-                label = "Paneles (2.4x6 m)",
+                label = stringResource(Res.string.structure_result_mesh_panels),
                 value = "${res.meshPanelsNeeded} u"
             )
         }
     } else {
         Text(
-            "Acero / Hierro (${res.totalWeightKg.roundToDecimals(1)} kg)",
+            stringResource(Res.string.structure_result_iron_steel, res.totalWeightKg.roundToDecimals(1)),
             fontWeight = FontWeight.Bold,
             fontSize = 18.sp
         )
         Text(
-            "(Incluye ${(res.percentageIronWaste * 100).toInt()}% desperdicio)",
+            stringResource(Res.string.structure_result_waste_included, (res.percentageIronWaste * 100).toInt()),
             style = MaterialTheme.typography.bodySmall
         )
 
@@ -1131,37 +873,56 @@ fun SlabResultContent(res: SlabResult) {
 
         if (res.diameterX != res.diameterY) {
             ResultRow(
-                label = "Hierros en X (Ø ${res.diameterX} mm)",
-                value = "${(res.lengthX * res.countX * (1 + res.percentageIronWaste)).roundToDecimals(1)} m"
+                label = stringResource(Res.string.structure_result_iron_x, res.diameterX),
+                value = stringResource(
+                    Res.string.concrete_result_volume_m3,
+                    (res.lengthX * res.countX * (1 + res.percentageIronWaste)).roundToDecimals(1),
+                    stringResource(Res.string.unit_meters)
+                )
             )
             Text(
-                "    ${res.weightX.roundToDecimals(1)} kg | aprox. ${
+                stringResource(
+                    Res.string.structure_result_weight_rods,
+                    res.weightX.roundToDecimals(1),
                     ceil((res.lengthX * res.countX * (1 + res.percentageIronWaste)) / 12).toInt()
-                } varillas", style = MaterialTheme.typography.bodySmall
+                ),
+                style = MaterialTheme.typography.bodySmall
             )
 
             ResultRow(
-                label = "Hierros en Y (Ø ${res.diameterY} mm)",
-                value = "${(res.lengthY * res.countY * (1 + res.percentageIronWaste)).roundToDecimals(1)} m"
+                label = stringResource(Res.string.structure_result_iron_y, res.diameterY),
+                value = stringResource(
+                    Res.string.concrete_result_volume_m3,
+                    (res.lengthY * res.countY * (1 + res.percentageIronWaste)).roundToDecimals(1),
+                    stringResource(Res.string.unit_meters)
+                )
             )
             Text(
-                "    ${res.weightY.roundToDecimals(1)} kg | aprox. ${
+                stringResource(
+                    Res.string.structure_result_weight_rods,
+                    res.weightY.roundToDecimals(1),
                     ceil((res.lengthY * res.countY * (1 + res.percentageIronWaste)) / 12).toInt()
-                } varillas", style = MaterialTheme.typography.bodySmall
+                ),
+                style = MaterialTheme.typography.bodySmall
             )
         } else {
             ResultRow(
-                label = "Hierro Ø ${res.diameterX} mm",
-                value = "${
+                label = stringResource(Res.string.structure_result_iron_generic, res.diameterX),
+                value = stringResource(
+                    Res.string.concrete_result_volume_m3,
                     ((res.lengthX * res.countX + res.lengthY * res.countY) * (1 + res.percentageIronWaste)).roundToDecimals(
                         1
-                    )
-                } m"
+                    ),
+                    stringResource(Res.string.unit_meters)
+                )
             )
             Text(
-                "    ${(res.weightX + res.weightY).roundToDecimals(1)} kg | aprox. ${
+                stringResource(
+                    Res.string.structure_result_weight_rods,
+                    (res.weightX + res.weightY).roundToDecimals(1),
                     ceil(((res.lengthX * res.countX + res.lengthY * res.countY) * (1 + res.percentageIronWaste)) / 12).toInt()
-                } varillas", style = MaterialTheme.typography.bodySmall
+                ),
+                style = MaterialTheme.typography.bodySmall
             )
         }
 
@@ -1173,20 +934,95 @@ fun SlabResultContent(res: SlabResult) {
                     Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        "Detalle de Armado:",
+                        stringResource(Res.string.structure_result_detail_title),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold
                     )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = """
-                        - Eje X: ${res.countX} varillas de ${res.lengthX.roundToDecimals(2)} m
-                        - Eje Y: ${res.countY} varillas de ${res.lengthY.roundToDecimals(2)} m
-                    """.trimIndent(),
+                    text = stringResource(
+                        Res.string.structure_result_detail_x,
+                        res.countX,
+                        res.lengthX.roundToDecimals(2)
+                    ) + "\n" +
+                            stringResource(
+                                Res.string.structure_result_detail_y,
+                                res.countY,
+                                res.lengthY.roundToDecimals(2)
+                            ),
                     style = MaterialTheme.typography.labelSmall
                 )
             }
         }
     }
+
+    // --- CÁLCULO DE PRECIOS ---
+    val prices = appSettings.priceSettings
+    var materialCost = 0.0
+
+    // Cemento
+    prices.materialPrices.find { it.name.contains("Cemento", ignoreCase = true) }?.let {
+        if (it.unit.contains("bolsa", ignoreCase = true)) {
+            materialCost += it.price * res.cementBagKg
+        } else if (it.unit.contains("kg", ignoreCase = true)) {
+            materialCost += it.price * res.cementKg
+        }
+    }
+
+    // Arena
+    prices.materialPrices.find { it.name.contains("Arena", ignoreCase = true) }?.let {
+        if (it.unit.contains("m3", ignoreCase = true)) {
+            materialCost += it.price * res.sandM3
+        }
+    }
+
+    // Piedra
+    prices.materialPrices.find {
+        it.name.contains("Piedra", ignoreCase = true) || it.name.contains(
+            "Canto",
+            ignoreCase = true
+        )
+    }?.let {
+        if (it.unit.contains("m3", ignoreCase = true)) {
+            materialCost += it.price * res.gravelM3
+        }
+    }
+
+    // Malla
+    if (res.suggestedMesh != null) {
+        prices.materialPrices.find {
+            it.name.contains("Malla", ignoreCase = true) || it.name.contains(
+                "Sima",
+                ignoreCase = true
+            )
+        }?.let {
+            if (it.unit.contains("u", ignoreCase = true) || it.unit.contains("panel", ignoreCase = true)) {
+                materialCost += it.price * (res.meshPanelsNeeded ?: 0)
+            }
+        }
+    } else {
+        // Hierro
+        // Simplificación: Buscamos "Hierro" y usamos el precio por kg si existe, o por barra estimando
+        prices.materialPrices.find { it.name.contains("Hierro", ignoreCase = true) }?.let {
+            if (it.unit.contains("kg", ignoreCase = true)) {
+                materialCost += it.price * res.totalWeightKg
+            }
+        }
+    }
+
+    // Mano de Obra (Losa)
+    var laborCost = 0.0
+    prices.laborPrices.find { it.name.contains("Losa", ignoreCase = true) }?.let {
+        if (it.unit.contains("m2", ignoreCase = true)) {
+            // Estimamos área: volumen / espesor promedio (o usamos inputs si los tuviéramos aquí)
+            // Como no tenemos el área directa en SlabResult, usamos volumen / 0.1 (espesor aprox) o lo omitimos
+            // Mejor: Si es m3, usamos volumen
+            if (it.unit.contains("m3", ignoreCase = true)) {
+                laborCost += it.price * res.volumeConcreteM3
+            }
+        }
+    }
+
+    PriceResultSection(materialCost, laborCost)
 }

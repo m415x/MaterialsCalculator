@@ -19,7 +19,7 @@
 package org.m415x.materialcalc.domain.utils
 
 import org.m415x.materialcalc.domain.model.Aperture
-import org.m415x.materialcalc.ui.common.roundToDecimals // Asegúrate de tener acceso a esta extensión o muévela a domain/common
+import org.m415x.materialcalc.ui.common.utils.roundToDecimals // Asegúrate de tener acceso a esta extensión o muévela a domain/common
 
 /**
  * Calcula la superficie neta de una pared descontando aberturas.

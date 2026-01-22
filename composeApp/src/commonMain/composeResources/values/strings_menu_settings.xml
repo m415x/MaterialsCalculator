@@ -55,4 +55,124 @@
     <string name="about_label_developer">Desarrollado por</string>
     <string name="about_copyright_format">© %1$s %2$s</string>
     <string name="about_all_rights_reserved">Todos los derechos reservados</string>
+
+    <!-- SETTINGS: Appearance -->
+    <string name="settings_appearance_title">Personalización Visual</string>
+    <string name="settings_appearance_theme_label">Tema de la aplicación</string>
+    <string name="settings_appearance_theme_desc">Define si usar modo claro, oscuro o del sistema.</string>
+    <string name="settings_appearance_palette_label">Paleta de Colores</string>
+    <string name="settings_appearance_palette_desc">Elige el estilo visual de la aplicación.</string>
+    <string name="settings_appearance_contrast_label">Modo Alto Contraste</string>
+    <string name="settings_appearance_contrast_desc">Mejora la legibilidad en condiciones de mucha luz exterior.
+    </string>
+    <string name="settings_appearance_outdoor_label">Modo Exterior</string>
+    <string name="settings_appearance_outdoor_desc">Fuerza el brillo al máximo para ver bajo el sol.</string>
+    <string name="settings_appearance_contrast_info">El modo de alto contraste ayuda a mejorar la visibilidad bajo la luz directa del sol.</string>
+
+    <!-- SETTINGS: Global Params -->
+    <string name="settings_params_default_title">Valores Predeterminados</string>
+    <string name="settings_params_concrete_gen_label">Hormigón General (Pisos/Losas)</string>
+    <string name="settings_params_concrete_str_label">Hormigón Estructural (Vigas/Columnas)</string>
+    <string name="settings_params_plaster_rough_label">Mezcla Revoque Grueso</string>
+    <string name="settings_params_presentation_title">Presentación de Materiales</string>
+    <string name="settings_params_cement_label">Cemento</string>
+    <string name="settings_params_lime_label">Cal</string>
+    <string name="settings_params_premix_label">Premezclado Fino</string>
+    <string name="settings_params_equivalences_title">Equivalencias de Obra</string>
+    <string name="settings_params_bucket_label">Balde</string>
+    <string name="settings_params_barrow_label">Carretilla</string>
+    <string name="settings_params_mixer_label">Hormigonera</string>
+    <string name="settings_params_technical_title">Configuración Técnica</string>
+    <string name="settings_params_fine_thickness_label">Espesor Revoque Fino</string>
+    <string name="settings_params_waste_title">Desperdicios / Márgenes (%)</string>
+    <string name="settings_params_waste_desc">Porcentaje extra que se sumará al cálculo para cubrir roturas y pérdidas.</string>
+    <string name="settings_params_waste_concrete">Hormigón</string>
+    <string name="settings_params_waste_mortar">Mortero</string>
+    <string name="settings_params_waste_bricks">Ladrillos</string>
+    <string name="settings_params_waste_plaster">Revoques</string>
+    <string name="settings_params_waste_iron_main">Hierro Principal</string>
+    <string name="settings_params_waste_iron_stirrup">Estribos</string>
+    <string name="settings_params_reset_desc">Restablecer</string>
+
+    <!-- SETTINGS: Materials DB -->
+    <string name="settings_db_tab_bricks">Ladrillos</string>
+    <string name="settings_db_tab_irons">Hierros</string>
+    <string name="settings_db_tab_recipes">Mezclas</string>
+    <string name="settings_db_restore_factory">Restaurar materiales de fábrica (%1$d)</string>
+    <string name="settings_db_bricks_desc">Gestiona los ladrillos disponibles en la calculadora.</string>
+    <string name="settings_db_empty">No hay materiales disponibles.</string>
+    <string name="settings_db_restore_title">Restaurar Materiales</string>
+    <string name="settings_db_brick_new">Nuevo Ladrillo</string>
+    <string name="settings_db_brick_edit">Editar Ladrillo</string>
+    <string name="settings_db_brick_name">Nombre del ladrillo</string>
+    <string name="settings_db_brick_bearing">Es Portante</string>
+    <string name="settings_db_brick_structural">(Estructural)</string>
+    <string name="settings_db_brick_width">Ancho</string>
+    <string name="settings_db_brick_height">Alto</string>
+    <string name="settings_db_brick_length">Largo</string>
+    <string name="settings_db_brick_joint">Junta</string>
+    <string name="settings_db_brick_desc">Descripción / Uso</string>
+    <string name="settings_db_irons_desc">Gestiona los hierros disponibles en la calculadora.</string>
+    <string name="settings_db_iron_new">Nuevo Hierro</string>
+    <string name="settings_db_iron_edit">Editar Hierro</string>
+    <string name="settings_db_iron_name">Nombre del hierro</string>
+    <string name="settings_db_iron_diameter">Diámetro</string>
+    <string name="settings_db_iron_weight">Peso/Metro</string>
+    <string name="settings_db_recipes_desc">Gestiona las mezclas disponibles en la calculadora.</string>
+    <string name="settings_db_recipe_new">Nueva Mezcla</string>
+    <string name="settings_db_recipe_edit">Editar Mezcla</string>
+    <string name="settings_db_recipe_type">Tipo de Mezcla</string>
+    <string name="settings_db_recipe_name">Nombre</string>
+    <string name="settings_db_recipe_structural">Es Apto Estructura (Portante)</string>
+    <string name="settings_db_recipe_mode">Modo de Ingreso</string>
+    <string name="settings_db_recipe_mode_empirical">Empírico (Baldes)</string>
+    <string name="settings_db_recipe_mode_technical">Técnico (kg/m³)</string>
+    <string name="settings_db_recipe_parts_hint">Ingrese partes (ej: baldes)</string>
+    <string name="settings_db_recipe_calculate">Calcular y Aplicar</string>
+    <string name="settings_db_recipe_desc">Usos / Descripción</string>
+    <string name="settings_db_hide_title">Ocultar Material</string>
+    <string name="settings_db_delete_title">Eliminar Material</string>
+    <string name="settings_db_hide_msg">Este es un material de fábrica. Se ocultará de la lista pero podrás restaurarlo luego.</string>
+    <string name="settings_db_delete_msg">Se eliminará '%1$s' permanentemente.</string>
+
+    <!-- SETTINGS: Prices -->
+    <string name="settings_prices_tab_materials">Materiales</string>
+    <string name="settings_prices_tab_labor">Mano de Obra</string>
+    <string name="settings_prices_empty_materials">No hay precios de materiales definidos.</string>
+    <string name="settings_prices_empty_labor">No hay precios de mano de obra definidos.</string>
+    <string name="settings_prices_material_new">Nuevo Precio Material</string>
+    <string name="settings_prices_material_edit">Editar Precio</string>
+    <string name="settings_prices_material_name">Nombre Material</string>
+    <string name="settings_prices_unit_label">Unidad (ej: bolsa, m3)</string>
+    <string name="settings_prices_price_label">Precio Unitario ($)</string>
+    <string name="settings_prices_labor_new">Nuevo Precio Mano de Obra</string>
+    <string name="settings_prices_labor_desc">Descripción Trabajo</string>
+    <string name="settings_prices_delete_title">Eliminar Precio</string>
+    <string name="settings_prices_delete_msg">¿Estás seguro de eliminar este precio?</string>
+    <string name="settings_prices_result_title">Estimación de Costos</string>
+    <string name="settings_prices_result_materials">Materiales</string>
+    <string name="settings_prices_result_labor">Mano de Obra</string>
+    <string name="settings_prices_result_total">TOTAL ESTIMADO</string>
+
+    <!-- SETTINGS: Prices (Basic Materials) -->
+    <string name="settings_prices_basic_cement">Cemento</string>
+    <string name="settings_prices_basic_lime">Cal</string>
+    <string name="settings_prices_basic_sand">Arena</string>
+    <string name="settings_prices_basic_stone">Piedra</string>
+    <string name="settings_prices_basic_premix">Premezcla</string>
+
+    <!-- SETTINGS: Prices (Labor) -->
+    <string name="settings_prices_labor_concrete">Hormigón</string>
+    <string name="settings_prices_labor_wall">Muro</string>
+    <string name="settings_prices_labor_plaster">Revoque</string>
+    <string name="settings_prices_labor_structure">Viga/Columna</string>
+    <string name="settings_prices_labor_slab">Losa</string>
+
+    <!-- SETTINGS: Prices (Categories) -->
+    <string name="settings_prices_cat_basic">Materiales Básicos</string>
+    <string name="settings_prices_cat_bricks">Ladrillos</string>
+    <string name="settings_prices_cat_irons">Hierros</string>
+    <string name="settings_prices_cat_labor_std">Mano de Obra Estándar</string>
+    <string name="settings_prices_cat_others">Otros</string>
+    <string name="settings_prices_no_price">Sin precio</string>
 </resources>

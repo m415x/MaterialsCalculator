@@ -25,7 +25,49 @@
     <string name="wall_section_brick_mortar">Ladrillo y Mortero</string>
 
     <!-- LABELS -->
+    <string name="wall_label_mortar">Mortero</string>
     <string name="wall_label_seat_mortar">Mortero de Asiento</string>
+    <string name="wall_dialog_choose_mix">Elegir Mezcla</string>
+    <string name="wall_result_net_area">Área Neta: %1$s m²</string>
+    <string name="wall_result_bricks">Ladrillos</string>
+    <string name="wall_result_waste_included">(Incluye %1$d% desperdicio)</string>
+    <string name="wall_result_mortar">Mortero (%1$s m³)</string>
+    <string name="wall_result_cement">Cemento</string>
+    <string name="wall_result_lime">Cal</string>
+    <string name="wall_result_sand">Arena</string>
+    <string name="wall_result_water">Agua</string>
 
+    <!-- BRICK TYPES -->
+    <string name="brick_name_comun">Ladrillo Común</string>
+    <string name="brick_desc_comun">Muros, parrillas</string>
 
+    <string name="brick_name_ladrillon">Ladrillón</string>
+    <string name="brick_desc_ladrillon">Muros de carga</string>
+
+    <string name="brick_name_hueco_8">Cerámico Hueco 8</string>
+    <string name="brick_desc_hueco_8">Tabiquería interior</string>
+
+    <string name="brick_name_hueco_12">Cerámico Hueco 12</string>
+    <string name="brick_desc_hueco_12">Tabiquería interior/exterior</string>
+
+    <string name="brick_name_hueco_18">Cerámico Hueco 18</string>
+    <string name="brick_desc_hueco_18">Tabiquería, cerramientos</string>
+
+    <string name="brick_name_portante_12">Cerámico Portante 12</string>
+    <string name="brick_desc_portante_12">Muros de carga</string>
+
+    <string name="brick_name_portante_18">Cerámico Portante 18</string>
+    <string name="brick_desc_portante_18">Muros de carga</string>
+
+    <string name="brick_name_bloque_10">Bloque 10</string>
+    <string name="brick_desc_bloque_10">Tabiques, muros divisorios</string>
+
+    <string name="brick_name_bloque_13">Bloque 13</string>
+    <string name="brick_desc_bloque_13">Muros de carga</string>
+
+    <string name="brick_name_bloque_15">Bloque 15</string>
+    <string name="brick_desc_bloque_15">Muros de carga</string>
+
+    <string name="brick_name_bloque_20">Bloque 20</string>
+    <string name="brick_desc_bloque_20">Muros de carga</string>
 </resources>
