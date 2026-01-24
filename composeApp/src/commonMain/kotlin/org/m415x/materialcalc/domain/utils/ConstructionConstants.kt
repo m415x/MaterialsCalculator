@@ -31,14 +31,16 @@ object ConstructionConstants {
     // Densidades Aparentes (Suelto, como se carga en balde)
     // Estos son los valores estándar para convertir Volumen <-> Peso en obra.
     const val APPARENT_CEMENT_DENSITY = 1400.0 // kg/m³ (Valor estándar para cálculos de mezcla)
-    const val APPARENT_LIME_DENSITY = 600.0      // kg/m³ (Varía mucho, 600 es promedio para cal hidratada)
+    const val APPARENT_LIME_HYDRATED_DENSITY = 600.0      // kg/m³ (Varía mucho, 600 es promedio para cal hidratada)
+    const val APPARENT_LIME_AERIAL_DENSITY = 400.0 // kg/m³ (Cal aérea, más liviana)
     const val APPARENT_SAND_DENSITY = 1500.0   // kg/m³ (Seca/Húmeda varía, 1500 es estándar)
     const val APPARENT_GRAVEL_DENSITY = 1600.0  // kg/m³
 
     // Coeficientes de Aporte (Volumen Real / Volumen Aparente)
     // Fuente: Chandias / Manuales de Construcción
     const val COEF_CEMENT = 0.47
-    const val COEF_LIME = 0.37 // Polvo
+    const val COEF_LIME_HYDRATED = 0.37 // Polvo
+    const val COEF_LIME_AERIAL = 0.45 // Polvo
     const val COEF_SAND = 0.63
     const val COEF_GRAVEL = 0.51
     const val COEF_WATER = 1.0

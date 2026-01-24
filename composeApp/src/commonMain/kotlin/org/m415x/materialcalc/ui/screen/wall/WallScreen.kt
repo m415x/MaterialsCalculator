@@ -47,10 +47,7 @@ import org.m415x.materialcalc.domain.model.asString
 import org.m415x.materialcalc.domain.usecase.CalculateWallUseCase
 import org.m415x.materialcalc.domain.utils.estimateProportionTxt
 import org.m415x.materialcalc.ui.common.dialogs.AppDialog
-import org.m415x.materialcalc.ui.common.display.AppResultBottomSheet
-import org.m415x.materialcalc.ui.common.display.ErrorMessage
-import org.m415x.materialcalc.ui.common.display.PriceResultSection
-import org.m415x.materialcalc.ui.common.display.ResultRow
+import org.m415x.materialcalc.ui.common.display.*
 import org.m415x.materialcalc.ui.common.inputs.BrickSelectorField
 import org.m415x.materialcalc.ui.common.inputs.NumericInput
 import org.m415x.materialcalc.ui.common.layout.InputRow
@@ -111,6 +108,7 @@ fun WallScreen(appSettings: AppSettingsState) {
     )
 
     val shareManager = remember { getShareManager() }
+
     val focusLength = remember { FocusRequester() }
     val focusHeight = remember { FocusRequester() }
     val focusOpeningWidth = remember { FocusRequester() }
@@ -138,12 +136,16 @@ fun WallScreen(appSettings: AppSettingsState) {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(24.dp) // Aumentamos espaciado entre secciones
         ) {
-            InputSection(title = stringResource(Res.string.wall_section_dimensions)) {
+            InputSection(title = stringResource(Res.string.label_dimensions)) {
                 InputRow {
                     NumericInput(
                         value = state.wallLength,
                         onValueChange = { state.wallLength = it },
-                        label = stringResource(Res.string.label_length, stringResource(Res.string.unit_meters)),
+                        label = stringResource(
+                            Res.string.label_length,
+                            stringResource(Res.string.unit_meters)
+                        ),
+                        errorText = state.lengthError, // Conectamos el error
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(1f),
                         focusRequester = focusLength,
@@ -152,7 +154,11 @@ fun WallScreen(appSettings: AppSettingsState) {
                     NumericInput(
                         value = state.wallHeight,
                         onValueChange = { state.wallHeight = it },
-                        label = stringResource(Res.string.label_height, stringResource(Res.string.unit_meters)),
+                        label = stringResource(
+                            Res.string.label_height,
+                            stringResource(Res.string.unit_meters)
+                        ),
+                        errorText = state.heightError, // Conectamos el error
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(1f),
                         focusRequester = focusHeight,
@@ -226,7 +232,7 @@ fun WallScreen(appSettings: AppSettingsState) {
                 }
             }
 
-            ErrorMessage(state.errorMsg)
+            ErrorMessageCard(state.errorMsg)
 
             Spacer(modifier = Modifier.height(80.dp))
         }
@@ -300,58 +306,92 @@ fun WallScreen(appSettings: AppSettingsState) {
 
 @Composable
 fun WallResultContent(res: WallResult) {
-    Text(
-        stringResource(Res.string.wall_result_net_area, res.netAreaM2.roundToDecimals(2)),
-        fontWeight = FontWeight.Bold,
-        fontSize = 18.sp
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-    ResultRow(label = stringResource(Res.string.wall_result_bricks), value = "${res.quantityBricks} U")
-    Text(
-        stringResource(Res.string.wall_result_waste_included, (res.percentageBrickWaste * 100).toInt()),
-        style = MaterialTheme.typography.bodySmall
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-    Text(stringResource(Res.string.wall_result_mortar, res.mortarM3.roundToDecimals(2)), fontWeight = FontWeight.Bold)
-    Text(
-        stringResource(Res.string.wall_result_waste_included, (res.percentageMortarWaste * 100).toInt()),
-        style = MaterialTheme.typography.bodySmall
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-    ResultRow(
-        label = stringResource(Res.string.wall_result_cement),
-        value = res.cementKg.toPresentationUnit(
-            res.cementBagKg,
-            Res.string.unit_bag,
-            Res.string.unit_bags
+    val unitM2 = stringResource(Res.string.unit_square_meters)
+    val unitU = stringResource(Res.string.unit_units)
+    val unitKg = stringResource(Res.string.unit_kilograms)
+    val unitM3 = stringResource(Res.string.unit_cubic_meters)
+    val unitLt = stringResource(Res.string.unit_liters)
+
+    ResultSection(
+        title = stringResource(
+            Res.string.wall_result_net_area,
+            res.netAreaM2.roundToDecimals(2),
+            unitM2
         )
-    )
-    if (res.limeKg > 0) {
+    ) {
         ResultRow(
-            label = stringResource(Res.string.wall_result_lime),
-            value = res.limeKg.toPresentationUnit(
-                res.limeBagKg,
+            label = stringResource(Res.string.wall_result_bricks),
+            value = stringResource(
+                Res.string.label_result_unit,
+                res.quantityBricks,
+                unitU
+            )
+        )
+        Text(
+            stringResource(Res.string.label_result_waste_included, (res.percentageBrickWaste * 100).toInt()),
+            style = MaterialTheme.typography.bodySmall
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        ResultTitle(
+            title = stringResource(Res.string.wall_result_mortar, res.mortarM3.roundToDecimals(2)),
+            subTitle = stringResource(
+                Res.string.label_result_waste_included,
+                (res.percentageMortarWaste * 100).toInt()
+            ),
+            titleFontSize = 16.sp,
+            spacer = Modifier.height(8.dp)
+        )
+
+        ResultRow(
+            label = stringResource(Res.string.wall_result_cement),
+            subLabel = stringResource(
+                Res.string.label_result_subtitle_unit,
+                res.cementKg.roundToDecimals(1),
+                unitKg
+            ),
+            value = res.cementKg.toPresentationUnit(
+                res.cementBagKg,
                 Res.string.unit_bag,
                 Res.string.unit_bags
             )
         )
+        
+        if (res.limeKg > 0) {
+            ResultRow(
+                label = stringResource(Res.string.wall_result_lime),
+                subLabel = stringResource(
+                    Res.string.label_result_subtitle_unit,
+                    res.limeKg.roundToDecimals(1),
+                    unitKg
+                ),
+                value = res.limeKg.toPresentationUnit(
+                    res.limeBagKg,
+                    Res.string.unit_bag,
+                    Res.string.unit_bags
+                )
+            )
+        }
+
+        ResultRow(
+            label = stringResource(Res.string.wall_result_sand),
+            value = stringResource(
+                Res.string.label_result_unit,
+                res.sandM3.roundToDecimals(2),
+                unitM3
+            )
+        )
+
+        ResultRow(
+            label = stringResource(Res.string.wall_result_water),
+            value = stringResource(
+                Res.string.label_result_unit,
+                res.waterLiters.roundToDecimals(1),
+                unitLt
+            )
+        )
     }
-    ResultRow(
-        label = stringResource(Res.string.wall_result_sand),
-        value = stringResource(
-            Res.string.concrete_result_volume_m3,
-            res.sandM3.roundToDecimals(2),
-            stringResource(Res.string.unit_cubic_meters)
-        )
-    )
-    ResultRow(
-        label = stringResource(Res.string.wall_result_water),
-        value = stringResource(
-            Res.string.concrete_result_volume_liters,
-            res.waterLiters.roundToDecimals(1),
-            stringResource(Res.string.unit_liters)
-        )
-    )
 
     // --- CÁLCULO DE PRECIOS ---
     // Ahora usamos los valores calculados en el UseCase

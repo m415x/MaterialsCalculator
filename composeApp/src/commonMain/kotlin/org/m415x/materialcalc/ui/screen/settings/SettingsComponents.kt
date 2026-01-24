@@ -19,14 +19,14 @@
 package org.m415x.materialcalc.ui.screen.settings
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,6 +34,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.domain.utils.PlatformInfo
@@ -160,34 +161,46 @@ fun SettingsCategoryTitle(text: String) {
 @Composable
 fun BaseEditSetting(
     label: String,
-    isModified: Boolean,
+    currentText: String, // Texto actual en el input
+    defaultText: String, // Valor por defecto convertido a texto
     onReset: () -> Unit,
+    modifier: Modifier = Modifier,
     inputContent: @Composable RowScope.() -> Unit
 ) {
+    // La lógica de modificación se centraliza aquí
+    val isModified = currentText != defaultText && currentText.isEmpty()
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
     ) {
-        // 1. Etiqueta
-        Text(
-            text = label,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        // 2. Botón Reset
-        AnimatedVisibility(
-            visible = isModified,
-            enter = fadeIn() + expandHorizontally(),
-            exit = fadeOut() + shrinkHorizontally()
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .padding(top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onReset) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = stringResource(Res.string.settings_params_reset_desc),
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
+            // 1. Etiqueta
+            Text(
+                text = label,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            // 2. Botón Reset
+            AnimatedVisibility(
+                visible = isModified,
+                enter = fadeIn() + expandHorizontally(),
+                exit = fadeOut() + shrinkHorizontally()
+            ) {
+                IconButton(onClick = onReset) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = stringResource(Res.string.settings_params_reset_desc),
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
 
@@ -211,8 +224,12 @@ fun EditIntegerSetting(
 
     BaseEditSetting(
         label = label,
-        isModified = value != defaultValue,
-        onReset = { onSave(defaultValue) }
+        currentText = text,
+        defaultText = defaultValue.toString(),
+        onReset = {
+            onSave(defaultValue)
+            text = defaultValue.toString()
+        }
     ) {
         NumericInput(
             value = text,
@@ -221,7 +238,7 @@ fun EditIntegerSetting(
                 it.toIntOrNull()?.let { num -> onSave(num) }
             },
             label = "",
-            modifier = Modifier.width(110.dp),
+            modifier = Modifier.width(150.dp),
             suffix = { suffix?.let { Text(it, style = MaterialTheme.typography.labelSmall) } },
             focusRequester = focusRequester,
             nextFocusRequester = nextFocusRequester
@@ -244,8 +261,12 @@ fun EditDoubleSetting(
 
     BaseEditSetting(
         label = label,
-        isModified = value != defaultValue,
-        onReset = { onSave(defaultValue) }
+        currentText = text,
+        defaultText = defaultValue.toString(),
+        onReset = {
+            onSave(defaultValue)
+            text = defaultValue.toString()
+        }
     ) {
         NumericInput(
             value = text,
@@ -254,7 +275,7 @@ fun EditDoubleSetting(
                 it.toDoubleOrNull()?.let { num -> onSave(num) }
             },
             label = "",
-            modifier = Modifier.width(110.dp),
+            modifier = Modifier.width(150.dp),
             suffix = { suffix?.let { Text(it, style = MaterialTheme.typography.labelSmall) } },
             focusRequester = focusRequester,
             nextFocusRequester = nextFocusRequester
@@ -273,52 +294,33 @@ fun EditPercentSetting(
     nextFocusRequester: FocusRequester? = null,
     onDone: (() -> Unit)? = null
 ) {
-    // Usamos el estado local para la edición fluida
+    // 1. Usamos el estado local para la edición fluida
     var text by remember(value) { mutableStateOf(value.toString()) }
 
-    // Detectamos si el valor actual difiere del default
-    val isModified = value != defaultValue
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 4.dp)
-    ) {
-        // 1. Texto descriptivo a la izquierda
-        Text(
-            text = label,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        // 2. Botón de Reset (Solo visible si se modificó)
-        // Usamos AnimatedVisibility para que aparezca/desaparezca suavemente
-        AnimatedVisibility(visible = isModified) {
-            IconButton(
-                onClick = {
-                    onSave(defaultValue) // Guardamos el default
-                    text = defaultValue.toString() // Actualizamos el input visualmente
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh, // Ícono de flecha circular
-                    contentDescription = stringResource(Res.string.settings_params_reset_desc),
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+    // 2. Usamos el componente Base inteligente
+    BaseEditSetting(
+        label = label,
+        currentText = text,
+        // Convertimos el default a String para la comparación visual
+        defaultText = defaultValue.toString(),
+        onReset = {
+            onSave(defaultValue)
+            text = defaultValue.toString()
         }
-
+    ) {
+        // 3. El Input se inyecta en el slot 'inputContent'
         NumericInput(
             value = text,
             onValueChange = { newText ->
                 text = newText
-                // Validamos y guardamos automáticamente
+                // Solo guardamos si es un número válido
                 newText.toDoubleOrNull()?.let { num -> onSave(num) }
             },
-            label = "", // Sin label flotante porque ya tenemos texto a la izquierda
-            modifier = Modifier.width(100.dp),
-
-            suffix = { Text("%") },
+            label = "", // Sin label interno porque usamos el del Base
+            modifier = Modifier.width(150.dp), // Ancho consistente con los otros settings
+            suffix = {
+                Text(text = "%", style = MaterialTheme.typography.labelSmall)
+            },
             focusRequester = focusRequester,
             nextFocusRequester = nextFocusRequester,
             onDone = onDone
@@ -353,8 +355,12 @@ fun EditPriceSetting(
 
     BaseEditSetting(
         label = label,
-        isModified = value != defaultValue,
-        onReset = { onSave(defaultValue) }
+        currentText = text,
+        defaultText = defaultValue.toString(),
+        onReset = {
+            onSave(defaultValue)
+            text = defaultValue.toString()
+        }
     ) {
         CmInput(
             value = text,
@@ -377,5 +383,73 @@ fun EditPriceSetting(
             nextFocusRequester = nextFocusRequester,
             onDone = onDone
         )
+    }
+}
+
+/**
+ * Contenedor acordeón estilizado como una Card.
+ */
+@Composable
+fun SettingsAccordion(
+    title: String,
+    defaultExpanded: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    var expanded by remember { mutableStateOf(defaultExpanded) }
+
+    // 1. Creamos el "peticionador" de vista
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val scope = rememberCoroutineScope()
+
+    // 2. Efecto para scrollear cuando se expande
+    LaunchedEffect(expanded) {
+        if (expanded) {
+            // Esperamos un poquito a que la animación de expansión empiece
+            delay(100)
+            // 3. Pedimos al padre scrollear hasta este componente
+            bringIntoViewRequester.bringIntoView()
+        }
+    }
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        modifier = Modifier
+            .fillMaxWidth()
+            // 4. Vinculamos el modificador
+            .bringIntoViewRequester(bringIntoViewRequester)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Icon(
+                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Column(
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                    content = content
+                )
+            }
+        }
     }
 }

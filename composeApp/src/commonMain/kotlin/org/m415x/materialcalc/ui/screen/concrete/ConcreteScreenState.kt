@@ -20,14 +20,13 @@ package org.m415x.materialcalc.ui.screen.concrete
 
 import androidx.compose.runtime.*
 import materialscalculator.composeapp.generated.resources.Res
-import materialscalculator.composeapp.generated.resources.label_error
-import materialscalculator.composeapp.generated.resources.message_error_validation
+import materialscalculator.composeapp.generated.resources.message_error_unknown
+import materialscalculator.composeapp.generated.resources.message_error_validation_input
 import org.m415x.materialcalc.domain.model.AppSettingsState
 import org.m415x.materialcalc.domain.model.ConcreteResult
 import org.m415x.materialcalc.domain.model.TextSource
 import org.m415x.materialcalc.domain.usecase.CalculateConcreteUseCase
 import org.m415x.materialcalc.ui.common.inputs.ConcreteOptionUi
-import org.m415x.materialcalc.ui.common.utils.areValidDimensions
 import org.m415x.materialcalc.ui.common.utils.toSafeDoubleOrNull
 
 /**
@@ -44,7 +43,13 @@ class ConcreteScreenState(
     var high by mutableStateOf("")
     var quantity by mutableStateOf("1")
 
-    var selectedOption by mutableStateOf(
+    // --- ESTADO DE ERRORES DE VALIDACIÓN ---
+    var widthError by mutableStateOf<TextSource?>(null)
+    var lengthError by mutableStateOf<TextSource?>(null)
+    var highError by mutableStateOf<TextSource?>(null)
+    var quantityError by mutableStateOf<TextSource?>(null)
+
+    var selectedConcrete by mutableStateOf(
         concreteOptions.find { it.id == appSettings.defaultConcreteGenId } ?: concreteOptions.firstOrNull()
     )
 
@@ -52,20 +57,70 @@ class ConcreteScreenState(
     var errorMsg by mutableStateOf<TextSource?>(null)
     var showResultSheet by mutableStateOf(false)
 
+    // --- VALIDACIÓN ---
+    fun validate(): Boolean {
+        var isValid = true
+
+        // Validar Ancho
+        val w = width.toSafeDoubleOrNull()
+        if (w == null || w <= 0) {
+            widthError = TextSource.Resource(Res.string.message_error_validation_input) // O un mensaje más específico
+            isValid = false
+        } else {
+            widthError = null
+        }
+
+        // Validar Largo
+        val l = length.toSafeDoubleOrNull()
+        if (l == null || l <= 0) {
+            lengthError = TextSource.Resource(Res.string.message_error_validation_input)
+            isValid = false
+        } else {
+            lengthError = null
+        }
+
+        // Validar Espesor
+        val h = high.toSafeDoubleOrNull()
+        if (h == null || h <= 0) {
+            highError = TextSource.Resource(Res.string.message_error_validation_input)
+            isValid = false
+        } else {
+            highError = null
+        }
+
+        // Validar Cantidad
+        val q = quantity.toIntOrNull()
+        if (q == null || q <= 0) {
+            quantityError = TextSource.Resource(Res.string.message_error_validation_input)
+            isValid = false
+        } else {
+            quantityError = null
+        }
+
+        return isValid
+    }
+
     // --- LÓGICA DE CÁLCULO ---
     fun calculate() {
-        val w = width.toSafeDoubleOrNull()
-        val l = length.toSafeDoubleOrNull()
-        val h = high.toSafeDoubleOrNull()
-        val q = quantity.toIntOrNull()
+        // Primero validamos
+        if (!validate()) {
+            errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
+            return
+        }
 
-        if (areValidDimensions(w, l, h, q) && selectedOption != null) {
+        // Si pasa la validación, procedemos (ya sabemos que no son nulos)
+        val w = width.toSafeDoubleOrNull()!!
+        val l = length.toSafeDoubleOrNull()!!
+        val h = high.toSafeDoubleOrNull()!!
+        val q = quantity.toIntOrNull()!!
+
+        if (selectedConcrete != null) {
             val calcResult = calculateConcrete(
-                widthMeters = w!!,
-                lengthMeters = l!!,
-                thicknessMeters = h!!,
-                unitQuantity = q!!,
-                concreteDosing = selectedOption!!.recipe,
+                widthMeters = w,
+                lengthMeters = l,
+                thicknessMeters = h,
+                unitQuantity = q,
+                concreteDosing = selectedConcrete!!.recipe,
                 cementBagWeightKg = appSettings.bagCementKg,
                 limeBagWeightKg = appSettings.bagLimeKg,
                 percentageConcreteWaste = appSettings.wasteConcretePct / 100.0
@@ -78,12 +133,14 @@ class ConcreteScreenState(
                     showResultSheet = true
                 },
                 onFailure = {
-                    errorMsg = TextSource.ResourceArgs(Res.string.label_error, listOf(": ", it.message ?: ""))
+                    // Este error es de lógica de negocio o excepción inesperada
+                    errorMsg = it.message?.let { msg -> TextSource.Raw(msg) }
+                        ?: TextSource.Resource(Res.string.message_error_unknown)
                     result = null
                 }
             )
         } else {
-            errorMsg = TextSource.Resource(Res.string.message_error_validation)
+            errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
             result = null
         }
     }

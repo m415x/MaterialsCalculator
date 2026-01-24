@@ -45,6 +45,7 @@ import org.m415x.materialcalc.ui.common.inputs.NumericInput
 import org.m415x.materialcalc.ui.common.utils.RequestFocusOnStart
 import org.m415x.materialcalc.ui.common.utils.roundToDecimals
 import org.m415x.materialcalc.ui.common.utils.toSafeDoubleOrNull
+import org.m415x.materialcalc.ui.screen.settings.SettingsAccordion
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -55,66 +56,19 @@ fun IronsTabContent(repository: SettingsRepository) {
     val hiddenIds by repository.hiddenIronIds.collectAsState(initial = emptySet())
     val staticRepo = remember { StaticMaterialRepository() }
 
-    // 1. Fusionar en MaterialUiModel (SOLUCION DEL ERROR)
-    /*val uiList = remember(customIrons, hiddenIds) {
-        val list = mutableListOf<MaterialUiModel>()
-
-        // Custom
-        list.addAll(customIrons.map {
-            MaterialUiModel(
-                id = it.id,
-                title = TextSource.Raw(it.name),
-                subtitle = TextSource.Raw("Ø ${it.diameterMm} mm | ${it.linearWeight} kg/m"),
-                isCustom = true,
-                originalData = it // Guardamos el CustomIron aquí
-            )
-        })
-
-        // Static
-        IronDiameter.entries.forEach { type ->
-            if (type.name !in hiddenIds) {
-                val weight = staticRepo.getIronWeightPerMeter(type)
-                list.add(MaterialUiModel(
-                    id = type.name,
-                    title = TextSource.Raw("Hierro Ø ${type.milimeters} mm"),
-                    subtitle = TextSource.Raw("$weight kg/m"),
-                    isCustom = false,
-                    // Creamos copia custom temporal
-                    originalData = CustomIron(
-                        id = "",
-                        name = "Hierro Ø ${type.milimeters} mm",
-                        diameterMm = type.milimeters,
-                        linearWeight = weight
-                    )
-                ))
-            }
-        }
-        list.sortedBy { it.id } // Ordenar por ID o nombre
-    }*/
-
-    // RE-IMPLEMENTACIÓN CON buildList para usar stringResource
     val unitMm = stringResource(Res.string.unit_millimeters)
     val unitKgM = stringResource(Res.string.unit_kg_m)
 
-    val uiListCorrected = buildList {
-        // Custom
-        customIrons.forEach {
-            add(
-                MaterialUiModel(
-                    id = it.id,
-                    title = TextSource.Raw(it.name),
-                    subtitle = TextSource.Raw("Ø ${it.diameterMm} $unitMm | ${it.linearWeight} $unitKgM"),
-                    isCustom = true,
-                    originalData = it
-                )
-            )
-        }
+    // 2. Lógica de Fusión y Agrupación
+    val categorizedIrons = remember(customIrons, hiddenIds) {
+        val standard = mutableListOf<MaterialUiModel>()
+        val custom = mutableListOf<MaterialUiModel>()
 
-        // Static
+        // A. Agregamos los ESTÁTICOS (Respetando el orden del Enum)
         IronDiameter.entries.forEach { type ->
             if (type.name !in hiddenIds) {
                 val weight = staticRepo.getIronWeightPerMeter(type)
-                add(
+                standard.add(
                     MaterialUiModel(
                         id = type.name,
                         title = TextSource.Raw("Ø ${type.milimeters} $unitMm"),
@@ -130,8 +84,22 @@ fun IronsTabContent(repository: SettingsRepository) {
                 )
             }
         }
-    }.sortedBy { it.id }
 
+        // B. Agregamos los CUSTOM
+        custom.addAll(customIrons.map {
+            MaterialUiModel(
+                id = it.id,
+                title = TextSource.Raw(it.name),
+                subtitle = TextSource.Raw("Ø ${it.diameterMm} $unitMm | ${it.linearWeight} $unitKgM"),
+                isCustom = true,
+                originalData = it
+            )
+        })
+
+        Pair(standard, custom)
+    }
+
+    val (standardIrons, customIronsList) = categorizedIrons
 
     var showEditor by remember { mutableStateOf(false) }
     var ironToEdit by remember { mutableStateOf<CustomIron?>(null) }
@@ -178,28 +146,58 @@ fun IronsTabContent(repository: SettingsRepository) {
                 )
             }
 
-            if (uiListCorrected.isEmpty()) {
+            if (standardIrons.isEmpty() && customIronsList.isEmpty()) {
                 Box(Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
                     Text(stringResource(Res.string.settings_db_empty))
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    items(uiListCorrected) { item ->
-                        UniversalMaterialItem(
-                            item = item,
-                            onEdit = {
-                                // Recuperamos el objeto original (Custom o convertido de Static)
-                                val original = item.originalData as? CustomIron
-                                // Si es de fábrica, forzamos ID nuevo
-                                ironToEdit = original?.copy(id = if (item.isCustom) original.id else "")
-                                showEditor = true
-                            },
-                            onDelete = { itemToDelete = item }
-                        )
+                    // 1. ACORDEÓN ESTÁNDAR
+                    if (standardIrons.isNotEmpty()) {
+                        item {
+                            SettingsAccordion(
+                                title = stringResource(Res.string.settings_prices_cat_irons),
+                                defaultExpanded = true
+                            ) {
+                                standardIrons.forEach { item ->
+                                    IronItemRow(
+                                        item = item,
+                                        onEdit = {
+                                            val original = item.originalData as? CustomIron
+                                            ironToEdit = original?.copy(id = "")
+                                            showEditor = true
+                                        },
+                                        onDelete = { itemToDelete = it }
+                                    )
+                                }
+                            }
+                        }
                     }
+
+                    // 2. ACORDEÓN PERSONALIZADOS
+                    if (customIronsList.isNotEmpty()) {
+                        item {
+                            SettingsAccordion(
+                                title = stringResource(Res.string.settings_prices_cat_others),
+                            ) {
+                                customIronsList.forEach { item ->
+                                    IronItemRow(
+                                        item = item,
+                                        onEdit = {
+                                            val original = item.originalData as? CustomIron
+                                            ironToEdit = original?.copy(id = original.id)
+                                            showEditor = true
+                                        },
+                                        onDelete = { itemToDelete = it }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     item { Spacer(modifier = Modifier.height(80.dp)) }
                 }
             }
@@ -239,6 +237,24 @@ fun IronsTabContent(repository: SettingsRepository) {
             onDismiss = { showRestore = false }
         )
     }
+}
+
+@Composable
+private fun IronItemRow(
+    item: MaterialUiModel,
+    onEdit: (MaterialUiModel) -> Unit,
+    onDelete: (MaterialUiModel) -> Unit
+) {
+    UniversalMaterialItem(
+        item = item,
+        onEdit = { onEdit(item) },
+        onDelete = { onDelete(item) }
+    )
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 8.dp),
+        thickness = 0.5.dp,
+        color = MaterialTheme.colorScheme.outlineVariant
+    )
 }
 
 @Composable

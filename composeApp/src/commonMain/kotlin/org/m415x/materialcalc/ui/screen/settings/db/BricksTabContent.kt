@@ -45,6 +45,7 @@ import org.m415x.materialcalc.ui.common.inputs.AppInput
 import org.m415x.materialcalc.ui.common.inputs.NumericInput
 import org.m415x.materialcalc.ui.common.utils.RequestFocusOnStart
 import org.m415x.materialcalc.ui.common.utils.toSafeDoubleOrNull
+import org.m415x.materialcalc.ui.screen.settings.SettingsAccordion
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -59,55 +60,44 @@ fun BricksTabContent(repository: SettingsRepository) {
     // Repositorio estático para obtener los defaults
     val staticRepo = remember { StaticMaterialRepository() }
 
-    // 2. Lógica de Fusión (Merge)
-    // Creamos la lista unificada para la UI
-    val uiList = remember(customBricks, hiddenIds) {
-        val list = mutableListOf<MaterialUiModel>()
+    // 2. Lógica de Fusión y Agrupación
+    val categorizedBricks = remember(customBricks, hiddenIds) {
+        val bearing = mutableListOf<MaterialUiModel>()
+        val nonBearing = mutableListOf<MaterialUiModel>()
+        val custom = mutableListOf<MaterialUiModel>()
 
-        // A. Agregamos los CUSTOM
-        list.addAll(customBricks.map {
-            // Convertimos CustomBrick a MaterialUiModel
-            val w = (it.width * 100).toInt()
-            val h = (it.height * 100).toInt()
-            val l = (it.length * 100).toInt()
+        // A. Agregamos los ESTÁTICOS (Respetando el orden del Enum)
+        BrickType.entries.forEach { type ->
+            if (type.name !in hiddenIds) {
+                val props = staticRepo.getBrickProps(type)!!
+                val model = MaterialUiModel(
+                    id = type.name,
+                    title = TextSource.Resource(type.brickNameRes),
+                    subtitle = TextSource.Raw("${(props.width * 100).toInt()}x${(props.height * 100).toInt()}x${(props.length * 100).toInt()} cm"),
+                    isCustom = false,
+                    originalData = null
+                )
 
+                if (type.isBearing) bearing.add(model) else nonBearing.add(model)
+            }
+        }
+
+        // B. Agregamos los CUSTOM
+        custom.addAll(customBricks.map {
             MaterialUiModel(
                 id = it.id,
                 title = TextSource.Raw(it.name),
-                subtitle = TextSource.Raw("${w}x${h}x${l} cm"),
+                subtitle = TextSource.Raw("${(it.width * 100).toInt()}x${(it.height * 100).toInt()}x${(it.length * 100).toInt()} cm"),
                 isCustom = true,
-                originalData = it // Guardamos el objeto real
+                originalData = it
             )
         })
 
-        // B. Agregamos los ESTÁTICOS (Si no están ocultos)
-        BrickType.entries.forEach { type ->
-            if (type.name !in hiddenIds) { // Usamos type.name como ID único
-                val props = staticRepo.getBrickProps(type)!!
-                val w = (props.width * 100).toInt()
-                val h = (props.height * 100).toInt()
-                val l = (props.length * 100).toInt()
-
-                list.add(MaterialUiModel(
-                    id = type.name,
-                    title = TextSource.Resource(type.brickNameRes),
-                    subtitle = TextSource.Raw("${w}x${h}x${l} cm"),
-                    isCustom = false,
-                    // Creamos un CustomBrick temporal para facilitar la copia en el editor
-                    // Nota: Aquí no podemos resolver el recurso a String, así que el editor
-                    // tendrá que manejar la carga inicial o aceptaremos que al editar un estático
-                    // el nombre aparezca vacío o se tenga que reingresar si queremos evitar
-                    // pasar TextSource al editor (que espera String).
-                    // Para simplificar, pasamos null en originalData si es estático y lo manejamos al abrir el editor.
-                    originalData = null 
-                ))
-            }
-        }
-        // Ordenamos alfabéticamente para que se mezclen bien
-        // Nota: Al usar TextSource, la ordenación alfabética perfecta es difícil sin resolver los strings.
-        // Ordenamos por ID o tipo para agrupar, o aceptamos un orden aproximado.
-        list.sortedBy { it.id }
+        // Devolvemos un objeto con las tres listas
+        Triple(bearing, nonBearing, custom)
     }
+
+    val (bearingBricks, nonBearingBricks, customBricksList) = categorizedBricks
 
     // 3. Estados de Diálogos
     var showEditor by remember { mutableStateOf(false) }
@@ -156,61 +146,115 @@ fun BricksTabContent(repository: SettingsRepository) {
             }
 
             // Lista Principal
-            if (uiList.isEmpty()) {
+            if (bearingBricks.isEmpty() && nonBearingBricks.isEmpty() && customBricksList.isEmpty()) {
                 Box(Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
                     Text(stringResource(Res.string.settings_db_empty))
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    items(uiList) { item ->
-                        UniversalMaterialItem(
-                            item = item,
-                            onEdit = {
-                                if (item.isCustom) {
-                                    brickToEdit = item.originalData as? CustomBrick
-                                } else {
-                                    // Si es estático, reconstruimos el CustomBrick aquí donde podemos usar stringResource?
-                                    // No, onClick no es composable.
-                                    // Pero podemos obtener los datos del repositorio estático usando el ID (que es el enum name)
-                                    try {
-                                        val type = BrickType.valueOf(item.id)
-                                        val props = staticRepo.getBrickProps(type)!!
-                                        // El nombre y descripción serán recursos, pero el editor espera String.
-                                        // El editor es un Composable, así que podemos pasarle el ID y que él resuelva,
-                                        // o pasarle un objeto intermedio.
-                                        // Para no complicar, creamos un CustomBrick con strings vacíos o placeholders
-                                        // y dejamos que el usuario los llene, o aceptamos que al copiar un estático
-                                        // se pierda el nombre original si no lo resolvemos.
-                                        
-                                        // Mejor opción: BrickEditorDialog recibe CustomBrick.
-                                        // No podemos resolver recursos aquí.
-                                        // Vamos a pasar un CustomBrick con el ID del recurso como string temporal? No.
-                                        
-                                        // Solución pragmática:
-                                        // Al editar un estático (copiar), el usuario tendrá que ponerle nombre.
-                                        // Los datos técnicos (medidas) sí se copian.
-                                        brickToEdit = CustomBrick(
-                                            id = "",
-                                            name = "", // Usuario debe nombrar su copia
-                                            width = props.width,
-                                            height = props.height,
-                                            length = props.length,
-                                            joint = props.gasketThickness,
-                                            isBearing = type.isBearing,
-                                            description = ""
-                                        )
-                                    } catch (e: Exception) {
-                                        brickToEdit = null
-                                    }
+                    // 1. ACORDEÓN PORTANTES
+                    if (bearingBricks.isNotEmpty()) {
+                        item {
+                            SettingsAccordion(
+                                title = stringResource(Res.string.settings_prices_cat_bricks_bearing),
+                                defaultExpanded = true
+                            ) {
+                                bearingBricks.forEach { item ->
+                                    BrickItemRow(
+                                        item = item,
+                                        onEdit = {
+                                            // Lógica de edición (copiada de la versión anterior)
+                                            if (item.isCustom) {
+                                                brickToEdit = item.originalData as? CustomBrick
+                                            } else {
+                                                try {
+                                                    val type = BrickType.valueOf(item.id)
+                                                    val props = staticRepo.getBrickProps(type)!!
+                                                    brickToEdit = CustomBrick(
+                                                        id = "",
+                                                        name = "", // Usuario debe nombrar su copia
+                                                        width = props.width,
+                                                        height = props.height,
+                                                        length = props.length,
+                                                        joint = props.gasketThickness,
+                                                        isBearing = type.isBearing,
+                                                        description = ""
+                                                    )
+                                                } catch (e: Exception) {
+                                                    brickToEdit = null
+                                                }
+                                            }
+                                            showEditor = true
+                                        },
+                                        onDelete = { itemToDelete = it }
+                                    )
                                 }
-                                showEditor = true
-                            },
-                            onDelete = { itemToDelete = item }
-                        )
+                            }
+                        }
                     }
+
+                    // 2. ACORDEÓN NO PORTANTES
+                    if (nonBearingBricks.isNotEmpty()) {
+                        item {
+                            SettingsAccordion(
+                                title = stringResource(Res.string.settings_prices_cat_bricks_non_bearing),
+                            ) {
+                                nonBearingBricks.forEach { item ->
+                                    BrickItemRow(
+                                        item = item,
+                                        onEdit = {
+                                            if (item.isCustom) {
+                                                brickToEdit = item.originalData as? CustomBrick
+                                            } else {
+                                                try {
+                                                    val type = BrickType.valueOf(item.id)
+                                                    val props = staticRepo.getBrickProps(type)!!
+                                                    brickToEdit = CustomBrick(
+                                                        id = "",
+                                                        name = "",
+                                                        width = props.width,
+                                                        height = props.height,
+                                                        length = props.length,
+                                                        joint = props.gasketThickness,
+                                                        isBearing = type.isBearing,
+                                                        description = ""
+                                                    )
+                                                } catch (e: Exception) {
+                                                    brickToEdit = null
+                                                }
+                                            }
+                                            showEditor = true
+                                        },
+                                        onDelete = { itemToDelete = it }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // 3. ACORDEÓN PERSONALIZADOS
+                    if (customBricksList.isNotEmpty()) {
+                        item {
+                            SettingsAccordion(
+                                title = stringResource(Res.string.settings_prices_cat_others),
+                            ) {
+                                customBricksList.forEach { item ->
+                                    BrickItemRow(
+                                        item = item,
+                                        onEdit = {
+                                            brickToEdit = item.originalData as? CustomBrick
+                                            showEditor = true
+                                        },
+                                        onDelete = { itemToDelete = it }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     item { Spacer(modifier = Modifier.height(80.dp)) }
                 }
             }
@@ -251,6 +295,24 @@ fun BricksTabContent(repository: SettingsRepository) {
             onDismiss = { showRestore = false }
         )
     }
+}
+
+@Composable
+private fun BrickItemRow(
+    item: MaterialUiModel,
+    onEdit: (MaterialUiModel) -> Unit,
+    onDelete: (MaterialUiModel) -> Unit
+) {
+    UniversalMaterialItem(
+        item = item,
+        onEdit = { onEdit(item) },
+        onDelete = { onDelete(item) }
+    )
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 8.dp),
+        thickness = 0.5.dp,
+        color = MaterialTheme.colorScheme.outlineVariant
+    )
 }
 
 @Composable

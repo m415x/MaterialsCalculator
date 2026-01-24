@@ -21,8 +21,6 @@ package org.m415x.materialcalc.ui.screen.settings.global
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -42,6 +40,7 @@ import org.m415x.materialcalc.ui.common.presenters.MortarPresenter
 import org.m415x.materialcalc.ui.screen.settings.EditDoubleSetting
 import org.m415x.materialcalc.ui.screen.settings.EditIntegerSetting
 import org.m415x.materialcalc.ui.screen.settings.EditPercentSetting
+import org.m415x.materialcalc.ui.screen.settings.SettingsAccordion
 
 /**
  * Pantalla de parámetros globales.
@@ -181,15 +180,11 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // --- SECCIÓN 1: MATERIALES PREDETERMINADOS ---
-        Text(
-            stringResource(Res.string.settings_params_default_title),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                // Selector Ladrillo
+        SettingsAccordion(
+            title = stringResource(Res.string.settings_params_default_title),
+            defaultExpanded = true
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 BrickSelectorField(
                     options = brickOptions,
                     selectedOption = selectedBrick,
@@ -199,7 +194,6 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
-
                 ConcreteSelectorField(
                     label = stringResource(Res.string.settings_params_concrete_gen_label),
                     options = concreteGenOptions,
@@ -210,7 +204,6 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
-
                 ConcreteSelectorField(
                     label = stringResource(Res.string.settings_params_concrete_str_label),
                     options = concreteStrOptions,
@@ -221,7 +214,6 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
-
                 MortarSelectorField(
                     label = stringResource(Res.string.settings_params_plaster_rough_label),
                     options = plasterOptions,
@@ -235,161 +227,147 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
             }
         }
 
-        Text(stringResource(Res.string.settings_params_presentation_title), style = MaterialTheme.typography.titleMedium)
-
-        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                EditIntegerSetting(
-                    label = stringResource(Res.string.settings_params_cement_label),
-                    value = cementWeight,
-                    defaultValue = Defaults.DEFAULT_BAG_CEMENT,
-                    suffix = stringResource(Res.string.unit_kilograms),
-                    onSave = { scope.launch { repository.saveBagWeight("cement", it) } },
-                    focusRequester = focusCement,
-                    nextFocusRequester = focusLime
-                )
-
-                EditIntegerSetting(
-                    label = stringResource(Res.string.settings_params_lime_label),
-                    value = limeWeight,
-                    defaultValue = Defaults.DEFAULT_BAG_LIME,
-                    suffix = stringResource(Res.string.unit_kilograms),
-                    onSave = { scope.launch { repository.saveBagWeight("lime", it) } },
-                    focusRequester = focusLime,
-                    nextFocusRequester = focusPremix
-                )
-
-                EditIntegerSetting(
-                    label = stringResource(Res.string.settings_params_premix_label),
-                    value = premixWeight,
-                    defaultValue = Defaults.DEFAULT_BAG_PREMIX,
-                    suffix = stringResource(Res.string.unit_kilograms),
-                    onSave = { scope.launch { repository.saveBagWeight("premix", it) } },
-                    focusRequester = focusPremix,
-                    nextFocusRequester = focusBucket
-                )
-            }
+        // --- SECCIÓN 2: PRESENTACIÓN (Pesos de bolsas) ---
+        SettingsAccordion(title = stringResource(Res.string.settings_params_presentation_title)) {
+            EditIntegerSetting(
+                label = stringResource(Res.string.settings_params_cement_label),
+                value = cementWeight,
+                defaultValue = Defaults.DEFAULT_BAG_CEMENT,
+                suffix = stringResource(Res.string.unit_kilograms),
+                onSave = { scope.launch { repository.saveBagWeight("cement", it) } },
+                focusRequester = focusCement,
+                nextFocusRequester = focusLime
+            )
+            EditIntegerSetting(
+                label = stringResource(Res.string.settings_params_lime_label),
+                value = limeWeight,
+                defaultValue = Defaults.DEFAULT_BAG_LIME,
+                suffix = stringResource(Res.string.unit_kilograms),
+                onSave = { scope.launch { repository.saveBagWeight("lime", it) } },
+                focusRequester = focusLime,
+                nextFocusRequester = focusPremix
+            )
+            EditIntegerSetting(
+                label = stringResource(Res.string.settings_params_premix_label),
+                value = premixWeight,
+                defaultValue = Defaults.DEFAULT_BAG_PREMIX,
+                suffix = stringResource(Res.string.unit_kilograms),
+                onSave = { scope.launch { repository.saveBagWeight("premix", it) } },
+                focusRequester = focusPremix,
+                nextFocusRequester = focusBucket
+            )
         }
 
-        Text(stringResource(Res.string.settings_params_equivalences_title), style = MaterialTheme.typography.titleMedium)
-
-        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                EditDoubleSetting(
-                    label = stringResource(Res.string.settings_params_bucket_label),
-                    value = bucketVol,
-                    defaultValue = Defaults.DEFAULT_BUCKET_VOL,
-                    suffix = stringResource(Res.string.unit_liters),
-                    onSave = { scope.launch { repository.saveVolumeCapacity("bucket", it) } },
-                    focusRequester = focusBucket,
-                    nextFocusRequester = focusBarrow
-                )
-                EditDoubleSetting(
-                    label = stringResource(Res.string.settings_params_barrow_label),
-                    value = barrowVol,
-                    defaultValue = Defaults.DEFAULT_BARROW_VOL,
-                    suffix = stringResource(Res.string.unit_liters),
-                    onSave = { scope.launch { repository.saveVolumeCapacity("barrow", it) } },
-                    focusRequester = focusBarrow,
-                    nextFocusRequester = focusMixer
-                )
-                EditDoubleSetting(
-                    label = stringResource(Res.string.settings_params_mixer_label),
-                    value = mixerVol,
-                    defaultValue = Defaults.DEFAULT_MIXER_VOL,
-                    suffix = stringResource(Res.string.unit_liters),
-                    onSave = { scope.launch { repository.saveVolumeCapacity("mixer", it) } },
-                    focusRequester = focusMixer,
-                    nextFocusRequester = focusFine
-                )
-            }
+        // --- SECCIÓN 3: EQUIVALENCIAS (Capacidades) ---
+        SettingsAccordion(title = stringResource(Res.string.settings_params_equivalences_title)) {
+            EditDoubleSetting(
+                label = stringResource(Res.string.settings_params_bucket_label),
+                value = bucketVol,
+                defaultValue = Defaults.DEFAULT_BUCKET_VOL,
+                suffix = stringResource(Res.string.unit_liters),
+                onSave = { scope.launch { repository.saveVolumeCapacity("bucket", it) } },
+                focusRequester = focusBucket,
+                nextFocusRequester = focusBarrow
+            )
+            EditDoubleSetting(
+                label = stringResource(Res.string.settings_params_barrow_label),
+                value = barrowVol,
+                defaultValue = Defaults.DEFAULT_BARROW_VOL,
+                suffix = stringResource(Res.string.unit_liters),
+                onSave = { scope.launch { repository.saveVolumeCapacity("barrow", it) } },
+                focusRequester = focusBarrow,
+                nextFocusRequester = focusMixer
+            )
+            EditDoubleSetting(
+                label = stringResource(Res.string.settings_params_mixer_label),
+                value = mixerVol,
+                defaultValue = Defaults.DEFAULT_MIXER_VOL,
+                suffix = stringResource(Res.string.unit_liters),
+                onSave = { scope.launch { repository.saveVolumeCapacity("mixer", it) } },
+                focusRequester = focusMixer,
+                nextFocusRequester = focusFine
+            )
         }
 
-        Text(stringResource(Res.string.settings_params_technical_title), style = MaterialTheme.typography.titleMedium)
-
-        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                EditDoubleSetting(
-                    label = stringResource(Res.string.settings_params_fine_thickness_label),
-                    value = fineThick,
-                    defaultValue = Defaults.DEFAULT_THICKNESS_FINE,
-                    suffix = stringResource(Res.string.unit_millimeters),
-                    onSave = { scope.launch { repository.saveFineThickness(it) } },
-                    focusRequester = focusFine,
-                    nextFocusRequester = focusConcrete
-                )
-            }
+        // --- SECCIÓN 4: CONFIGURACIÓN TÉCNICA ---
+        SettingsAccordion(title = stringResource(Res.string.settings_params_technical_title)) {
+            EditDoubleSetting(
+                label = stringResource(Res.string.settings_params_fine_thickness_label),
+                value = fineThick,
+                defaultValue = Defaults.DEFAULT_THICKNESS_FINE,
+                suffix = stringResource(Res.string.unit_millimeters),
+                onSave = { scope.launch { repository.saveFineThickness(it) } },
+                focusRequester = focusFine,
+                nextFocusRequester = focusConcrete
+            )
         }
 
-        Text(stringResource(Res.string.settings_params_waste_title), style = MaterialTheme.typography.titleMedium)
-        Text(
-            stringResource(Res.string.settings_params_waste_desc),
-            style = MaterialTheme.typography.labelSmall
-        )
-
-        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                EditPercentSetting(
-                    label = stringResource(Res.string.settings_params_waste_concrete),
-                    value = wConcrete,
-                    defaultValue = Defaults.DEFAULT_WASTE_CONCRETE,
-                    onSave = { nuevoValor ->
-                        scope.launch { repository.saveWaste("concrete", nuevoValor) }
-                    },
-                    focusRequester = focusConcrete,
-                    nextFocusRequester = focusMortar
-                )
-                EditPercentSetting(
-                    label = stringResource(Res.string.settings_params_waste_mortar),
-                    value = wMortar,
-                    defaultValue = Defaults.DEFAULT_WASTE_MORTAR,
-                    onSave = { nuevoValor ->
-                        scope.launch { repository.saveWaste("mortar", nuevoValor) }
-                    },
-                    focusRequester = focusMortar,
-                    nextFocusRequester = focusBrick
-                )
-                EditPercentSetting(
-                    label = stringResource(Res.string.settings_params_waste_bricks),
-                    value = wBrick,
-                    defaultValue = Defaults.DEFAULT_WASTE_BRICK,
-                    onSave = { nuevoValor ->
-                        scope.launch { repository.saveWaste("bricks", nuevoValor) }
-                    },
-                    focusRequester = focusBrick,
-                    nextFocusRequester = focusPlaster
-                )
-                EditPercentSetting(
-                    label = stringResource(Res.string.settings_params_waste_plaster),
-                    value = wPlaster,
-                    defaultValue = Defaults.DEFAULT_WASTE_PLASTER,
-                    onSave = { nuevoValor ->
-                        scope.launch { repository.saveWaste("plaster", nuevoValor) }
-                    },
-                    focusRequester = focusPlaster,
-                    nextFocusRequester = focusIron
-                )
-                EditPercentSetting(
-                    label = stringResource(Res.string.settings_params_waste_iron_main),
-                    value = wIronMain,
-                    defaultValue = Defaults.DEFAULT_WASTE_IRON_MAIN,
-                    onSave = { nuevoValor ->
-                        scope.launch { repository.saveWaste("iron_main", nuevoValor) }
-                    },
-                    focusRequester = focusIron,
-                    nextFocusRequester = focusStirrup
-                )
-                EditPercentSetting(
-                    label = stringResource(Res.string.settings_params_waste_iron_stirrup),
-                    value = wIronStirrup,
-                    defaultValue = Defaults.DEFAULT_WASTE_IRON_STIRRUP,
-                    onSave = { nuevoValor ->
-                        scope.launch { repository.saveWaste("iron_stirrup", nuevoValor) }
-                    },
-                    focusRequester = focusStirrup,
-                    onDone = {}
-                )
-            }
+        // --- SECCIÓN 5: DESPERDICIOS ---
+        SettingsAccordion(title = stringResource(Res.string.settings_params_waste_title)) {
+            // El texto descriptivo lo ponemos dentro del acordeón al principio
+            Text(
+                text = stringResource(Res.string.settings_params_waste_desc),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            EditPercentSetting(
+                label = stringResource(Res.string.settings_params_waste_concrete),
+                value = wConcrete,
+                defaultValue = Defaults.DEFAULT_WASTE_CONCRETE,
+                onSave = { nuevoValor -> scope.launch { repository.saveWaste("concrete", nuevoValor) } },
+                focusRequester = focusConcrete,
+                nextFocusRequester = focusMortar
+            )
+            EditPercentSetting(
+                label = stringResource(Res.string.settings_params_waste_mortar),
+                value = wMortar,
+                defaultValue = Defaults.DEFAULT_WASTE_MORTAR,
+                onSave = { nuevoValor ->
+                    scope.launch { repository.saveWaste("mortar", nuevoValor) }
+                },
+                focusRequester = focusMortar,
+                nextFocusRequester = focusBrick
+            )
+            EditPercentSetting(
+                label = stringResource(Res.string.settings_params_waste_bricks),
+                value = wBrick,
+                defaultValue = Defaults.DEFAULT_WASTE_BRICK,
+                onSave = { nuevoValor ->
+                    scope.launch { repository.saveWaste("bricks", nuevoValor) }
+                },
+                focusRequester = focusBrick,
+                nextFocusRequester = focusPlaster
+            )
+            EditPercentSetting(
+                label = stringResource(Res.string.settings_params_waste_plaster),
+                value = wPlaster,
+                defaultValue = Defaults.DEFAULT_WASTE_PLASTER,
+                onSave = { nuevoValor ->
+                    scope.launch { repository.saveWaste("plaster", nuevoValor) }
+                },
+                focusRequester = focusPlaster,
+                nextFocusRequester = focusIron
+            )
+            EditPercentSetting(
+                label = stringResource(Res.string.settings_params_waste_iron_main),
+                value = wIronMain,
+                defaultValue = Defaults.DEFAULT_WASTE_IRON_MAIN,
+                onSave = { nuevoValor ->
+                    scope.launch { repository.saveWaste("iron_main", nuevoValor) }
+                },
+                focusRequester = focusIron,
+                nextFocusRequester = focusStirrup
+            )
+            EditPercentSetting(
+                label = stringResource(Res.string.settings_params_waste_iron_stirrup),
+                value = wIronStirrup,
+                defaultValue = Defaults.DEFAULT_WASTE_IRON_STIRRUP,
+                onSave = { nuevoValor ->
+                    scope.launch { repository.saveWaste("iron_stirrup", nuevoValor) }
+                },
+                focusRequester = focusStirrup,
+                onDone = {}
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))

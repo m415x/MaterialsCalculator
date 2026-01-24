@@ -21,7 +21,6 @@
     <string name="plaster_title">Revoque</string>
 
     <!-- SECTIONS -->
-    <string name="plaster_section_dimensions">Dimensiones del Muro</string>
     <string name="plaster_section_openings">Aberturas</string>
     <string name="plaster_section_openings_attenuated">(Puertas y Ventanas)</string>
     <string name="plaster_section_thick">Revoque Grueso</string>
@@ -37,18 +36,17 @@
     <string name="plaster_dialog_choose_mix">Elegir Mezcla</string>
 
     <!-- RESULTS -->
-    <string name="plaster_result_total_area">Superficie Total: %1$s m²</string>
-    <string name="plaster_result_thick_title">1. Revoque Grueso (Jaharro)</string>
-    <string name="plaster_result_waste_included">(Incluye %1$d% desperdicio)</string>
+    <string name="plaster_result_total_area">Superficie Total: %1$s %2$s</string>
+    <string name="plaster_result_thick_title">1. Revoque Grueso</string>
     <string name="plaster_result_cement">Cemento</string>
     <string name="plaster_result_lime">Cal Hidratada</string>
     <string name="plaster_result_sand">Arena Común</string>
     <string name="plaster_result_water">Agua</string>
     <string name="plaster_result_fine_title">2. Revoque Fino (Enlucido)</string>
-    <string name="plaster_result_choose_option">Elige una opción:</string>
+    <string name="plaster_result_choose_option">Opciones:</string>
     <string name="plaster_result_option_a">A) Premezcla</string>
     <string name="plaster_result_option_b">B) Cal Aérea</string>
-    <string name="plaster_result_fine_sand">Arena Fina</string>
+    <string name="plaster_result_fine_sand">   Arena Fina</string>
 
     <!-- PLASTER TYPES -->
     <string name="plaster_type_std_jaharro">Tradicional (Jaharro)</string>

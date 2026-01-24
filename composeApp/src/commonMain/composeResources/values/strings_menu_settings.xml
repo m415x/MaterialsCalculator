@@ -70,7 +70,7 @@
     <string name="settings_appearance_contrast_info">El modo de alto contraste ayuda a mejorar la visibilidad bajo la luz directa del sol.</string>
 
     <!-- SETTINGS: Global Params -->
-    <string name="settings_params_default_title">Valores Predeterminados</string>
+    <string name="settings_params_default_title">Materiales Predeterminados</string>
     <string name="settings_params_concrete_gen_label">Hormigón General (Pisos/Losas)</string>
     <string name="settings_params_concrete_str_label">Hormigón Estructural (Vigas/Columnas)</string>
     <string name="settings_params_plaster_rough_label">Mezcla Revoque Grueso</string>
@@ -171,6 +171,8 @@
     <!-- SETTINGS: Prices (Categories) -->
     <string name="settings_prices_cat_basic">Materiales Básicos</string>
     <string name="settings_prices_cat_bricks">Ladrillos</string>
+    <string name="settings_prices_cat_bricks_bearing">Ladrillos Portantes</string>
+    <string name="settings_prices_cat_bricks_non_bearing">Ladrillos No Portantes</string>
     <string name="settings_prices_cat_irons">Hierros</string>
     <string name="settings_prices_cat_labor_std">Mano de Obra Estándar</string>
     <string name="settings_prices_cat_others">Otros</string>

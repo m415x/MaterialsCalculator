@@ -205,7 +205,7 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
             val weightY = repository.getIronWeightPerMeter(phiY) * netMetersY
             val totalWeight = (weightX + weightY) * (1 + wastePct)
 
-            val commercialBars12m = ceil(totalMeters / 12.0).toInt()
+//            val commercialBars12m = ceil(totalMeters / 12.0).toInt()
 
             // 4. Hormigón
             val volumeM3 = widthX * lengthY * thickness
@@ -232,7 +232,7 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
                     diameterY = phiY.milimeters,
                     weightX = weightX * (1 + wastePct),
                     weightY = weightY * (1 + wastePct),
-                    commercialBars12m = commercialBars12m,
+//                    commercialBars12m = commercialBars12m,
                     wasteAmountKg = totalWeight - (weightX + weightY),
                     suggestedMesh = null,
                     meshPanelsNeeded = null,
@@ -294,7 +294,7 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
                     diameterY = 0.0,
                     weightX = 0.0,
                     weightY = 0.0,
-                    commercialBars12m = 0,
+                    commercialBarLength = 0,
                     wasteAmountKg = 0.0,
                     suggestedMesh = meshId.uppercase(),
                     meshPanelsNeeded = panelsNeeded,

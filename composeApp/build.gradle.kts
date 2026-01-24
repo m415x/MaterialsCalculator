@@ -21,8 +21,8 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 val appCode = 4
-val appVersion = "1.2.0-beta.3"
-val appVersionDesktop = "1.2.0"
+val appVersion = "1.2.1-beta.3"
+val appVersionDesktop = "1.2.1"
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)

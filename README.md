@@ -69,4 +69,4 @@ _**Copyright (C) 2026 M415X**_
 
 ## Estado del Proyecto
 
-Actualmente en fase **Beta** (`1.2.0-beta.3`). El motor de precios está siendo integrado.
+Actualmente en fase **Beta** (`1.2.1-beta.3`). El motor de precios está siendo integrado.

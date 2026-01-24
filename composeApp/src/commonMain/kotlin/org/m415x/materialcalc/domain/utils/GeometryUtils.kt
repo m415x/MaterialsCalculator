@@ -18,8 +18,13 @@
 
 package org.m415x.materialcalc.domain.utils
 
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.openings_message_error_equal_wall
+import materialscalculator.composeapp.generated.resources.openings_message_error_exceed_wall
 import org.m415x.materialcalc.domain.model.Aperture
-import org.m415x.materialcalc.ui.common.utils.roundToDecimals // Asegúrate de tener acceso a esta extensión o muévela a domain/common
+import org.m415x.materialcalc.domain.model.CalculationException
+import org.m415x.materialcalc.domain.model.TextSource
+import org.m415x.materialcalc.ui.common.utils.roundToDecimals
 
 /**
  * Calcula la superficie neta de una pared descontando aberturas.
@@ -29,6 +34,7 @@ import org.m415x.materialcalc.ui.common.utils.roundToDecimals // Asegúrate de t
  * @param height Alto de la pared en metros.
  * @param openingsList Lista de aberturas a descontar.
  * @return Superficie neta de la pared en metros cuadrados.
+ * @throws CalculationException Si las aberturas superan o igualan al muro.
  */
 fun calculateNetSurface(
     length: Double,
@@ -40,18 +46,20 @@ fun calculateNetSurface(
 
     // VALIDACIONES CENTRALIZADAS
     if (openingArea > grossArea) {
-        throw IllegalArgumentException(
-            "El área de aberturas (${openingArea.roundToDecimals(2)} m²) supera el área del muro (${
-                grossArea.roundToDecimals(
-                    2
+        throw CalculationException(
+            TextSource.ResourceArgs(
+                Res.string.openings_message_error_exceed_wall,
+                listOf(
+                    openingArea.roundToDecimals(2).toString(),
+                    grossArea.roundToDecimals(2).toString()
                 )
-            } m²)."
+            )
         )
     }
 
     if (openingArea == grossArea && grossArea > 0) {
-        throw IllegalArgumentException(
-            "El área de aberturas es igual al área del muro. No hay superficie para calcular."
+        throw CalculationException(
+            TextSource.Resource(Res.string.openings_message_error_equal_wall)
         )
     }
 

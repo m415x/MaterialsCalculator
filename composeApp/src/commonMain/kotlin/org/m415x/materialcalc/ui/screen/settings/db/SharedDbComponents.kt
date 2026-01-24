@@ -55,73 +55,70 @@ fun UniversalMaterialItem(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = if (item.isCustom) MaterialTheme.colorScheme.surfaceContainerLow
-            else MaterialTheme.colorScheme.surface
-        )
+    // Eliminamos el Card contenedor para que se integre mejor en el acordeón
+    // o lo hacemos transparente/plano si queremos mantener el padding interno.
+    // Para el diseño de acordeón, suele quedar mejor una fila limpia.
+    
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+        // Icono distintivo (C = Custom, F = Factory)
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .background(
+                    if (item.isCustom) MaterialTheme.colorScheme.tertiaryContainer
+                    else MaterialTheme.colorScheme.secondaryContainer,
+                    shape = MaterialTheme.shapes.small
+                ),
+            contentAlignment = Alignment.Center
         ) {
-            // Icono distintivo (C = Custom, F = Factory)
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(
-                        if (item.isCustom) MaterialTheme.colorScheme.tertiaryContainer
-                        else MaterialTheme.colorScheme.secondaryContainer,
-                        shape = MaterialTheme.shapes.small
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
+            Text(
+                text = if (item.isCustom) "C" else "F",
+                fontWeight = FontWeight.Bold,
+                color = if (item.isCustom) MaterialTheme.colorScheme.onTertiaryContainer
+                else MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+
+        Spacer(Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = if (item.isCustom) "C" else "F",
-                    fontWeight = FontWeight.Bold,
-                    color = if (item.isCustom) MaterialTheme.colorScheme.onTertiaryContainer
-                    else MaterialTheme.colorScheme.onSecondaryContainer
+                    item.title.asString(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
-            }
-
-            Spacer(Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        item.title.asString(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    if (item.type != null) {
-                        val badgeText = when (item.type) {
-                            "CONCRETE" -> stringResource(Res.string.concrete_title)
-                            "MORTAR" -> stringResource(Res.string.wall_label_mortar)
-                            "PLASTER" -> stringResource(Res.string.plaster_title)
-                            else -> item.type
-                        }
-                        PrimaryBadge(text = badgeText ?: "")
+                if (item.type != null) {
+                    val badgeText = when (item.type) {
+                        "CONCRETE" -> stringResource(Res.string.concrete_title)
+                        "MORTAR" -> stringResource(Res.string.wall_label_mortar)
+                        "PLASTER" -> stringResource(Res.string.plaster_title)
+                        else -> item.type
                     }
+                    PrimaryBadge(text = badgeText ?: "")
                 }
-                Text(
-                    item.subtitle.asString(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
+            Text(
+                item.subtitle.asString(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
-            IconButton(onClick = onEdit) {
-                // Si es custom editamos, si es fábrica copiamos
-                val icon = if (item.isCustom) Icons.Default.Edit else Icons.Default.ContentCopy
-                Icon(icon, stringResource(Res.string.button_edit), tint = MaterialTheme.colorScheme.primary)
-            }
-            IconButton(onClick = onDelete) {
-                Icon(
-                    Icons.Default.Delete,
-                    stringResource(Res.string.button_remove),
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
+        IconButton(onClick = onEdit) {
+            // Si es custom editamos, si es fábrica copiamos
+            val icon = if (item.isCustom) Icons.Default.Edit else Icons.Default.ContentCopy
+            Icon(icon, stringResource(Res.string.button_edit), tint = MaterialTheme.colorScheme.primary)
+        }
+        IconButton(onClick = onDelete) {
+            Icon(
+                Icons.Default.Delete,
+                stringResource(Res.string.button_remove),
+                tint = MaterialTheme.colorScheme.error
+            )
         }
     }
 }

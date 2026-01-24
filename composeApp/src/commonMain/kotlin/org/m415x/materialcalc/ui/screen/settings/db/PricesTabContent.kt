@@ -18,21 +18,12 @@
 
 package org.m415x.materialcalc.ui.screen.settings.db
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import materialscalculator.composeapp.generated.resources.*
@@ -45,6 +36,7 @@ import org.m415x.materialcalc.ui.common.inputs.CmInput
 import org.m415x.materialcalc.ui.common.utils.RequestFocusOnStart
 import org.m415x.materialcalc.ui.common.utils.toSafeDoubleOrNull
 import org.m415x.materialcalc.ui.screen.settings.EditPriceSetting
+import org.m415x.materialcalc.ui.screen.settings.SettingsAccordion
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -71,7 +63,6 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
     // --- PRE-RESOLUCIÓN DE STRINGS ---
     val unitUnit = MaterialUnits.UNIT.asString()
     val unitBar = MaterialUnits.BAR.asString()
-    val UnitBag = MaterialUnits.BAG.asString()
 
     // --- DEFINICIÓN DE DATOS ---
     val basicMaterials = remember(appSettings.bagCementKg, appSettings.bagLimeKg, appSettings.bagPremixKg) {
@@ -167,7 +158,7 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                     text = { Text(stringResource(Res.string.settings_prices_tab_labor)) })
             }
         },
-        floatingActionButton = {
+        /*floatingActionButton = {
             // FAB solo para agregar items personalizados ("Otros")
             ExtendedFloatingActionButton(
                 onClick = {
@@ -177,7 +168,7 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                 icon = { Icon(Icons.Default.Add, null) },
                 text = { Text(stringResource(Res.string.button_new)) }
             )
-        }
+        }*/
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(16.dp)) {
             if (selectedTab == 0) {
@@ -256,7 +247,7 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                     }
 
                     // 4. OTROS (Personalizados)
-                    val predefinedIds = basicMaterials.map { it.id }.toSet() +
+                    /*val predefinedIds = basicMaterials.map { it.id }.toSet() +
                             allBricks.map { it.first }.toSet() +
                             allIrons.map { it.first }.toSet()
                     val otherPrices = materialPrices.filter { it.id !in predefinedIds }
@@ -278,7 +269,7 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                                 }
                             }
                         }
-                    }
+                    }*/
 
                     item { Spacer(modifier = Modifier.height(80.dp)) }
                 }
@@ -356,57 +347,6 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                 }
             }
         )
-    }
-}
-
-/**
- * Contenedor acordeón estilizado como una Card.
- */
-@Composable
-fun SettingsAccordion(
-    title: String,
-    defaultExpanded: Boolean = false,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    var expanded by remember { mutableStateOf(defaultExpanded) }
-
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = !expanded }
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Icon(
-                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            AnimatedVisibility(
-                visible = expanded,
-                enter = expandVertically(),
-                exit = shrinkVertically()
-            ) {
-                Column(
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                    content = content
-                )
-            }
-        }
     }
 }
 

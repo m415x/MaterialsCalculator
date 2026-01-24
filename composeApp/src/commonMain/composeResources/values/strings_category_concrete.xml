@@ -21,7 +21,6 @@
     <string name="concrete_title">Hormigón</string>
 
     <!-- SECTIONS -->
-    <string name="concrete_section_dimensions">Dimensiones</string>
     <string name="concrete_section_resistance">Resistencia</string>
 
     <!-- LABELS -->
@@ -31,14 +30,10 @@
 
     <!-- RESULTS -->
     <string name="concrete_result_total_volume">Volumen Total: %1$s %2$s</string>
-    <string name="concrete_result_waste_included">(Incluye %1$s% desperdicio)</string>
     <string name="concrete_result_cement">Cemento</string>
     <string name="concrete_result_sand">Arena</string>
     <string name="concrete_result_gravel">Piedra/Grava</string>
     <string name="concrete_result_water">Agua</string>
-    <string name="concrete_result_weight_kg">(%1$s %2$s)</string>
-    <string name="concrete_result_volume_m3">%1$s %2$s</string>
-    <string name="concrete_result_volume_liters">%1$s %2$s</string>
     <string name="concrete_result_proportion">(Cem:Arena:Piedra)</string>
     <string name="concrete_result_technical">%1$s Cem | A/C:</string>
 </resources>

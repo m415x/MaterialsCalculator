@@ -20,13 +20,12 @@ package org.m415x.materialcalc.ui.screen.wall
 
 import androidx.compose.runtime.*
 import materialscalculator.composeapp.generated.resources.Res
-import materialscalculator.composeapp.generated.resources.label_error
-import materialscalculator.composeapp.generated.resources.message_error_validation
+import materialscalculator.composeapp.generated.resources.message_error_unknown
+import materialscalculator.composeapp.generated.resources.message_error_validation_input
 import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.domain.usecase.CalculateWallUseCase
 import org.m415x.materialcalc.ui.common.inputs.BrickOptionUi
 import org.m415x.materialcalc.ui.common.inputs.MortarOptionUi
-import org.m415x.materialcalc.ui.common.utils.areValidDimensions
 import org.m415x.materialcalc.ui.common.utils.toSafeDoubleOrNull
 
 /**
@@ -42,6 +41,10 @@ class WallScreenState(
     var wallLength by mutableStateOf("")
     var wallHeight by mutableStateOf("")
     val openings = mutableStateListOf<Aperture>()
+
+    // --- ESTADO DE ERRORES DE VALIDACIÓN ---
+    var lengthError by mutableStateOf<TextSource?>(null)
+    var heightError by mutableStateOf<TextSource?>(null)
 
     var selectedBrickOption by mutableStateOf(
         brickOptions.find { it.id == appSettings.defaultBrickId } ?: brickOptions.firstOrNull()
@@ -92,18 +95,49 @@ class WallScreenState(
         }
     }
 
+    // --- VALIDACIÓN ---
+    fun validate(): Boolean {
+        var isValid = true
+
+        // Validar Largo
+        val l = wallLength.toSafeDoubleOrNull()
+        if (l == null || l <= 0) {
+            lengthError = TextSource.Resource(Res.string.message_error_validation_input)
+            isValid = false
+        } else {
+            lengthError = null
+        }
+
+        // Validar Alto
+        val h = wallHeight.toSafeDoubleOrNull()
+        if (h == null || h <= 0) {
+            heightError = TextSource.Resource(Res.string.message_error_validation_input)
+            isValid = false
+        } else {
+            heightError = null
+        }
+
+        return isValid
+    }
+
     // --- LÓGICA DE CÁLCULO ---
     fun calculate() {
-        val l = wallLength.toSafeDoubleOrNull()
-        val h = wallHeight.toSafeDoubleOrNull()
+        // Primero validamos
+        if (!validate()) {
+            errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
+            return
+        }
 
-        if (areValidDimensions(l, h) && selectedBrickOption != null && selectedMix != null) {
+        val l = wallLength.toSafeDoubleOrNull()!!
+        val h = wallHeight.toSafeDoubleOrNull()!!
+
+        if (selectedBrickOption != null && selectedMix != null) {
             // Obtenemos los precios actuales del estado global
             val prices = appSettings.priceSettings
 
             val calcResult = calculateWall(
-                lengthMeters = l!!,
-                heightMeters = h!!,
+                lengthMeters = l,
+                heightMeters = h,
                 brickProps = selectedBrickOption!!.props,
                 mortarDosing = selectedMix!!,
                 openingList = openings.toList(),
@@ -123,12 +157,18 @@ class WallScreenState(
                     showResultSheet = true
                 },
                 onFailure = {
-                    errorMsg = TextSource.ResourceArgs(Res.string.label_error, listOf(": ", it.message ?: ""))
+                    // Manejo seguro de errores
+                    errorMsg = if (it is CalculationException) {
+                        it.textSource
+                    } else {
+                        it.message?.let { msg -> TextSource.Raw(msg) }
+                            ?: TextSource.Resource(Res.string.message_error_unknown)
+                    }
                     result = null
                 }
             )
         } else {
-            errorMsg = TextSource.Resource(Res.string.message_error_validation)
+            errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
             result = null
         }
     }

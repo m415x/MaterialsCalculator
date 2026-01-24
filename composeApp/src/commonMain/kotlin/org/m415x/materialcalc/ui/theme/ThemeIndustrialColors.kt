@@ -58,6 +58,10 @@ data object ThemeIndustrialColors {
     val surfaceContainerLight = Color(0xFFF1EDEC)
     val surfaceContainerHighLight = Color(0xFFEBE7E6)
     val surfaceContainerHighestLight = Color(0xFFE5E2E0)
+    val warningLight = Color(0xFF8B5000)
+    val onWarningLight = Color(0xFFFFFFFF)
+    val warningContainerLight = Color(0xFFFF9800)
+    val onWarningContainerLight = Color(0xFF653900)
 
     // Light High Contrast
     val primaryLightHighContrast = Color(0xFF00340A)
@@ -95,6 +99,10 @@ data object ThemeIndustrialColors {
     val surfaceContainerLightHighContrast = Color(0xFFE5E2E0)
     val surfaceContainerHighLightHighContrast = Color(0xFFD7D4D2)
     val surfaceContainerHighestLightHighContrast = Color(0xFFC9C6C5)
+    val warningLightHighContrast = Color(0xFF442500)
+    val onWarningLightHighContrast = Color(0xFFFFFFFF)
+    val warningContainerLightHighContrast = Color(0xFF6D3E00)
+    val onWarningContainerLightHighContrast = Color(0xFFFFFFFF)
 
     // Dark
     val primaryDark = Color(0xFF94D78F)
@@ -132,6 +140,10 @@ data object ThemeIndustrialColors {
     val surfaceContainerDark = Color(0xFF201F1F)
     val surfaceContainerHighDark = Color(0xFF2A2A29)
     val surfaceContainerHighestDark = Color(0xFF353534)
+    val warningDark = Color(0xFFFFC081)
+    val onWarningDark = Color(0xFF4A2800)
+    val warningContainerDark = Color(0xFFFF9800)
+    val onWarningContainerDark = Color(0xFF653900)
 
     // Dark High Contrast
     val primaryDarkHighContrast = Color(0xFFC4FFBD)
@@ -169,4 +181,8 @@ data object ThemeIndustrialColors {
     val surfaceContainerDarkHighContrast = Color(0xFF313030)
     val surfaceContainerHighDarkHighContrast = Color(0xFF3C3B3B)
     val surfaceContainerHighestDarkHighContrast = Color(0xFF474646)
+    val warningDarkHighContrast = Color(0xFFFFEDDF)
+    val onWarningDarkHighContrast = Color(0xFF000000)
+    val warningContainerDarkHighContrast = Color(0xFFFFB363)
+    val onWarningContainerDarkHighContrast = Color(0xFF150800)
 }

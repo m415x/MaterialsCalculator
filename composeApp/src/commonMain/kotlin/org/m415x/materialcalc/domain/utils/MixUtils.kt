@@ -22,7 +22,7 @@ import org.m415x.materialcalc.domain.model.ConcreteDosing
 import org.m415x.materialcalc.domain.model.MortarDosing
 import org.m415x.materialcalc.domain.model.TextSource
 import org.m415x.materialcalc.domain.utils.ConstructionConstants.APPARENT_CEMENT_DENSITY
-import org.m415x.materialcalc.domain.utils.ConstructionConstants.APPARENT_LIME_DENSITY
+import org.m415x.materialcalc.domain.utils.ConstructionConstants.APPARENT_LIME_HYDRATED_DENSITY
 import org.m415x.materialcalc.domain.utils.ConstructionConstants.formatPart
 
 /**
@@ -76,7 +76,7 @@ fun MortarDosing.estimateProportionTxt(): TextSource {
 
     // 3. Normalizamos dividiendo todo por el volumen del cemento (El cemento es el "1")
     val cementPart = 1.0
-    val limePart = if (this.limeKg > 0) (this.limeKg / APPARENT_LIME_DENSITY) / cementVolume else 0.0
+    val limePart = if (this.limeKg > 0) (this.limeKg / APPARENT_LIME_HYDRATED_DENSITY) / cementVolume else 0.0
     val sandPart = this.sandM3 / cementVolume // La arena ya está en m3
     // val parteAgua = ... (Generalmente no se pone en el 1:3:3, es a ojo)
 

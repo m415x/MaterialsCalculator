@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 
 enum class ColorPalette {
     Default,
@@ -533,9 +534,37 @@ fun AppTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = getAppTypography(),
-        content = content
-    )
+    // 3. Seleccionar los colores personalizados
+    val customColors = when {
+        // Prioridad: Alto Contraste
+        contrastMode == ContrastMode.HighContrast -> {
+            when (colorPalette) {
+                ColorPalette.Default -> if (actualDarkTheme) customColorsDarkHighContrast else customColorsLightHighContrast
+                ColorPalette.Industrial -> if (actualDarkTheme) industrialColorsDarkHighContrast else industrialColorsLightHighContrast
+                ColorPalette.Security -> if (actualDarkTheme) securityColorsDarkHighContrast else securityColorsLightHighContrast
+            }
+        }
+        // Luego: Paleta de Colores
+        colorPalette == ColorPalette.Industrial -> {
+            if (actualDarkTheme) industrialColorsDark else industrialColorsLight
+        }
+        colorPalette == ColorPalette.Security -> {
+            if (actualDarkTheme) securityColorsDark else securityColorsLight
+        }
+        // Por defecto: Paleta Default
+        else -> {
+            if (actualDarkTheme) customColorsDark else customColorsLight
+        }
+    }
+
+    // 4. Proveer los colores personalizados y el tema estándar
+    CompositionLocalProvider(
+        LocalAppCustomColors provides customColors
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = getAppTypography(),
+            content = content
+        )
+    }
 }

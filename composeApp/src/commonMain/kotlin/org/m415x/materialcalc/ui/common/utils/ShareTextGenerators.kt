@@ -413,7 +413,7 @@ fun rememberSlabShareText(
                 appendLine("● $totalWeightStr ${result.weightY.roundToDecimals(1)} $unitKg")
                 appendLine()
                 appendLine("● Total Hierro: ${result.totalWeightKg.roundToDecimals(1)} $unitKg")
-                appendLine("    └ $buyStr ${result.commercialBars12m} $bars12mStr")
+                appendLine("    └ $buyStr ${result.commercialBarLength} $bars12mStr")
             }
 
             appendLine()

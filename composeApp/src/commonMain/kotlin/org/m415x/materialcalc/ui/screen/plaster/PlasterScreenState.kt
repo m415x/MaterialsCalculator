@@ -20,12 +20,11 @@ package org.m415x.materialcalc.ui.screen.plaster
 
 import androidx.compose.runtime.*
 import materialscalculator.composeapp.generated.resources.Res
-import materialscalculator.composeapp.generated.resources.label_error
-import materialscalculator.composeapp.generated.resources.message_error_validation
+import materialscalculator.composeapp.generated.resources.message_error_unknown
+import materialscalculator.composeapp.generated.resources.message_error_validation_input
 import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.domain.usecase.CalculatePlasterUseCase
 import org.m415x.materialcalc.ui.common.inputs.MortarOptionUi
-import org.m415x.materialcalc.ui.common.utils.areValidDimensions
 import org.m415x.materialcalc.ui.common.utils.toSafeDoubleOrNull
 
 /**
@@ -42,6 +41,11 @@ class PlasterScreenState(
     val openings = mutableStateListOf<Aperture>()
     var thickThickness by mutableStateOf("0.02") // Valor por defecto sugerido
     var bothSides by mutableStateOf(false) // Switch
+
+    // --- ESTADO DE ERRORES DE VALIDACIÓN ---
+    var lengthError by mutableStateOf<TextSource?>(null)
+    var heightError by mutableStateOf<TextSource?>(null)
+    var thicknessError by mutableStateOf<TextSource?>(null)
 
     var selectMortar by mutableStateOf<MortarDosing?>(
         recipeOptions.find { it.id == appSettings.defaultPlasterId }?.data
@@ -68,18 +72,57 @@ class PlasterScreenState(
         }
     }
 
+    // --- VALIDACIÓN ---
+    fun validate(): Boolean {
+        var isValid = true
+
+        // Validar Largo
+        val l = length.toSafeDoubleOrNull()
+        if (l == null || l <= 0) {
+            lengthError = TextSource.Resource(Res.string.message_error_validation_input)
+            isValid = false
+        } else {
+            lengthError = null
+        }
+
+        // Validar Alto
+        val h = height.toSafeDoubleOrNull()
+        if (h == null || h <= 0) {
+            heightError = TextSource.Resource(Res.string.message_error_validation_input)
+            isValid = false
+        } else {
+            heightError = null
+        }
+
+        // Validar Espesor
+        val t = thickThickness.toSafeDoubleOrNull()
+        if (t == null || t <= 0) {
+            thicknessError = TextSource.Resource(Res.string.message_error_validation_input)
+            isValid = false
+        } else {
+            thicknessError = null
+        }
+
+        return isValid
+    }
+
     // --- LÓGICA DE CÁLCULO ---
     fun calculate() {
-        val l = length.toSafeDoubleOrNull()
-        val a = height.toSafeDoubleOrNull()
-        // Nota: espesorGrueso viene del CmInput como "2.00", toSafeDouble lo lee directo como 2.0
-        val e = thickThickness.toSafeDoubleOrNull()
+        // Primero validamos
+        if (!validate()) {
+            errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
+            return
+        }
 
-        if (areValidDimensions(l, a, e) && selectMortar != null) {
+        val l = length.toSafeDoubleOrNull()!!
+        val a = height.toSafeDoubleOrNull()!!
+        val e = thickThickness.toSafeDoubleOrNull()!!
+
+        if (selectMortar != null) {
             val calcResult = calculatePlaster(
-                lengthMeters = l!!,
-                heightMeters = a!!,
-                thickThickness = e!!,
+                lengthMeters = l,
+                heightMeters = a,
+                thickThickness = e,
                 // CONVERTIMOS MM A METROS (/1000)
                 thinThickness = appSettings.fineThicknessMm / 1000.0,
                 isBothSides = bothSides,
@@ -99,12 +142,18 @@ class PlasterScreenState(
                     showResultSheet = true
                 },
                 onFailure = {
-                    errorMsg = TextSource.ResourceArgs(Res.string.label_error, listOf(": ", it.message ?: ""))
+                    // Manejo seguro de errores
+                    errorMsg = if (it is CalculationException) {
+                        it.textSource
+                    } else {
+                        it.message?.let { msg -> TextSource.Raw(msg) }
+                            ?: TextSource.Resource(Res.string.message_error_unknown)
+                    }
                     result = null
                 }
             )
         } else {
-            errorMsg = TextSource.Resource(Res.string.message_error_validation)
+            errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
             result = null
         }
     }

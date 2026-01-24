@@ -150,7 +150,7 @@ fun StructureScreen(appSettings: AppSettingsState) {
                 }
             }
 
-            ErrorMessage(state.errorMsg)
+            ErrorMessageCard(state.errorMsg)
 
             Spacer(modifier = Modifier.height(80.dp))
         }
@@ -210,11 +210,6 @@ fun StructureScreen(appSettings: AppSettingsState) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BeamColumnInputs(state: StructureScreenState) {
-    val structureName =
-        if (state.selectedStructureType == StructureType.BEAM) stringResource(Res.string.structure_type_beam) else stringResource(
-            Res.string.structure_type_column
-        )
-
     val focusSideA = remember { FocusRequester() }
     val focusSideB = remember { FocusRequester() }
     val focusLength = remember { FocusRequester() }
@@ -239,7 +234,7 @@ fun BeamColumnInputs(state: StructureScreenState) {
         }
     }
 
-    InputSection(title = stringResource(Res.string.structure_section_dimensions, structureName)) {
+    InputSection(title = stringResource(Res.string.label_dimensions)) {
         InputRow {
             CmInput(
                 value = state.sideA,
@@ -247,7 +242,11 @@ fun BeamColumnInputs(state: StructureScreenState) {
                 label = if (state.isCircular) stringResource(
                     Res.string.structure_label_diameter,
                     stringResource(Res.string.unit_meters)
-                ) else stringResource(Res.string.structure_label_side_a, stringResource(Res.string.unit_meters)),
+                ) else stringResource(
+                    Res.string.structure_label_side_a,
+                    stringResource(Res.string.unit_meters)
+                ),
+                errorText = state.sideAError, // Conectamos el error
                 suffix = { Text(stringResource(Res.string.unit_meters)) },
                 modifier = Modifier.weight(1f),
                 focusRequester = focusSideA,
@@ -257,7 +256,11 @@ fun BeamColumnInputs(state: StructureScreenState) {
                 CmInput(
                     value = state.sideB,
                     onValueChange = { state.sideB = it },
-                    label = stringResource(Res.string.structure_label_side_b, stringResource(Res.string.unit_meters)),
+                    label = stringResource(
+                        Res.string.structure_label_side_b,
+                        stringResource(Res.string.unit_meters)
+                    ),
+                    errorText = state.sideBError, // Conectamos el error
                     suffix = { Text(stringResource(Res.string.unit_meters)) },
                     modifier = Modifier.weight(1f),
                     focusRequester = focusSideB,
@@ -268,7 +271,11 @@ fun BeamColumnInputs(state: StructureScreenState) {
         NumericInput(
             value = state.length,
             onValueChange = { state.length = it },
-            label = stringResource(Res.string.structure_label_total_length, stringResource(Res.string.unit_meters)),
+            label = stringResource(
+                Res.string.structure_label_total_length,
+                stringResource(Res.string.unit_meters)
+            ),
+            errorText = state.lengthError, // Conectamos el error
             suffix = { Text(stringResource(Res.string.unit_meters)) },
             modifier = Modifier.fillMaxWidth(),
             focusRequester = focusLength,
@@ -290,6 +297,7 @@ fun BeamColumnInputs(state: StructureScreenState) {
                 value = state.quantityIronRods,
                 onValueChange = { state.quantityIronRods = it },
                 label = stringResource(Res.string.structure_label_rods_quantity),
+                errorText = state.quantityError, // Conectamos el error
                 suffix = { Text(stringResource(Res.string.unit_units)) },
                 modifier = Modifier.weight(0.5f),
                 focusRequester = focusQuantityRods,
@@ -313,6 +321,7 @@ fun BeamColumnInputs(state: StructureScreenState) {
                     Res.string.structure_label_stirrup_spacing,
                     stringResource(Res.string.unit_meters)
                 ),
+                errorText = state.spacingError, // Conectamos el error
                 suffix = { Text(stringResource(Res.string.unit_meters)) },
                 modifier = Modifier.weight(0.5f),
                 focusRequester = focusStirrupSpacing,
@@ -352,6 +361,7 @@ fun BeamColumnInputs(state: StructureScreenState) {
                         Res.string.structure_label_hook_start,
                         stringResource(Res.string.unit_meters)
                     ),
+                    errorText = state.startHookError, // Conectamos el error
                     suffix = { Text(stringResource(Res.string.unit_meters)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -383,7 +393,11 @@ fun BeamColumnInputs(state: StructureScreenState) {
                 CmInput(
                     value = state.endHookLength,
                     onValueChange = { state.endHookLength = it },
-                    label = stringResource(Res.string.structure_label_hook_end, stringResource(Res.string.unit_meters)),
+                    label = stringResource(
+                        Res.string.structure_label_hook_end,
+                        stringResource(Res.string.unit_meters)
+                    ),
+                    errorText = state.endHookError, // Conectamos el error
                     suffix = { Text(stringResource(Res.string.unit_meters)) },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -412,12 +426,16 @@ fun SlabInputs(state: StructureScreenState) {
     RequestFocusOnStart(focusWidth)
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        InputSection(title = stringResource(Res.string.structure_section_slab_dimensions)) {
+        InputSection(title = stringResource(Res.string.label_dimensions)) {
             InputRow {
                 NumericInput(
                     value = state.slabWidth,
                     onValueChange = { state.slabWidth = it },
-                    label = stringResource(Res.string.structure_label_width_x),
+                    label = stringResource(
+                        Res.string.structure_label_width_x,
+                        stringResource(Res.string.unit_meters)
+                    ),
+                    errorText = state.slabWidthError, // Conectamos el error
                     suffix = { Text(stringResource(Res.string.unit_meters)) },
                     modifier = Modifier.weight(1f),
                     focusRequester = focusWidth,
@@ -426,7 +444,11 @@ fun SlabInputs(state: StructureScreenState) {
                 NumericInput(
                     value = state.slabLength,
                     onValueChange = { state.slabLength = it },
-                    label = stringResource(Res.string.structure_label_length_y),
+                    label = stringResource(
+                        Res.string.structure_label_length_y,
+                        stringResource(Res.string.unit_meters)
+                    ),
+                    errorText = state.slabLengthError, // Conectamos el error
                     suffix = { Text(stringResource(Res.string.unit_meters)) },
                     modifier = Modifier.weight(1f),
                     focusRequester = focusLength,
@@ -436,7 +458,11 @@ fun SlabInputs(state: StructureScreenState) {
             CmInput(
                 value = state.slabThickness,
                 onValueChange = { state.slabThickness = it },
-                label = stringResource(Res.string.label_thickness, stringResource(Res.string.unit_meters)),
+                label = stringResource(
+                    Res.string.label_thickness,
+                    stringResource(Res.string.unit_meters)
+                ),
+                errorText = state.slabThicknessError, // Conectamos el error
                 suffix = { Text(stringResource(Res.string.unit_meters)) },
                 modifier = Modifier.fillMaxWidth(),
                 focusRequester = focusThickness,
@@ -469,6 +495,8 @@ fun SlabInputs(state: StructureScreenState) {
                             Res.string.structure_label_sep_x,
                             stringResource(Res.string.unit_meters)
                         ),
+                        errorText = state.separationXError,
+                        warningText = state.separationXWarning, // Conectamos el warning
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(0.5f),
                         focusRequester = focusSepX,
@@ -493,6 +521,8 @@ fun SlabInputs(state: StructureScreenState) {
                             Res.string.structure_label_sep_y,
                             stringResource(Res.string.unit_meters)
                         ),
+                        errorText = state.separationYError,
+                        warningText = state.separationYWarning, // Conectamos el warning
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(0.5f),
                         focusRequester = focusSepY,
@@ -536,6 +566,7 @@ fun SlabInputs(state: StructureScreenState) {
                                 Res.string.structure_label_hook,
                                 stringResource(Res.string.unit_meters)
                             ),
+                            errorText = state.hookError, // Conectamos el error
                             suffix = { Text(stringResource(Res.string.unit_meters)) },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -553,10 +584,9 @@ fun SlabInputs(state: StructureScreenState) {
             )
         }
 
-        val sepX = state.separationX.toSafeDoubleOrNull() ?: 0.0
-        val sepY = state.separationY.toSafeDoubleOrNull() ?: 0.0
-        if (state.isManualRebar && (sepX > 0.3 || sepY > 0.3)) {
-            WarningMessage(TextSource.Resource(Res.string.structure_warning_cirsoc))
+        // WarningMessageCard para mostrar el mensaje largo si hay advertencias
+        if (state.separationXWarning != null || state.separationYWarning != null) {
+            WarningMessageCard(TextSource.Resource(Res.string.structure_warning_cirsoc_30cm))
         }
     }
 }
@@ -586,102 +616,143 @@ fun RadioButtonRow(selected: Boolean, text: String, onClick: () -> Unit) {
  */
 @Composable
 fun StructureResultContent(res: StructureResult, appSettings: AppSettingsState) {
+    val unitM3 = stringResource(Res.string.unit_cubic_meters)
+    val unitKg = stringResource(Res.string.unit_kilograms)
+    val unitLt = stringResource(Res.string.unit_liters)
+    val unitM = stringResource(Res.string.unit_meters)
+
     // Sección Hormigón
-    Text(
-        stringResource(Res.string.structure_result_concrete, res.volumeConcreteM3.roundToDecimals(2)),
-        fontWeight = FontWeight.Bold,
-        fontSize = 18.sp
-    )
-    Text(
-        stringResource(Res.string.structure_result_waste_included, (res.percentageConcreteWaste * 100).toInt()),
-        style = MaterialTheme.typography.bodySmall
-    )
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    ResultRow(
-        label = stringResource(Res.string.structure_result_cement),
-        value = res.cementKg.toPresentationUnit(
-            res.cementBagKg,
-            Res.string.unit_bag,
-            Res.string.unit_bags
+    ResultSection(
+        title = stringResource(
+            Res.string.structure_result_concrete,
+            res.volumeConcreteM3.roundToDecimals(2),
+            unitM3
+        ),
+        subTitle = stringResource(
+            Res.string.label_result_waste_included,
+            (res.percentageConcreteWaste * 100).toInt()
         )
-    )
-
-    ResultRow(
-        label = stringResource(Res.string.structure_result_sand),
-        value = stringResource(
-            Res.string.concrete_result_volume_m3,
-            res.sandM3.roundToDecimals(2),
-            stringResource(Res.string.unit_cubic_meters)
+    ) {
+        ResultRow(
+            label = stringResource(Res.string.structure_result_cement),
+            subLabel = stringResource(
+                Res.string.label_result_subtitle_unit,
+                res.cementKg.roundToDecimals(1),
+                unitKg
+            ),
+            value = res.cementKg.toPresentationUnit(
+                res.cementBagKg,
+                Res.string.unit_bag,
+                Res.string.unit_bags
+            )
         )
-    )
 
-    ResultRow(
-        label = stringResource(Res.string.structure_result_gravel),
-        value = stringResource(
-            Res.string.concrete_result_volume_m3,
-            res.gravelM3.roundToDecimals(2),
-            stringResource(Res.string.unit_cubic_meters)
+        ResultRow(
+            label = stringResource(Res.string.structure_result_sand),
+            value = stringResource(
+                Res.string.label_result_unit,
+                res.sandM3.roundToDecimals(2),
+                unitM3
+            )
         )
-    )
 
-    ResultRow(
-        label = stringResource(Res.string.structure_result_water),
-        value = stringResource(
-            Res.string.concrete_result_volume_liters,
-            res.waterLiters.roundToDecimals(1),
-            stringResource(Res.string.unit_liters)
+        ResultRow(
+            label = stringResource(Res.string.structure_result_gravel),
+            value = stringResource(
+                Res.string.label_result_unit,
+                res.gravelM3.roundToDecimals(2),
+                unitM3
+            )
         )
-    )
 
-    Spacer(modifier = Modifier.height(16.dp))
+        ResultRow(
+            label = stringResource(Res.string.structure_result_water),
+            value = stringResource(
+                Res.string.label_result_unit,
+                res.waterLiters.roundToDecimals(1),
+                unitLt
+            )
+        )
+    }
 
     // Sección Hierro
-    Text(
-        stringResource(Res.string.structure_result_iron_steel, (res.mainIronKg + res.stirrupIronKg).roundToDecimals(1)),
-        fontWeight = FontWeight.Bold,
-        fontSize = 18.sp
-    )
-    Text(
-        stringResource(
-            Res.string.structure_result_waste_included,
-            ((res.percentageMainIronWaste + res.percentageStirrupIronWaste) * 50).toInt()
+    ResultSection(
+        title = stringResource(
+            Res.string.structure_result_iron_steel,
+            (res.mainIronKg + res.stirrupIronKg).roundToDecimals(1),
+            unitKg
         ),
-        style = MaterialTheme.typography.bodySmall
-    )
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    ResultRow(
-        label = stringResource(Res.string.structure_result_main, res.mainDiameterMm),
-        value = stringResource(
-            Res.string.concrete_result_volume_m3,
-            res.mainIronMeters.roundToDecimals(1),
-            stringResource(Res.string.unit_meters)
+        subTitle = stringResource(
+            Res.string.label_result_waste_included,
+            ((res.percentageMainIronWaste + res.percentageStirrupIronWaste) * 50).toInt()
         )
-    )
-    Text(
-        stringResource(Res.string.structure_result_weight_kg, res.mainIronKg.roundToDecimals(1)),
-        style = MaterialTheme.typography.bodySmall
-    )
-
-    ResultRow(
-        label = stringResource(Res.string.structure_result_stirrups, res.stirrupDiameterMm),
-        value = stringResource(
-            Res.string.concrete_result_volume_m3,
-            res.stirrupIronMeters.roundToDecimals(1),
-            stringResource(Res.string.unit_meters)
+    ) {
+        // Hierro Principal
+        ResultTitle(
+            title = "${stringResource(Res.string.structure_label_main_iron)}: ${
+                stringResource(
+                    Res.string.structure_result_iron_kilograms,
+                    res.mainIronKg.roundToDecimals(1),
+                    unitKg
+                )
+            }",
+            titleFontSize = 16.sp,
+            spacer = Modifier.height(0.dp)
         )
-    )
-    Text(
-        stringResource(Res.string.structure_result_weight_kg, res.stirrupIronKg.roundToDecimals(1)),
-        style = MaterialTheme.typography.bodySmall
-    )
 
-    Spacer(modifier = Modifier.height(8.dp))
+        ResultRow(
+            label = stringResource(
+                Res.string.structure_result_iron_diameter,
+                res.mainDiameterMm
+            ),
+            subLabel = stringResource(
+                Res.string.structure_result_iron_meters,
+                res.mainIronMeters.roundToDecimals(1),
+                unitM
+            ),
+            value = (res.mainIronMeters * (1 + res.percentageMainIronWaste)).toPresentationUnit(
+                res.commercialBarLength,
+                Res.string.unit_bar,
+                Res.string.unit_bars
+            ),
+            labelStyle = MaterialTheme.typography.bodyMedium
+        )
+
+        // Hierro Estribos
+        ResultTitle(
+            title = "${stringResource(Res.string.structure_label_stirrups)}: ${
+                stringResource(
+                    Res.string.structure_result_iron_kilograms,
+                    res.stirrupIronKg.roundToDecimals(1),
+                    unitKg
+                )
+            }",
+            titleFontSize = 16.sp,
+            spacer = Modifier.height(0.dp)
+        )
+
+        ResultRow(
+            label = stringResource(
+                Res.string.structure_result_iron_diameter,
+                res.stirrupDiameterMm
+            ),
+            subLabel = stringResource(
+                Res.string.structure_result_iron_meters,
+                res.stirrupIronMeters.roundToDecimals(1),
+                unitM,
+            ),
+            // Usamos la misma lógica que el cemento pero con base 12 (metros por barra)
+            value = (res.stirrupIronMeters * (1 + res.percentageStirrupIronWaste)).toPresentationUnit(
+                res.commercialBarLength,
+                Res.string.unit_bar,
+                Res.string.unit_bars
+            ),
+            labelStyle = MaterialTheme.typography.bodyMedium
+        )
+    }
 
     // Tarjeta anidada para el consejo (Tip)
+    /*
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
         Row(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
             Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -704,6 +775,7 @@ fun StructureResultContent(res: StructureResult, appSettings: AppSettingsState) 
             )
         }
     }
+    */
 
     // --- CÁLCULO DE PRECIOS ---
     val prices = appSettings.priceSettings
@@ -789,144 +861,199 @@ fun StructureResultContent(res: StructureResult, appSettings: AppSettingsState) 
 
 @Composable
 fun SlabResultContent(res: SlabResult, appSettings: AppSettingsState) {
+    val unitM3 = stringResource(Res.string.unit_cubic_meters)
+    val unitKg = stringResource(Res.string.unit_kilograms)
+    val unitLt = stringResource(Res.string.unit_liters)
+    val unitM = stringResource(Res.string.unit_meters)
+    val unitU = stringResource(Res.string.unit_units)
+    val unitCm = stringResource(Res.string.unit_centimeters)
+
+    val spacingX = calculateSpacingCm(res.lengthX, res.countX)
+    val spacingY = calculateSpacingCm(res.lengthY, res.countY)
+
     // Sección Hormigón
-    Text(
-        stringResource(Res.string.structure_result_concrete, res.volumeConcreteM3.roundToDecimals(2)),
-        fontWeight = FontWeight.Bold,
-        fontSize = 18.sp
-    )
-    Text(
-        stringResource(Res.string.structure_result_waste_included, (res.percentageConcreteWaste * 100).toInt()),
-        style = MaterialTheme.typography.bodySmall
-    )
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    ResultRow(
-        label = stringResource(Res.string.structure_result_cement),
-        value = res.cementKg.toPresentationUnit(
-            res.cementBagKg,
-            Res.string.unit_bag,
-            Res.string.unit_bags
+    ResultSection(
+        title = stringResource(
+            Res.string.structure_result_concrete,
+            res.volumeConcreteM3.roundToDecimals(2),
+            unitM3
+        ),
+        subTitle = stringResource(
+            Res.string.label_result_waste_included,
+            (res.percentageConcreteWaste * 100).toInt()
+        ),
+    ) {
+        ResultRow(
+            label = stringResource(Res.string.structure_result_cement),
+            subLabel = stringResource(
+                Res.string.label_result_subtitle_unit,
+                res.cementKg.roundToDecimals(1),
+                unitKg
+            ),
+            value = res.cementKg.toPresentationUnit(
+                res.cementBagKg,
+                Res.string.unit_bag,
+                Res.string.unit_bags
+            )
         )
-    )
 
-    ResultRow(
-        label = stringResource(Res.string.structure_result_sand),
-        value = stringResource(
-            Res.string.concrete_result_volume_m3,
-            res.sandM3.roundToDecimals(2),
-            stringResource(Res.string.unit_cubic_meters)
+        ResultRow(
+            label = stringResource(Res.string.structure_result_sand),
+            value = stringResource(
+                Res.string.label_result_unit,
+                res.sandM3.roundToDecimals(2),
+                unitM3
+            )
         )
-    )
 
-    ResultRow(
-        label = stringResource(Res.string.structure_result_gravel),
-        value = stringResource(
-            Res.string.concrete_result_volume_m3,
-            res.gravelM3.roundToDecimals(2),
-            stringResource(Res.string.unit_cubic_meters)
+        ResultRow(
+            label = stringResource(Res.string.structure_result_gravel),
+            value = stringResource(
+                Res.string.label_result_unit,
+                res.gravelM3.roundToDecimals(2),
+                unitM3
+            )
         )
-    )
 
-    ResultRow(
-        label = stringResource(Res.string.structure_result_water),
-        value = stringResource(
-            Res.string.concrete_result_volume_liters,
-            res.waterLiters.roundToDecimals(1),
-            stringResource(Res.string.unit_liters)
+        ResultRow(
+            label = stringResource(Res.string.structure_result_water),
+            value = stringResource(
+                Res.string.label_result_unit,
+                res.waterLiters.roundToDecimals(1),
+                unitLt
+            )
         )
-    )
-
-    Spacer(modifier = Modifier.height(16.dp))
+    }
 
     // Sección Hierro
     if (res.suggestedMesh != null) {
-        Text(
-            stringResource(Res.string.structure_result_mesh),
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        ResultRow(
-            label = stringResource(Res.string.structure_result_mesh_type),
-            value = res.suggestedMesh
-        )
-        if (res.meshPanelsNeeded != null) {
+        ResultSection(
+            title = stringResource(Res.string.structure_result_mesh),
+        ) {
             ResultRow(
-                label = stringResource(Res.string.structure_result_mesh_panels),
-                value = "${res.meshPanelsNeeded} u"
+                label = stringResource(Res.string.structure_result_mesh_type),
+                value = res.suggestedMesh
             )
+
+            if (res.meshPanelsNeeded != null) {
+                ResultRow(
+                    label = stringResource(Res.string.structure_result_mesh_panels),
+                    value = stringResource(
+                        Res.string.label_result_unit,
+                        res.meshPanelsNeeded,
+                        unitU
+                    )
+                )
+            }
         }
     } else {
-        Text(
-            stringResource(Res.string.structure_result_iron_steel, res.totalWeightKg.roundToDecimals(1)),
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp
-        )
-        Text(
-            stringResource(Res.string.structure_result_waste_included, (res.percentageIronWaste * 100).toInt()),
-            style = MaterialTheme.typography.bodySmall
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (res.diameterX != res.diameterY) {
-            ResultRow(
-                label = stringResource(Res.string.structure_result_iron_x, res.diameterX),
-                value = stringResource(
-                    Res.string.concrete_result_volume_m3,
-                    (res.lengthX * res.countX * (1 + res.percentageIronWaste)).roundToDecimals(1),
-                    stringResource(Res.string.unit_meters)
+        ResultSection(
+            title = stringResource(
+                Res.string.structure_result_iron_steel,
+                res.totalWeightKg.roundToDecimals(1),
+                unitKg
+            ),
+            subTitle = stringResource(
+                Res.string.label_result_waste_included,
+                (res.percentageIronWaste * 100).toInt()
+            )
+        ) {
+            if (res.diameterX != res.diameterY) {
+                // Hierro X
+                ResultTitle(
+                    title = "${
+                        stringResource(
+                            Res.string.structure_result_iron_coord,
+                            "X"
+                        )
+                    }: ${
+                        stringResource(
+                            Res.string.structure_result_iron_kilograms,
+                            res.weightX.roundToDecimals(1),
+                            unitKg
+                        )
+                    }",
+                    titleFontSize = 16.sp,
+                    spacer = Modifier.height(0.dp)
                 )
-            )
-            Text(
-                stringResource(
-                    Res.string.structure_result_weight_rods,
-                    res.weightX.roundToDecimals(1),
-                    ceil((res.lengthX * res.countX * (1 + res.percentageIronWaste)) / 12).toInt()
-                ),
-                style = MaterialTheme.typography.bodySmall
-            )
 
-            ResultRow(
-                label = stringResource(Res.string.structure_result_iron_y, res.diameterY),
-                value = stringResource(
-                    Res.string.concrete_result_volume_m3,
-                    (res.lengthY * res.countY * (1 + res.percentageIronWaste)).roundToDecimals(1),
-                    stringResource(Res.string.unit_meters)
-                )
-            )
-            Text(
-                stringResource(
-                    Res.string.structure_result_weight_rods,
-                    res.weightY.roundToDecimals(1),
-                    ceil((res.lengthY * res.countY * (1 + res.percentageIronWaste)) / 12).toInt()
-                ),
-                style = MaterialTheme.typography.bodySmall
-            )
-        } else {
-            ResultRow(
-                label = stringResource(Res.string.structure_result_iron_generic, res.diameterX),
-                value = stringResource(
-                    Res.string.concrete_result_volume_m3,
-                    ((res.lengthX * res.countX + res.lengthY * res.countY) * (1 + res.percentageIronWaste)).roundToDecimals(
-                        1
+                ResultRow(
+                    label = stringResource(
+                        Res.string.structure_result_iron_diameter,
+                        res.diameterX
                     ),
-                    stringResource(Res.string.unit_meters)
+                    subLabel = stringResource(
+                        Res.string.structure_result_iron_meters,
+                        (res.lengthX * res.countX).roundToDecimals(1),
+                        unitM
+                    ),
+                    value = ((res.lengthX * res.countX) * (1 + res.percentageIronWaste)).toPresentationUnit(
+                        res.commercialBarLength,
+                        Res.string.unit_bar,
+                        Res.string.unit_bars
+                    ),
+                    labelStyle = MaterialTheme.typography.bodyMedium
                 )
-            )
-            Text(
-                stringResource(
-                    Res.string.structure_result_weight_rods,
-                    (res.weightX + res.weightY).roundToDecimals(1),
-                    ceil(((res.lengthX * res.countX + res.lengthY * res.countY) * (1 + res.percentageIronWaste)) / 12).toInt()
-                ),
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+                // Hierro Y
+                ResultTitle(
+                    title = "${
+                        stringResource(
+                            Res.string.structure_result_iron_coord,
+                            "Y"
+                        )
+                    }: ${
+                        stringResource(
+                            Res.string.structure_result_iron_kilograms,
+                            res.weightY.roundToDecimals(1),
+                            unitKg
+                        )
+                    }",
+                    titleFontSize = 16.sp,
+                    spacer = Modifier.height(0.dp)
+                )
+
+                ResultRow(
+                    label = stringResource(
+                        Res.string.structure_result_iron_diameter,
+                        res.diameterY
+                    ),
+                    subLabel = stringResource(
+                        Res.string.structure_result_iron_meters,
+                        (res.lengthY * res.countY).roundToDecimals(1),
+                        unitM
+                    ),
+                    value = ((res.lengthY * res.countY) * (1 + res.percentageIronWaste)).toPresentationUnit(
+                        res.commercialBarLength,
+                        Res.string.unit_bar,
+                        Res.string.unit_bars
+                    ),
+                    labelStyle = MaterialTheme.typography.bodyMedium
+                )
+
+            } else {
+                // Hierro X-Y
+                ResultRow(
+                    label = stringResource(
+                        Res.string.structure_result_iron_diameter,
+                        res.diameterX
+                    ),
+                    subLabel = stringResource(
+                        Res.string.structure_result_iron_meters,
+                        ((res.lengthX * res.countX + res.lengthY * res.countY) * (1 + res.percentageIronWaste)).roundToDecimals(
+                            1
+                        ),
+                        unitM
+                    ),
+                    value = ((res.lengthX * res.countX + res.lengthY * res.countY) * (1 + res.percentageIronWaste)).toPresentationUnit(
+                        res.commercialBarLength,
+                        Res.string.unit_bar,
+                        Res.string.unit_bars
+                    ),
+                    labelStyle = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
 
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
             Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
@@ -942,15 +1069,26 @@ fun SlabResultContent(res: SlabResult, appSettings: AppSettingsState) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = stringResource(
-                        Res.string.structure_result_detail_x,
+                        Res.string.structure_result_detail_axis,
+                        "X",
                         res.countX,
-                        res.lengthX.roundToDecimals(2)
-                    ) + "\n" +
-                            stringResource(
-                                Res.string.structure_result_detail_y,
-                                res.countY,
-                                res.lengthY.roundToDecimals(2)
-                            ),
+                        res.lengthX.roundToDecimals(2),
+                        unitM,
+                        spacingX,
+                        unitCm
+                    ),
+                    style = MaterialTheme.typography.labelSmall
+                )
+                Text(
+                    text = stringResource(
+                        Res.string.structure_result_detail_axis,
+                        "Y",
+                        res.countY,
+                        res.lengthY.roundToDecimals(2),
+                        unitM,
+                        spacingY,
+                        unitCm
+                    ),
                     style = MaterialTheme.typography.labelSmall
                 )
             }
@@ -1025,4 +1163,11 @@ fun SlabResultContent(res: SlabResult, appSettings: AppSettingsState) {
     }
 
     PriceResultSection(materialCost, laborCost)
+}
+
+// Función interna para calcular separación en cm
+private fun calculateSpacingCm(lengthM: Double, count: Int): Int {
+    if (count <= 1) return 0
+    val spacingM = lengthM / (count - 1)
+    return ceil(spacingM * 100).toInt() // Convertimos a cm y redondeamos
 }

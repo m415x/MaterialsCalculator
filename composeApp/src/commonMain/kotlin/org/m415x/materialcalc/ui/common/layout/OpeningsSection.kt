@@ -74,6 +74,26 @@ fun OpeningsSection(
     val focusWidth = focusRequesterWidth ?: remember { FocusRequester() }
     val focusHeight = remember { FocusRequester() }
 
+    // Definimos la acción de agregar como una lambda reutilizable
+    val onAddAction = {
+        val w = widthInput.toSafeDoubleOrNull()
+        val h = heightInput.toSafeDoubleOrNull()
+        if (areValidDimensions(w, h)) {
+            onAddOpening(
+                Aperture(
+                    widthMeters = w!!,
+                    heightMeters = h!!,
+                    quantity = 1,
+                    name = "$openingStr ${openings.size + 1}"
+                )
+            )
+            // Limpiar y re-enfocar al primer campo
+            widthInput = ""
+            heightInput = ""
+            focusWidth.requestFocus()
+        }
+    }
+
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
 
         InputRow {
@@ -93,29 +113,11 @@ fun OpeningsSection(
                 suffix = { Text(stringResource(Res.string.unit_meters)) },
                 modifier = Modifier.weight(1f),
                 focusRequester = focusHeight,
-                nextFocusRequester = nextFocusRequesterHeight,
-                onDone = {} // Opcional: Podrías llamar a agregar aquí
+                onDone = onAddAction
             )
             FilledIconButton(
-                onClick = {
-                    val w = widthInput.toSafeDoubleOrNull()
-                    val h = heightInput.toSafeDoubleOrNull()
-                    if (areValidDimensions(w, h)) {
-                        onAddOpening(
-                            Aperture(
-                                widthMeters = w!!,
-                                heightMeters = h!!,
-                                quantity = 1,
-                                name = "$openingStr ${openings.size + 1}"
-                            )
-                        )
-                        // Limpiar y re-enfocar
-                        widthInput = ""
-                        heightInput = ""
-                        focusWidth.requestFocus()
-                    }
-                },
-                modifier = Modifier.padding(top = 8.dp)
+                onClick = onAddAction,
+                modifier = Modifier.padding(top = 6.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.openings_add))
             }

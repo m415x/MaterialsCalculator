@@ -127,7 +127,8 @@ data class StructureResult(
     val stirrupIronMeters: Double,
     val stirrupIronKg: Double,
     val stirrupIronAmount: Int,
-    val percentageStirrupIronWaste: Double
+    val percentageStirrupIronWaste: Double,
+    val commercialBarLength: Int = 12,
 )
 
 /**
@@ -143,7 +144,7 @@ data class StructureResult(
  * @property diameterY Diámetro de cada varilla Y
  * @property weightX Peso de varillas en dirección X
  * @property weightY Peso de varillas en dirección Y
- * @property commercialBars12m Cantidad de barras de 12m a comprar
+ * @property commercialBarLength Cantidad de barras de 12m a comprar
  * @property wasteAmountKg Cuánto del peso es desperdicio
  * @property suggestedMesh Esquema recomendado
  * @property meshPanelsNeeded Cantidad de paneles de 2x5m necesarios
@@ -167,7 +168,7 @@ data class SlabResult(
     val diameterY: Double,
     val weightX: Double,
     val weightY: Double,
-    val commercialBars12m: Int,
+    val commercialBarLength: Int = 12,
     val wasteAmountKg: Double,
     val suggestedMesh: String? = null,
     val meshPanelsNeeded: Int? = null,

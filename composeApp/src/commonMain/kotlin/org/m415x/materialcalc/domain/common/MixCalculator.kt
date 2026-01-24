@@ -71,7 +71,7 @@ object MixCalculator {
 
         // 1. Calcular el Volumen Real que genera esa suma de partes
         val actualVolume = (cementParts * ConstructionConstants.COEF_CEMENT) +
-                (limeParts * ConstructionConstants.COEF_LIME) +
+                (limeParts * ConstructionConstants.COEF_LIME_HYDRATED) +
                 (sandParts * ConstructionConstants.COEF_SAND) +
                 (gravelParts * ConstructionConstants.COEF_GRAVEL) +
                 (waterParts * ConstructionConstants.COEF_WATER)
@@ -84,7 +84,7 @@ object MixCalculator {
         // 3. Cantidades Finales
         return ResultProportion(
             cementKg = (cementParts * factor) * (ConstructionConstants.APPARENT_CEMENT_DENSITY / 1000.0),
-            limeKg = (limeParts * factor) * (ConstructionConstants.APPARENT_LIME_DENSITY / 1000.0),
+            limeKg = (limeParts * factor) * (ConstructionConstants.APPARENT_LIME_HYDRATED_DENSITY / 1000.0),
             sandM3 = (sandParts * factor) / 1000.0,
             gravelM3 = (gravelParts * factor) / 1000.0,
             waterLiters = waterParts * factor
@@ -112,7 +112,7 @@ object MixCalculator {
 
         // 1. Convertir todo a volumen aparente (m3)
         val volCem = cementKg / ConstructionConstants.APPARENT_CEMENT_DENSITY
-        val volLime = limeKg / ConstructionConstants.APPARENT_LIME_DENSITY
+        val volLime = limeKg / ConstructionConstants.APPARENT_LIME_HYDRATED_DENSITY
         val volSand = sandM3 // Ya está en m3
         val volGravel = gravelM3 // Ya está en m3
 

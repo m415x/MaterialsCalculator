@@ -52,6 +52,7 @@ import org.m415x.materialcalc.ui.common.layout.InputRow
 import org.m415x.materialcalc.ui.common.utils.RequestFocusOnStart
 import org.m415x.materialcalc.ui.common.utils.roundToDecimals
 import org.m415x.materialcalc.ui.common.utils.toSafeDoubleOrNull
+import org.m415x.materialcalc.ui.screen.settings.SettingsAccordion
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -63,7 +64,7 @@ fun RecipesTabContent(repository: SettingsRepository) {
     val staticRepo = remember { StaticMaterialRepository() }
 
     // RE-IMPLEMENTACIÓN CON buildList (sin remember) para poder usar stringResource y asString()
-    val uiList = buildList {
+    val categorizedRecipes = buildList {
         val factoryOptions = mutableListOf<Pair<Int, MaterialUiModel>>()
         val customOptions = mutableListOf<MaterialUiModel>()
 
@@ -160,8 +161,11 @@ fun RecipesTabContent(repository: SettingsRepository) {
         val sortedFactory = factoryOptions.sortedBy { it.first }.map { it.second }
         val sortedCustom = customOptions.sortedBy { it.title.toString() } // Orden aproximado
 
-        addAll(sortedFactory + sortedCustom)
-    }
+        // Devolvemos el par
+        add(Pair(sortedFactory, sortedCustom))
+    }.first()
+
+    val (factoryRecipes, customRecipesList) = categorizedRecipes as Pair<List<MaterialUiModel>, List<MaterialUiModel>>
 
     var showEditor by remember { mutableStateOf(false) }
     var recipeToEdit by remember { mutableStateOf<CustomRecipe?>(null) }
@@ -202,26 +206,58 @@ fun RecipesTabContent(repository: SettingsRepository) {
                 )
             }
 
-            if (uiList.isEmpty()) {
+            if (factoryRecipes.isEmpty() && customRecipesList.isEmpty()) {
                 Box(Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
                     Text(stringResource(Res.string.settings_db_empty))
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    items(uiList) { item ->
-                        UniversalMaterialItem(
-                            item = item,
-                            onEdit = {
-                                val original = item.originalData as? CustomRecipe
-                                recipeToEdit = original?.copy(id = if (item.isCustom) original.id else "")
-                                showEditor = true
-                            },
-                            onDelete = { itemToDelete = item }
-                        )
+                    // 1. ACORDEÓN ESTÁNDAR
+                    if (factoryRecipes.isNotEmpty()) {
+                        item {
+                            SettingsAccordion(
+                                title = stringResource(Res.string.settings_prices_cat_basic), // "Materiales Básicos" o "Estándar"
+                                defaultExpanded = true
+                            ) {
+                                factoryRecipes.forEach { item ->
+                                    RecipeItemRow(
+                                        item = item,
+                                        onEdit = {
+                                            val original = item.originalData as? CustomRecipe
+                                            recipeToEdit = original?.copy(id = "")
+                                            showEditor = true
+                                        },
+                                        onDelete = { itemToDelete = it }
+                                    )
+                                }
+                            }
+                        }
                     }
+
+                    // 2. ACORDEÓN PERSONALIZADOS
+                    if (customRecipesList.isNotEmpty()) {
+                        item {
+                            SettingsAccordion(
+                                title = stringResource(Res.string.settings_prices_cat_others),
+                            ) {
+                                customRecipesList.forEach { item ->
+                                    RecipeItemRow(
+                                        item = item,
+                                        onEdit = {
+                                            val original = item.originalData as? CustomRecipe
+                                            recipeToEdit = original?.copy(id = original.id)
+                                            showEditor = true
+                                        },
+                                        onDelete = { itemToDelete = it }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     item { Spacer(modifier = Modifier.height(80.dp)) }
                 }
             }
@@ -259,6 +295,24 @@ fun RecipesTabContent(repository: SettingsRepository) {
             onDismiss = { showRestore = false }
         )
     }
+}
+
+@Composable
+private fun RecipeItemRow(
+    item: MaterialUiModel,
+    onEdit: (MaterialUiModel) -> Unit,
+    onDelete: (MaterialUiModel) -> Unit
+) {
+    UniversalMaterialItem(
+        item = item,
+        onEdit = { onEdit(item) },
+        onDelete = { onDelete(item) }
+    )
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 8.dp),
+        thickness = 0.5.dp,
+        color = MaterialTheme.colorScheme.outlineVariant
+    )
 }
 
 @Composable

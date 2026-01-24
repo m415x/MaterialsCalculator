@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import org.m415x.materialcalc.domain.model.TextSource
 import org.m415x.materialcalc.domain.model.asString
+import org.m415x.materialcalc.ui.theme.customColors
 
 /**
  * Componente genérico para mostrar un mensaje dentro de una Card, con animación de entrada y salida.
@@ -45,7 +46,7 @@ import org.m415x.materialcalc.domain.model.asString
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CardMessage(
+fun MessageCard(
     msg: TextSource?,
     cardColor: Color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
     txtColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -89,12 +90,12 @@ fun CardMessage(
  * @param modifier Modificador para personalizar el layout.
  */
 @Composable
-fun ErrorMessage(
+fun ErrorMessageCard(
     errorMsg: TextSource?,
     modifier: Modifier = Modifier
 ) {
     if (errorMsg != null) {
-        CardMessage(
+        MessageCard(
             errorMsg,
             cardColor = MaterialTheme.colorScheme.errorContainer,
             txtColor = MaterialTheme.colorScheme.onErrorContainer,
@@ -112,17 +113,17 @@ fun ErrorMessage(
  * @param modifier Modificador para personalizar el layout.
  */
 @Composable
-fun WarningMessage(
+fun WarningMessageCard(
     warningMsg: TextSource?,
     modifier: Modifier = Modifier
 ) {
     if (warningMsg != null) {
-        CardMessage(
+        MessageCard(
             msg = warningMsg,
-            cardColor = Color(0xFFFFF4E5),
-            txtColor = Color(0xFF663C00),
+            cardColor = MaterialTheme.customColors.warningContainer,
+            txtColor = MaterialTheme.customColors.onWarningContainer,
             icon = Icons.Default.Warning,
-            iconColor = Color(0xFFFF9800),
+            iconColor = MaterialTheme.customColors.warning,
             modifier = modifier
         )
     }

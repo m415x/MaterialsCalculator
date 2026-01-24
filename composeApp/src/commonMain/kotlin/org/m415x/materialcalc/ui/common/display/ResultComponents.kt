@@ -30,11 +30,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
-import org.m415x.materialcalc.domain.common.PresentationUnit
 import org.m415x.materialcalc.domain.common.DisplayUnit
+import org.m415x.materialcalc.domain.common.PresentationUnit
 
 /**
  * Tarjeta contenedora genérica para resultados.
@@ -145,6 +147,51 @@ fun AppResultBottomSheet(
     }
 }
 
+@Composable
+fun ResultTitle(
+    title: String,
+    subTitle: String? = null,
+    titleFontSize: TextUnit = 20.sp,
+    spacer: Modifier = Modifier.height(16.dp)
+) {
+    Text(
+        text = title,
+        fontWeight = FontWeight.Bold,
+        fontSize = titleFontSize
+    )
+
+    if (subTitle != null) {
+        Text(
+            text = subTitle,
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
+
+    Spacer(modifier = spacer)
+}
+
+@Composable
+fun ResultSection(
+    title: String,
+    subTitle: String? = null,
+    titleFontSize: TextUnit = 20.sp,
+    titleSpacer: Modifier = Modifier.height(4.dp),
+    sectionSpacer: Modifier = Modifier.height(16.dp),
+    content: @Composable ColumnScope.() -> Unit
+) {
+    ResultTitle(
+        title = title,
+        subTitle = subTitle,
+        titleFontSize = titleFontSize,
+        spacer = titleSpacer
+    )
+
+    Column(modifier = Modifier.padding(vertical = 8.dp).padding(start = 8.dp)) {
+        content()
+    }
+    Spacer(modifier = sectionSpacer)
+}
+
 /**
  * Fila auxiliar: Texto a la izquierda, Valor en negrita a la derecha.
  * Ahorra escribir Rows repetitivos.
@@ -156,14 +203,26 @@ fun AppResultBottomSheet(
 @Composable
 fun ResultRow(
     label: String,
+    subLabel: String? = null,
     value: PresentationUnit,
-    labelStyle: TextStyle = MaterialTheme.typography.bodyLarge
+    labelStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+    subLabelStyle: TextStyle = MaterialTheme.typography.bodySmall,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, style = labelStyle)
+        Row(
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = label, style = labelStyle)
+            if (subLabel != null) {
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = subLabel, style = subLabelStyle)
+            }
+        }
         Text(
             text = DisplayUnit(value),
             style = labelStyle.copy(fontWeight = FontWeight.Bold)
@@ -177,19 +236,32 @@ fun ResultRow(
 @Composable
 fun ResultRow(
     label: String,
+    subLabel: String? = null,
     value: String,
-    labelStyle: TextStyle = MaterialTheme.typography.bodyLarge
+    labelStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+    subLabelStyle: TextStyle = MaterialTheme.typography.bodySmall,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, style = labelStyle)
+        Row(
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = label, style = labelStyle)
+            if (subLabel != null) {
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = subLabel, style = subLabelStyle)
+            }
+        }
         Text(
             text = value,
             style = labelStyle.copy(fontWeight = FontWeight.Bold)
         )
     }
+    if (subLabel != null) Spacer(modifier = Modifier.height(8.dp))
 }
 
 /**

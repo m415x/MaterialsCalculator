@@ -20,13 +20,13 @@ package org.m415x.materialcalc.ui.screen.structure
 
 import androidx.compose.runtime.*
 import materialscalculator.composeapp.generated.resources.Res
-import materialscalculator.composeapp.generated.resources.label_error
-import materialscalculator.composeapp.generated.resources.message_error_validation
+import materialscalculator.composeapp.generated.resources.message_error_unknown
+import materialscalculator.composeapp.generated.resources.message_error_validation_input
+import materialscalculator.composeapp.generated.resources.structure_warning_cirsoc_short
 import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.domain.usecase.CalculateStructureUseCase
 import org.m415x.materialcalc.ui.common.inputs.ConcreteOptionUi
 import org.m415x.materialcalc.ui.common.inputs.IronOptionUi
-import org.m415x.materialcalc.ui.common.utils.areValidDimensions
 import org.m415x.materialcalc.ui.common.utils.roundToDecimals
 import org.m415x.materialcalc.ui.common.utils.toSafeDoubleOrNull
 
@@ -45,6 +45,7 @@ class StructureScreenState(
     var result by mutableStateOf<StructureResult?>(null)
     var slabResult by mutableStateOf<SlabResult?>(null)
     var errorMsg by mutableStateOf<TextSource?>(null)
+    var warningMsg by mutableStateOf<TextSource?>(null)
     var showResultSheet by mutableStateOf(false)
 
     // --- ESTADO VIGAS / COLUMNAS ---
@@ -54,6 +55,15 @@ class StructureScreenState(
     var sideB by mutableStateOf("")
     var quantityIronRods by mutableStateOf("4")
     var stirrupSpacingM by mutableStateOf("0.20")
+
+    // --- ERRORES VIGAS / COLUMNAS ---
+    var lengthError by mutableStateOf<TextSource?>(null)
+    var sideAError by mutableStateOf<TextSource?>(null)
+    var sideBError by mutableStateOf<TextSource?>(null)
+    var quantityError by mutableStateOf<TextSource?>(null)
+    var spacingError by mutableStateOf<TextSource?>(null)
+    var startHookError by mutableStateOf<TextSource?>(null)
+    var endHookError by mutableStateOf<TextSource?>(null)
 
     var selectedConcreteOption by mutableStateOf(
         concreteOptions.find { it.id == appSettings.defaultConcreteStrId } ?: concreteOptions.firstOrNull()
@@ -79,6 +89,16 @@ class StructureScreenState(
     var selectedMeshId by mutableStateOf("q131")
     var separationX by mutableStateOf("0.15")
     var separationY by mutableStateOf("0.15")
+
+    // --- ERRORES Y WARNINGS LOSAS ---
+    var slabWidthError by mutableStateOf<TextSource?>(null)
+    var slabLengthError by mutableStateOf<TextSource?>(null)
+    var slabThicknessError by mutableStateOf<TextSource?>(null)
+    var separationXError by mutableStateOf<TextSource?>(null)
+    var separationYError by mutableStateOf<TextSource?>(null)
+    var separationXWarning by mutableStateOf<TextSource?>(null) // Nuevo warning
+    var separationYWarning by mutableStateOf<TextSource?>(null) // Nuevo warning
+    var hookError by mutableStateOf<TextSource?>(null)
 
     var selectedPhiX by mutableStateOf(
         ironOptions.find { it.id == IronDiameter.HIERRO_8.name } ?: ironOptions.firstOrNull()
@@ -164,9 +184,134 @@ class StructureScreenState(
         }
     }
 
+    // --- VALIDACIÓN ---
+    fun validate(): Boolean {
+        var isValid = true
+        val errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
+        // Mensaje corto para el input
+        val warningMsgShort = TextSource.Resource(Res.string.structure_warning_cirsoc_short)
+
+        if (selectedStructureType == StructureType.SLAB) {
+            // Validar Losa
+            val w = slabWidth.toSafeDoubleOrNull()
+            if (w == null || w <= 0) {
+                slabWidthError = errorMsg
+                isValid = false
+            } else slabWidthError = null
+
+            val l = slabLength.toSafeDoubleOrNull()
+            if (l == null || l <= 0) {
+                slabLengthError = errorMsg
+                isValid = false
+            } else slabLengthError = null
+
+            val t = slabThickness.toSafeDoubleOrNull()
+            if (t == null || t <= 0) {
+                slabThicknessError = errorMsg
+                isValid = false
+            } else slabThicknessError = null
+
+            if (isManualRebar) {
+                val sepX = separationX.toSafeDoubleOrNull()
+                if (sepX == null || sepX <= 0) {
+                    separationXError = errorMsg
+                    separationXWarning = null
+                    isValid = false
+                } else {
+                    separationXError = null
+                    // Lógica de Warning: Si es válido pero > 0.30
+                    if (sepX > 0.30) {
+                        separationXWarning = warningMsgShort
+                    } else {
+                        separationXWarning = null
+                    }
+                }
+
+                val sepY = separationY.toSafeDoubleOrNull()
+                if (sepY == null || sepY <= 0) {
+                    separationYError = errorMsg
+                    separationYWarning = null
+                    isValid = false
+                } else {
+                    separationYError = null
+                    // Lógica de Warning: Si es válido pero > 0.30
+                    if (sepY > 0.30) {
+                        separationYWarning = warningMsgShort
+                    } else {
+                        separationYWarning = null
+                    }
+                }
+            }
+
+            if (selectedSlabTermination != RebarTerminationType.STRAIGHT) {
+                val he = slabHookLength.toSafeDoubleOrNull()
+                if (he == null || he <= 0) {
+                    hookError = errorMsg
+                    isValid = false
+                } else hookError = null
+            }
+        } else {
+            // Validar Viga/Columna
+            val l = length.toSafeDoubleOrNull()
+            if (l == null || l <= 0) {
+                lengthError = errorMsg
+                isValid = false
+            } else lengthError = null
+
+            val a = sideA.toSafeDoubleOrNull()
+            if (a == null || a <= 0) {
+                sideAError = errorMsg
+                isValid = false
+            } else sideAError = null
+
+            if (!isCircular) {
+                val b = sideB.toSafeDoubleOrNull()
+                if (b == null || b <= 0) {
+                    sideBError = errorMsg
+                    isValid = false
+                } else sideBError = null
+            }
+
+            val q = quantityIronRods.toIntOrNull()
+            if (q == null || q <= 0) {
+                quantityError = errorMsg
+                isValid = false
+            } else quantityError = null
+
+            val sp = stirrupSpacingM.toSafeDoubleOrNull()
+            if (sp == null || sp <= 0) {
+                spacingError = errorMsg
+                isValid = false
+            } else spacingError = null
+
+            if (selectedStartTermination != RebarTerminationType.STRAIGHT) {
+                val sh = startHookLength.toSafeDoubleOrNull()
+                if (sh == null || sh <= 0) {
+                    startHookError = errorMsg
+                    isValid = false
+                } else startHookError = null
+            }
+
+            if (selectedEndTermination != RebarTerminationType.STRAIGHT) {
+                val eh = endHookLength.toSafeDoubleOrNull()
+                if (eh == null || eh <= 0) {
+                    endHookError = errorMsg
+                    isValid = false
+                } else endHookError = null
+            }
+        }
+
+        return isValid
+    }
+
     // --- LÓGICA DE CÁLCULO ---
 
     fun calculate() {
+        if (!validate()) {
+            errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
+            return
+        }
+
         if (selectedStructureType == StructureType.SLAB) {
             calculateSlab()
         } else {
@@ -175,80 +320,72 @@ class StructureScreenState(
     }
 
     private fun calculateSlab() {
-        val w = slabWidth.toSafeDoubleOrNull()
-        val l = slabLength.toSafeDoubleOrNull()
-        val t = slabThickness.toSafeDoubleOrNull()
+        val w = slabWidth.toSafeDoubleOrNull()!!
+        val l = slabLength.toSafeDoubleOrNull()!!
+        val t = slabThickness.toSafeDoubleOrNull()!!
         val sepX = separationX.toSafeDoubleOrNull()
         val sepY = separationY.toSafeDoubleOrNull()
         val hookL = slabHookLength.toSafeDoubleOrNull() ?: 0.0
 
-        if (areValidDimensions(w, l, t) &&
-            (!isManualRebar || areValidDimensions(sepX, sepY))
-        ) {
-            val typeForCalculation = try {
-                ConcreteType.valueOf(selectedConcreteOption?.id ?: "")
-            } catch (e: Exception) {
-                ConcreteType.H21
-            }
+        val typeForCalculation = try {
+            ConcreteType.valueOf(selectedConcreteOption?.id ?: "")
+        } catch (e: Exception) {
+            ConcreteType.H21
+        }
 
-            val result = if (isManualRebar) {
-                calculateStructure.calculateSlab(
-                    widthX = w!!,
-                    lengthY = l!!,
-                    thickness = t!!,
-                    sepXm = sepX!!,
-                    sepYm = sepY!!,
-                    phiX = selectedPhiX!!.iron,
-                    phiY = selectedPhiY!!.iron,
-                    wastePct = appSettings.wasteIronMainPct / 100.0,
-                    hookLengthMeters = hookL,
-                    concreteType = typeForCalculation,
-                    cementBagWeightKg = appSettings.bagCementKg,
-                    limeBagWeightKg = appSettings.bagLimeKg,
-                    percentageConcreteWaste = appSettings.wasteConcretePct / 100.0
-                )
-            } else {
-                calculateStructure.calculateSlabWithMesh(
-                    widthX = w!!,
-                    lengthY = l!!,
-                    thickness = t!!,
-                    meshId = selectedMeshId,
-                    concreteType = typeForCalculation,
-                    cementBagWeightKg = appSettings.bagCementKg,
-                    limeBagWeightKg = appSettings.bagLimeKg,
-                    percentageConcreteWaste = appSettings.wasteConcretePct / 100.0
-                )
-            }
-
-            result.fold(
-                onSuccess = {
-                    slabResult = it
-                    errorMsg = null
-                    showResultSheet = true
-                },
-                onFailure = {
-                    errorMsg = TextSource.ResourceArgs(Res.string.label_error, listOf(": ", it.message ?: ""))
-                    slabResult = null
-                }
+        val slabResult = if (isManualRebar) {
+            calculateStructure.calculateSlab(
+                widthX = w,
+                lengthY = l,
+                thickness = t,
+                sepXm = sepX!!,
+                sepYm = sepY!!,
+                phiX = selectedPhiX!!.iron,
+                phiY = selectedPhiY!!.iron,
+                wastePct = appSettings.wasteIronMainPct / 100.0,
+                hookLengthMeters = hookL,
+                concreteType = typeForCalculation,
+                cementBagWeightKg = appSettings.bagCementKg,
+                limeBagWeightKg = appSettings.bagLimeKg,
+                percentageConcreteWaste = appSettings.wasteConcretePct / 100.0
             )
         } else {
-            errorMsg = TextSource.Resource(Res.string.message_error_validation)
-            slabResult = null
+            calculateStructure.calculateSlabWithMesh(
+                widthX = w,
+                lengthY = l,
+                thickness = t,
+                meshId = selectedMeshId,
+                concreteType = typeForCalculation,
+                cementBagWeightKg = appSettings.bagCementKg,
+                limeBagWeightKg = appSettings.bagLimeKg,
+                percentageConcreteWaste = appSettings.wasteConcretePct / 100.0
+            )
         }
+
+        slabResult.fold(
+            onSuccess = {
+                this@StructureScreenState.slabResult = it
+                errorMsg = null
+                showResultSheet = true
+            },
+            onFailure = {
+                errorMsg = it.message?.let { msg -> TextSource.Raw(msg) }
+                    ?: TextSource.Resource(Res.string.message_error_unknown)
+                this@StructureScreenState.slabResult = null
+            }
+        )
     }
 
     private fun calculateBeamOrColumn() {
-        val l = length.toSafeDoubleOrNull()
-        val a = sideA.toSafeDoubleOrNull()
-        val b = if (isCircular) 1.0 else sideB.toSafeDoubleOrNull()
-        val quantityRods = quantityIronRods.toIntOrNull()
-        val spM = stirrupSpacingM.toSafeDoubleOrNull()
+        val l = length.toSafeDoubleOrNull()!!
+        val a = sideA.toSafeDoubleOrNull()!!
+        val b = if (isCircular) 1.0 else sideB.toSafeDoubleOrNull()!!
+        val quantityRods = quantityIronRods.toIntOrNull()!!
+        val spM = stirrupSpacingM.toSafeDoubleOrNull()!!
         val startHook = startHookLength.toSafeDoubleOrNull() ?: 0.0
         val endHook = endHookLength.toSafeDoubleOrNull() ?: 0.0
 
-        if (areValidDimensions(l, a, b, quantityRods, spM) &&
-            selectedMainIron != null && selectedStirrup != null
-        ) {
+        if (selectedMainIron != null && selectedStirrup != null) {
             val typeForCalculate = try {
                 ConcreteType.valueOf(selectedConcreteOption?.id ?: "")
             } catch (e: Exception) {
@@ -263,16 +400,16 @@ class StructureScreenState(
                 appSettings.customIrons.find { it.id == selectedStirrup!!.id }
             } else null
 
-            val result = calculateStructure(
-                lengthMeters = l!!,
-                sideAMeters = a!!,
-                sideBMeters = if (isCircular) 0.0 else b!!,
+            val structureResult = calculateStructure(
+                lengthMeters = l,
+                sideAMeters = a,
+                sideBMeters = if (isCircular) 0.0 else b,
                 isCircular = isCircular,
                 concreteType = typeForCalculate,
                 mainIronDiameter = selectedMainIron!!.iron,
-                mainIronQuantity = quantityRods!!,
+                mainIronQuantity = quantityRods,
                 stirrupIronDiameter = selectedStirrup!!.iron,
-                stirrupSpacingMeters = spM!!,
+                stirrupSpacingMeters = spM,
                 cementBagWeightKg = appSettings.bagCementKg,
                 limeBagWeightKg = appSettings.bagLimeKg,
                 percentageCementWaste = appSettings.wasteConcretePct / 100.0,
@@ -284,19 +421,20 @@ class StructureScreenState(
                 endHookLengthMeters = endHook
             )
 
-            result.fold(
+            structureResult.fold(
                 onSuccess = {
                     this.result = it
                     errorMsg = null
                     showResultSheet = true
                 },
                 onFailure = {
-                    errorMsg = TextSource.ResourceArgs(Res.string.label_error, listOf(": ", it.message ?: ""))
+                    errorMsg = it.message?.let { msg -> TextSource.Raw(msg) }
+                        ?: TextSource.Resource(Res.string.message_error_unknown)
                     this.result = null
                 }
             )
         } else {
-            errorMsg = TextSource.Resource(Res.string.message_error_validation)
+            errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
             result = null
         }
     }

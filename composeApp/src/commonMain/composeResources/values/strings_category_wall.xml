@@ -21,19 +21,17 @@
     <string name="wall_title">Muro</string>
 
     <!-- SECTIONS -->
-    <string name="wall_section_dimensions">Dimensiones del Muro</string>
     <string name="wall_section_brick_mortar">Ladrillo y Mortero</string>
 
     <!-- LABELS -->
     <string name="wall_label_mortar">Mortero</string>
     <string name="wall_label_seat_mortar">Mortero de Asiento</string>
     <string name="wall_dialog_choose_mix">Elegir Mezcla</string>
-    <string name="wall_result_net_area">Área Neta: %1$s m²</string>
+    <string name="wall_result_net_area">Superficie Neta: %1$s %2$s</string>
     <string name="wall_result_bricks">Ladrillos</string>
-    <string name="wall_result_waste_included">(Incluye %1$d% desperdicio)</string>
     <string name="wall_result_mortar">Mortero (%1$s m³)</string>
     <string name="wall_result_cement">Cemento</string>
-    <string name="wall_result_lime">Cal</string>
+    <string name="wall_result_lime">Cal Hidratada</string>
     <string name="wall_result_sand">Arena</string>
     <string name="wall_result_water">Agua</string>
 

@@ -46,10 +46,7 @@ import org.m415x.materialcalc.domain.model.PlasterResult
 import org.m415x.materialcalc.domain.model.asString
 import org.m415x.materialcalc.domain.usecase.CalculatePlasterUseCase
 import org.m415x.materialcalc.ui.common.dialogs.AppDialog
-import org.m415x.materialcalc.ui.common.display.AppResultBottomSheet
-import org.m415x.materialcalc.ui.common.display.ErrorMessage
-import org.m415x.materialcalc.ui.common.display.PriceResultSection
-import org.m415x.materialcalc.ui.common.display.ResultRow
+import org.m415x.materialcalc.ui.common.display.*
 import org.m415x.materialcalc.ui.common.inputs.CmInput
 import org.m415x.materialcalc.ui.common.inputs.NumericInput
 import org.m415x.materialcalc.ui.common.layout.InputRow
@@ -146,12 +143,16 @@ fun PlasterScreen(appSettings: AppSettingsState) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            InputSection(title = stringResource(Res.string.plaster_section_dimensions)) {
+            InputSection(title = stringResource(Res.string.label_dimensions)) {
                 InputRow {
                     NumericInput(
                         value = state.length,
                         onValueChange = { state.length = it },
-                        label = stringResource(Res.string.plaster_label_length, stringResource(Res.string.unit_meters)),
+                        label = stringResource(
+                            Res.string.plaster_label_length,
+                            stringResource(Res.string.unit_meters)
+                        ),
+                        errorText = state.lengthError, // Conectamos el error
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(1f),
                         focusRequester = focusLength,
@@ -160,7 +161,11 @@ fun PlasterScreen(appSettings: AppSettingsState) {
                     NumericInput(
                         value = state.height,
                         onValueChange = { state.height = it },
-                        label = stringResource(Res.string.plaster_label_height, stringResource(Res.string.unit_meters)),
+                        label = stringResource(
+                            Res.string.plaster_label_height,
+                            stringResource(Res.string.unit_meters)
+                        ),
+                        errorText = state.heightError, // Conectamos el error
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(1f),
                         focusRequester = focusHeight,
@@ -231,7 +236,7 @@ fun PlasterScreen(appSettings: AppSettingsState) {
                             Res.string.plaster_label_thickness,
                             stringResource(Res.string.unit_meters)
                         ),
-                        placeholder = "0.02",
+                        errorText = state.thicknessError, // Conectamos el error
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
                         modifier = Modifier.weight(1f),
                         focusRequester = focusThickness,
@@ -264,7 +269,7 @@ fun PlasterScreen(appSettings: AppSettingsState) {
                 }
             }
 
-            ErrorMessage(state.errorMsg)
+            ErrorMessageCard(state.errorMsg)
 
             Spacer(modifier = Modifier.height(80.dp))
         }
@@ -335,112 +340,120 @@ fun PlasterScreen(appSettings: AppSettingsState) {
  */
 @Composable
 fun PlasterResultContent(res: PlasterResult, appSettings: AppSettingsState) {
-    Text(
-        stringResource(Res.string.plaster_result_total_area, res.totalAreaM2.roundToDecimals(2)),
-        fontWeight = FontWeight.Bold,
-        fontSize = 18.sp
-    )
+    val unitM2 = stringResource(Res.string.unit_square_meters)
+    val unitKg = stringResource(Res.string.unit_kilograms)
+    val unitM3 = stringResource(Res.string.unit_cubic_meters)
+    val unitLt = stringResource(Res.string.unit_liters)
 
-    Spacer(modifier = Modifier.height(16.dp))
+    ResultTitle(
+        title = stringResource(
+            Res.string.plaster_result_total_area,
+            res.totalAreaM2.roundToDecimals(2),
+            unitM2
+        )
+    )
 
     // Sección GRUESO
-    Text(
+    ResultSection(
         stringResource(Res.string.plaster_result_thick_title),
-        fontWeight = FontWeight.Bold,
-        fontSize = 18.sp
-    )
-    Text(
-        stringResource(Res.string.plaster_result_waste_included, (res.thickPercentageWaste * 100).toInt()),
-        style = MaterialTheme.typography.bodySmall
-    )
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    ResultRow(
-        stringResource(Res.string.plaster_result_cement),
-        res.thickCementKg.toPresentationUnit(
-            res.cementBagKg,
-            Res.string.unit_bag,
-            Res.string.unit_bags
+        subTitle = stringResource(
+            Res.string.label_result_waste_included,
+            (res.thickPercentageWaste * 100).toInt()
         ),
-    )
-
-    ResultRow(
-        stringResource(Res.string.plaster_result_lime),
-        res.thickLimeKg.toPresentationUnit(
-            res.limeBagKg,
-            Res.string.unit_bag,
-            Res.string.unit_bags
-        ),
-    )
-
-    ResultRow(
-        stringResource(Res.string.plaster_result_sand),
-        stringResource(
-            Res.string.concrete_result_volume_m3,
-            res.thickSandKg.roundToDecimals(2),
-            stringResource(Res.string.unit_cubic_meters)
+    ) {
+        ResultRow(
+            label = stringResource(Res.string.plaster_result_cement),
+            subLabel = stringResource(
+                Res.string.label_result_subtitle_unit,
+                res.thickCementKg.roundToDecimals(1),
+                unitKg
+            ),
+            value = res.thickCementKg.toPresentationUnit(
+                res.cementBagKg,
+                Res.string.unit_bag,
+                Res.string.unit_bags
+            ),
         )
-    )
 
-    ResultRow(
-        stringResource(Res.string.plaster_result_water),
-        stringResource(
-            Res.string.concrete_result_volume_liters,
-            res.thickWaterLiters.roundToDecimals(1),
-            stringResource(Res.string.unit_liters)
+        ResultRow(
+            label = stringResource(Res.string.plaster_result_lime),
+            subLabel = stringResource(
+                Res.string.label_result_subtitle_unit,
+                res.thickLimeKg.roundToDecimals(1),
+                unitKg
+            ),
+            value = res.thickLimeKg.toPresentationUnit(
+                res.limeBagKg,
+                Res.string.unit_bag,
+                Res.string.unit_bags
+            ),
         )
-    )
 
-    Spacer(modifier = Modifier.height(16.dp))
+        ResultRow(
+            label = stringResource(Res.string.plaster_result_sand),
+            value = stringResource(
+                Res.string.label_result_unit,
+                res.thickSandKg.roundToDecimals(2),
+                unitM3
+            )
+        )
+
+        ResultRow(
+            label = stringResource(Res.string.plaster_result_water),
+            value = stringResource(
+                Res.string.label_result_unit,
+                res.thickWaterLiters.roundToDecimals(1),
+                unitLt
+            )
+        )
+    }
 
     // Sección FINO
-    Text(
+    ResultSection(
         stringResource(Res.string.plaster_result_fine_title),
-        fontWeight = FontWeight.Bold,
-        fontSize = 18.sp
-    )
-    Text(
-        stringResource(Res.string.plaster_result_waste_included, (res.finePercentageWaste * 100).toInt()),
-        style = MaterialTheme.typography.bodySmall
-    )
+        stringResource(Res.string.label_result_waste_included, (res.finePercentageWaste * 100).toInt()),
+    ) {
+        Text(stringResource(Res.string.plaster_result_choose_option), style = MaterialTheme.typography.labelLarge)
 
-    Spacer(modifier = Modifier.height(8.dp))
-
-    Text(stringResource(Res.string.plaster_result_choose_option), style = MaterialTheme.typography.labelLarge)
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    // Opción A
-    ResultRow(
-        stringResource(Res.string.plaster_result_option_a),
-        res.finePremixKg.toPresentationUnit(
-            res.premixBagKg,
-            Res.string.unit_bag,
-            Res.string.unit_bags
+        // Opción A
+        ResultRow(
+            label = stringResource(Res.string.plaster_result_option_a),
+            subLabel = stringResource(
+                Res.string.label_result_subtitle_unit,
+                res.finePremixKg.roundToDecimals(1),
+                unitKg
+            ),
+            value = res.finePremixKg.toPresentationUnit(
+                res.premixBagKg,
+                Res.string.unit_bag,
+                Res.string.unit_bags
+            )
         )
-    )
 
-    Spacer(modifier = Modifier.height(8.dp))
-
-    // Opción B
-    ResultRow(
-        stringResource(Res.string.plaster_result_option_b),
-        res.fineLimeKg.toPresentationUnit(
-            res.limeBagKg,
-            Res.string.unit_bag,
-            Res.string.unit_bags
+        // Opción B
+        ResultRow(
+            label = stringResource(Res.string.plaster_result_option_b),
+            subLabel = stringResource(
+                Res.string.label_result_subtitle_unit,
+                res.fineLimeKg.roundToDecimals(1),
+                unitKg
+            ),
+            value = res.fineLimeKg.toPresentationUnit(
+                res.limeBagKg,
+                Res.string.unit_bag,
+                Res.string.unit_bags
+            )
         )
-    )
 
-    ResultRow(
-        stringResource(Res.string.plaster_result_fine_sand),
-        stringResource(
-            Res.string.concrete_result_volume_m3,
-            res.fineSandM3.roundToDecimals(2),
-            stringResource(Res.string.unit_cubic_meters)
+        ResultRow(
+            label = stringResource(Res.string.plaster_result_fine_sand),
+            value = stringResource(
+                Res.string.label_result_unit,
+                res.fineSandM3.roundToDecimals(2),
+                stringResource(Res.string.unit_cubic_meters)
+            )
         )
-    )
+    }
 
     // --- CÁLCULO DE PRECIOS ---
     val prices = appSettings.priceSettings
