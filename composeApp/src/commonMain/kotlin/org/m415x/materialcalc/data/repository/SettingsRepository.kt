@@ -60,6 +60,7 @@ class SettingsRepository(private val settings: ObservableSettings) {
     private val KEY_WASTE_IRON_STIRRUP = "waste_iron_stirrup_pct"
     private val KEY_WASTE_PLASTER = "waste_plaster_pct"
     private val KEY_THICKNESS_FINE = "thickness_fine_mm"
+    private val KEY_REQUEST_FOCUS = "request_focus_on_start"
     private val KEY_CUSTOM_BRICKS = "custom_bricks_list_json"
     private val KEY_HIDDEN_BRICK_IDS = "hidden_static_bricks_json"
     private val KEY_CUSTOM_IRONS = "custom_irons_json"
@@ -140,6 +141,7 @@ class SettingsRepository(private val settings: ObservableSettings) {
     val wasteIronStirrupPct = settings.getDoubleFlow(KEY_WASTE_IRON_STIRRUP, Defaults.DEFAULT_WASTE_IRON_STIRRUP)
     val wastePlasterPct = settings.getDoubleFlow(KEY_WASTE_PLASTER, Defaults.DEFAULT_WASTE_PLASTER)
     val fineThicknessMm = settings.getDoubleFlow(KEY_THICKNESS_FINE, Defaults.DEFAULT_THICKNESS_FINE)
+    val requestFocusOnStart = settings.getBooleanFlow(KEY_REQUEST_FOCUS, Defaults.DEFAULT_REQUEST_FOCUS)
     val customBricks: Flow<List<CustomBrick>> = getListFlow(KEY_CUSTOM_BRICKS)
     val hiddenBrickIds: Flow<Set<String>> = getSetFlow(KEY_HIDDEN_BRICK_IDS)
     val customIrons: Flow<List<CustomIron>> = getListFlow(KEY_CUSTOM_IRONS)
@@ -234,6 +236,7 @@ class SettingsRepository(private val settings: ObservableSettings) {
     }
 
     fun saveFineThickness(mm: Double) = settings.putDouble(KEY_THICKNESS_FINE, mm)
+    fun saveRequestFocusOnStart(enabled: Boolean) = settings.putBoolean(KEY_REQUEST_FOCUS, enabled)
     fun saveCustomBrick(brick: CustomBrick) = saveItemToList(KEY_CUSTOM_BRICKS, brick) { it.id }
     fun deleteCustomBrick(id: String) = deleteItemFromList<CustomBrick>(KEY_CUSTOM_BRICKS) { it.id == id }
     fun hideStaticBrick(brickId: String) = addToSet(KEY_HIDDEN_BRICK_IDS, brickId)
@@ -270,5 +273,6 @@ class SettingsRepository(private val settings: ObservableSettings) {
         const val DEFAULT_WASTE_IRON_STIRRUP = 5.0
         const val DEFAULT_WASTE_PLASTER = 10.0
         const val DEFAULT_THICKNESS_FINE = 3.0
+        const val DEFAULT_REQUEST_FOCUS = false
     }
 }

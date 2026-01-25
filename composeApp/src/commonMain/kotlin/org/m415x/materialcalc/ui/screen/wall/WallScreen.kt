@@ -29,6 +29,8 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,8 +42,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
+import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.domain.common.toPresentationUnit
 import org.m415x.materialcalc.domain.model.AppSettingsState
+import org.m415x.materialcalc.domain.model.PriceSettings
 import org.m415x.materialcalc.domain.model.WallResult
 import org.m415x.materialcalc.domain.model.asString
 import org.m415x.materialcalc.domain.usecase.CalculateWallUseCase
@@ -64,9 +68,19 @@ import org.m415x.materialcalc.ui.common.utils.*
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WallScreen(appSettings: AppSettingsState) {
+fun WallScreen(appSettings: AppSettingsState, repository: SettingsRepository) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val appName = stringResource(Res.string.app_name)
+
+    // Observamos los precios en tiempo real
+    val materialPrices by repository.materialPrices.collectAsState(initial = emptyList())
+    val laborPrices by repository.laborPrices.collectAsState(initial = emptyList())
+
+    // Creamos un objeto PriceSettings actualizado
+    val currentPriceSettings = remember(materialPrices, laborPrices) {
+        PriceSettings(materialPrices, laborPrices)
+    }
+
     val calculateWall = remember { CalculateWallUseCase() }
 
     // Instanciamos los Presenters
@@ -114,14 +128,14 @@ fun WallScreen(appSettings: AppSettingsState) {
     val focusOpeningWidth = remember { FocusRequester() }
     val focusBrickType = remember { FocusRequester() }
 
-    RequestFocusOnStart(focusLength)
+    RequestFocusOnStart(focusLength, enabled = appSettings.requestFocusOnStart)
 
     Scaffold(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = {
                     keyboardController?.hide()
-                    state.calculate()
+                    state.calculate(currentPriceSettings)
                 },
                 icon = { Icon(Icons.Default.Calculate, null) },
                 text = { Text(stringResource(Res.string.button_calculate)) }
@@ -224,7 +238,7 @@ fun WallScreen(appSettings: AppSettingsState) {
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
-                            TextButton(onClick = { state.showMezclaDialog = true }) {
+                            TextButton(onClick = { state.showWasteDialog = true }) {
                                 Text(stringResource(Res.string.button_change))
                             }
                         }
@@ -238,9 +252,9 @@ fun WallScreen(appSettings: AppSettingsState) {
         }
     }
 
-    if (state.showMezclaDialog) {
+    if (state.showWasteDialog) {
         AppDialog(
-            onDismissRequest = { state.showMezclaDialog = false },
+            onDismissRequest = { state.showWasteDialog = false },
             title = { Text(stringResource(Res.string.wall_dialog_choose_mix)) },
             content = {
                 LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
@@ -273,7 +287,7 @@ fun WallScreen(appSettings: AppSettingsState) {
             },
             actions = {
                 TextButton(onClick = {
-                    state.showMezclaDialog = false
+                    state.showWasteDialog = false
                 }) { Text(stringResource(Res.string.button_cancel)) }
             }
         )
@@ -290,7 +304,9 @@ fun WallScreen(appSettings: AppSettingsState) {
             brickDetail = "(${brickDimensions} ${stringResource(Res.string.unit_centimeters)})",
             openings = state.openings.toList(),
             mixDetail = state.selectedMix?.mixingRatio?.asString() ?: "N/A",
-            appName = appName
+            appName = appName,
+            materialCost = state.result!!.materialCost,
+            laborCost = state.result!!.laborCost
         )
 
         AppResultBottomSheet(
@@ -393,7 +409,5 @@ fun WallResultContent(res: WallResult) {
         )
     }
 
-    // --- CÁLCULO DE PRECIOS ---
-    // Ahora usamos los valores calculados en el UseCase
-    PriceResultSection(res.materialsCost, res.laborCost)
+    PriceResultSection(res.materialCost, res.laborCost)
 }

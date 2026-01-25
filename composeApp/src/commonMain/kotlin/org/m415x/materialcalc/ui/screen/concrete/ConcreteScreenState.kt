@@ -24,6 +24,7 @@ import materialscalculator.composeapp.generated.resources.message_error_unknown
 import materialscalculator.composeapp.generated.resources.message_error_validation_input
 import org.m415x.materialcalc.domain.model.AppSettingsState
 import org.m415x.materialcalc.domain.model.ConcreteResult
+import org.m415x.materialcalc.domain.model.PriceSettings
 import org.m415x.materialcalc.domain.model.TextSource
 import org.m415x.materialcalc.domain.usecase.CalculateConcreteUseCase
 import org.m415x.materialcalc.ui.common.inputs.ConcreteOptionUi
@@ -101,7 +102,7 @@ class ConcreteScreenState(
     }
 
     // --- LÓGICA DE CÁLCULO ---
-    fun calculate() {
+    fun calculate(updatedPrices: PriceSettings) {
         // Primero validamos
         if (!validate()) {
             errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
@@ -123,7 +124,8 @@ class ConcreteScreenState(
                 concreteDosing = selectedConcrete!!.recipe,
                 cementBagWeightKg = appSettings.bagCementKg,
                 limeBagWeightKg = appSettings.bagLimeKg,
-                percentageConcreteWaste = appSettings.wasteConcretePct / 100.0
+                percentageConcreteWaste = appSettings.wasteConcretePct / 100.0,
+                priceSettings = updatedPrices
             )
 
             calcResult.fold(

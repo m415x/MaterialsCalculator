@@ -306,20 +306,20 @@ class StructureScreenState(
 
     // --- LÓGICA DE CÁLCULO ---
 
-    fun calculate() {
+    fun calculate(updatedPrices: PriceSettings) {
         if (!validate()) {
             errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
             return
         }
 
         if (selectedStructureType == StructureType.SLAB) {
-            calculateSlab()
+            calculateSlab(updatedPrices)
         } else {
-            calculateBeamOrColumn()
+            calculateBeamOrColumn(updatedPrices)
         }
     }
 
-    private fun calculateSlab() {
+    private fun calculateSlab(updatedPrices: PriceSettings) {
         val w = slabWidth.toSafeDoubleOrNull()!!
         val l = slabLength.toSafeDoubleOrNull()!!
         val t = slabThickness.toSafeDoubleOrNull()!!
@@ -347,7 +347,8 @@ class StructureScreenState(
                 concreteType = typeForCalculation,
                 cementBagWeightKg = appSettings.bagCementKg,
                 limeBagWeightKg = appSettings.bagLimeKg,
-                percentageConcreteWaste = appSettings.wasteConcretePct / 100.0
+                percentageConcreteWaste = appSettings.wasteConcretePct / 100.0,
+                priceSettings = updatedPrices
             )
         } else {
             calculateStructure.calculateSlabWithMesh(
@@ -358,7 +359,8 @@ class StructureScreenState(
                 concreteType = typeForCalculation,
                 cementBagWeightKg = appSettings.bagCementKg,
                 limeBagWeightKg = appSettings.bagLimeKg,
-                percentageConcreteWaste = appSettings.wasteConcretePct / 100.0
+                percentageConcreteWaste = appSettings.wasteConcretePct / 100.0,
+                priceSettings = updatedPrices
             )
         }
 
@@ -376,7 +378,7 @@ class StructureScreenState(
         )
     }
 
-    private fun calculateBeamOrColumn() {
+    private fun calculateBeamOrColumn(updatedPrices: PriceSettings) {
         val l = length.toSafeDoubleOrNull()!!
         val a = sideA.toSafeDoubleOrNull()!!
         val b = if (isCircular) 1.0 else sideB.toSafeDoubleOrNull()!!
@@ -418,7 +420,8 @@ class StructureScreenState(
                 customMainIron = customMainIron,
                 customStirrupIron = customStirrupIron,
                 startHookLengthMeters = startHook,
-                endHookLengthMeters = endHook
+                endHookLengthMeters = endHook,
+                priceSettings = updatedPrices
             )
 
             structureResult.fold(

@@ -28,6 +28,8 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
+import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
 import org.m415x.materialcalc.domain.common.toPresentationUnit
 import org.m415x.materialcalc.domain.model.*
@@ -59,11 +62,21 @@ import kotlin.math.ceil
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StructureScreen(appSettings: AppSettingsState) {
+fun StructureScreen(appSettings: AppSettingsState, repository: SettingsRepository) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val appName = stringResource(Res.string.app_name)
-    val repository = remember { StaticMaterialRepository() }
-    val calculateStructure = remember { CalculateStructureUseCase(repository) }
+
+    // Observamos los precios en tiempo real
+    val materialPrices by repository.materialPrices.collectAsState(initial = emptyList())
+    val laborPrices by repository.laborPrices.collectAsState(initial = emptyList())
+
+    // Creamos un objeto PriceSettings actualizado
+    val currentPriceSettings = remember(materialPrices, laborPrices) {
+        PriceSettings(materialPrices, laborPrices)
+    }
+
+    val staticRepository = remember { StaticMaterialRepository() }
+    val calculateStructure = remember { CalculateStructureUseCase(staticRepository) }
 
     // Instanciamos los Presenters
     val concretePresenter = remember { ConcretePresenter() }
@@ -112,7 +125,7 @@ fun StructureScreen(appSettings: AppSettingsState) {
             ExtendedFloatingActionButton(
                 onClick = {
                     keyboardController?.hide()
-                    state.calculate()
+                    state.calculate(currentPriceSettings)
                 },
                 icon = { Icon(Icons.Default.Calculate, null) },
                 text = { Text(stringResource(Res.string.button_calculate)) }
@@ -142,11 +155,11 @@ fun StructureScreen(appSettings: AppSettingsState) {
 
             when (state.selectedStructureType) {
                 StructureType.SLAB -> {
-                    SlabInputs(state = state)
+                    SlabInputs(state = state, requestFocus = appSettings.requestFocusOnStart)
                 }
 
                 StructureType.BEAM, StructureType.COLUMN -> {
-                    BeamColumnInputs(state = state)
+                    BeamColumnInputs(state = state, requestFocus = appSettings.requestFocusOnStart)
                 }
             }
 
@@ -168,7 +181,9 @@ fun StructureScreen(appSettings: AppSettingsState) {
                 } catch (e: Exception) {
                     ConcreteType.H21
                 },
-                appName = appName
+                appName = appName,
+                materialCost = state.slabResult!!.materialCost,
+                laborCost = state.slabResult!!.laborCost
             )
 
             AppResultBottomSheet(
@@ -177,7 +192,7 @@ fun StructureScreen(appSettings: AppSettingsState) {
                 onEdit = { state.showResultSheet = false },
                 onShare = { shareManager.shareText(slabShareText) }
             ) {
-                SlabResultContent(state.slabResult!!, appSettings)
+                SlabResultContent(state.slabResult!!)
             }
         } else if (state.result != null) {
             val shareText = rememberStructureShareText(
@@ -192,7 +207,9 @@ fun StructureScreen(appSettings: AppSettingsState) {
                     ConcreteType.H21
                 },
                 stirrupSpacingCm = state.stirrupSpacingM.toSafeDoubleOrNull()?.times(100) ?: 20.0,
-                appName = appName
+                appName = appName,
+                materialCost = state.result!!.materialCost,
+                laborCost = state.result!!.laborCost
             )
 
             AppResultBottomSheet(
@@ -201,7 +218,7 @@ fun StructureScreen(appSettings: AppSettingsState) {
                 onEdit = { state.showResultSheet = false },
                 onShare = { shareManager.shareText(shareText) }
             ) {
-                StructureResultContent(state.result!!, appSettings)
+                StructureResultContent(state.result!!)
             }
         }
     }
@@ -209,14 +226,14 @@ fun StructureScreen(appSettings: AppSettingsState) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BeamColumnInputs(state: StructureScreenState) {
+fun BeamColumnInputs(state: StructureScreenState, requestFocus: Boolean) {
     val focusSideA = remember { FocusRequester() }
     val focusSideB = remember { FocusRequester() }
     val focusLength = remember { FocusRequester() }
     val focusQuantityRods = remember { FocusRequester() }
     val focusStirrupSpacing = remember { FocusRequester() }
 
-    RequestFocusOnStart(focusSideA)
+    RequestFocusOnStart(focusSideA, enabled = requestFocus)
 
     if (state.selectedStructureType == StructureType.COLUMN) {
         InputSection(title = stringResource(Res.string.structure_section_column_shape)) {
@@ -416,14 +433,14 @@ fun BeamColumnInputs(state: StructureScreenState) {
 }
 
 @Composable
-fun SlabInputs(state: StructureScreenState) {
+fun SlabInputs(state: StructureScreenState, requestFocus: Boolean) {
     val focusWidth = remember { FocusRequester() }
     val focusLength = remember { FocusRequester() }
     val focusThickness = remember { FocusRequester() }
     val focusSepX = remember { FocusRequester() }
     val focusSepY = remember { FocusRequester() }
 
-    RequestFocusOnStart(focusWidth)
+    RequestFocusOnStart(focusWidth, enabled = requestFocus)
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         InputSection(title = stringResource(Res.string.label_dimensions)) {
@@ -615,7 +632,7 @@ fun RadioButtonRow(selected: Boolean, text: String, onClick: () -> Unit) {
  * @param res Resultado del cálculo.
  */
 @Composable
-fun StructureResultContent(res: StructureResult, appSettings: AppSettingsState) {
+fun StructureResultContent(res: StructureResult) {
     val unitM3 = stringResource(Res.string.unit_cubic_meters)
     val unitKg = stringResource(Res.string.unit_kilograms)
     val unitLt = stringResource(Res.string.unit_liters)
@@ -751,116 +768,11 @@ fun StructureResultContent(res: StructureResult, appSettings: AppSettingsState) 
         )
     }
 
-    // Tarjeta anidada para el consejo (Tip)
-    /*
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-        Row(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-            Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = stringResource(Res.string.structure_result_tip_intro) + "\n" +
-                        stringResource(
-                            Res.string.structure_result_tip_main,
-                            res.mainIronAmount,
-                            if (res.mainIronAmount != 1) "s" else "",
-                            res.mainDiameterMm
-                        ) + "\n" +
-                        stringResource(
-                            Res.string.structure_result_tip_stirrup,
-                            res.stirrupIronAmount,
-                            if (res.stirrupIronAmount != 1) "s" else "",
-                            res.stirrupDiameterMm
-                        ),
-                style = MaterialTheme.typography.labelSmall
-            )
-        }
-    }
-    */
-
-    // --- CÁLCULO DE PRECIOS ---
-    val prices = appSettings.priceSettings
-    var materialCost = 0.0
-
-    // Cemento
-    prices.materialPrices.find { it.name.contains("Cemento", ignoreCase = true) }?.let {
-        if (it.unit.contains("bolsa", ignoreCase = true)) {
-            materialCost += it.price * res.cementBagKg
-        } else if (it.unit.contains("kg", ignoreCase = true)) {
-            materialCost += it.price * res.cementKg
-        }
-    }
-
-    // Arena
-    prices.materialPrices.find { it.name.contains("Arena", ignoreCase = true) }?.let {
-        if (it.unit.contains("m3", ignoreCase = true)) {
-            materialCost += it.price * res.sandM3
-        }
-    }
-
-    // Piedra
-    prices.materialPrices.find {
-        it.name.contains("Piedra", ignoreCase = true) || it.name.contains(
-            "Canto",
-            ignoreCase = true
-        )
-    }?.let {
-        if (it.unit.contains("m3", ignoreCase = true)) {
-            materialCost += it.price * res.gravelM3
-        }
-    }
-
-    // Hierro Principal
-    prices.materialPrices.find {
-        it.name.contains(
-            "Hierro",
-            ignoreCase = true
-        ) && it.name.contains(res.mainDiameterMm.toString())
-    }?.let {
-        if (it.unit.contains("barra", ignoreCase = true) || it.unit.contains("varilla", ignoreCase = true)) {
-            // Asumimos barra de 12m
-            materialCost += it.price * (res.mainIronMeters / 12.0)
-        } else if (it.unit.contains("kg", ignoreCase = true)) {
-            materialCost += it.price * res.mainIronKg
-        }
-    }
-
-    // Hierro Estribos
-    prices.materialPrices.find {
-        it.name.contains(
-            "Hierro",
-            ignoreCase = true
-        ) && it.name.contains(res.stirrupDiameterMm.toString())
-    }?.let {
-        if (it.unit.contains("barra", ignoreCase = true) || it.unit.contains("varilla", ignoreCase = true)) {
-            materialCost += it.price * (res.stirrupIronMeters / 12.0)
-        } else if (it.unit.contains("kg", ignoreCase = true)) {
-            materialCost += it.price * res.stirrupIronKg
-        }
-    }
-
-    // Mano de Obra (Viga/Columna)
-    var laborCost = 0.0
-    prices.laborPrices.find {
-        it.name.contains("Viga", ignoreCase = true) || it.name.contains(
-            "Columna",
-            ignoreCase = true
-        )
-    }?.let {
-        if (it.unit.contains("ml", ignoreCase = true) || it.unit.contains("m", ignoreCase = true)) {
-            // Asumimos que el largo es lo que se cobra
-            // No tenemos el largo directo en StructureResult, pero podemos estimarlo del volumen o pasarlo
-            // Para simplificar, usamos volumen si es m3, o nada si es ml porque falta el dato
-            if (it.unit.contains("m3", ignoreCase = true)) {
-                laborCost += it.price * res.volumeConcreteM3
-            }
-        }
-    }
-
-    PriceResultSection(materialCost, laborCost)
+    PriceResultSection(res.materialCost, res.laborCost)
 }
 
 @Composable
-fun SlabResultContent(res: SlabResult, appSettings: AppSettingsState) {
+fun SlabResultContent(res: SlabResult) {
     val unitM3 = stringResource(Res.string.unit_cubic_meters)
     val unitKg = stringResource(Res.string.unit_kilograms)
     val unitLt = stringResource(Res.string.unit_liters)
@@ -1095,74 +1007,7 @@ fun SlabResultContent(res: SlabResult, appSettings: AppSettingsState) {
         }
     }
 
-    // --- CÁLCULO DE PRECIOS ---
-    val prices = appSettings.priceSettings
-    var materialCost = 0.0
-
-    // Cemento
-    prices.materialPrices.find { it.name.contains("Cemento", ignoreCase = true) }?.let {
-        if (it.unit.contains("bolsa", ignoreCase = true)) {
-            materialCost += it.price * res.cementBagKg
-        } else if (it.unit.contains("kg", ignoreCase = true)) {
-            materialCost += it.price * res.cementKg
-        }
-    }
-
-    // Arena
-    prices.materialPrices.find { it.name.contains("Arena", ignoreCase = true) }?.let {
-        if (it.unit.contains("m3", ignoreCase = true)) {
-            materialCost += it.price * res.sandM3
-        }
-    }
-
-    // Piedra
-    prices.materialPrices.find {
-        it.name.contains("Piedra", ignoreCase = true) || it.name.contains(
-            "Canto",
-            ignoreCase = true
-        )
-    }?.let {
-        if (it.unit.contains("m3", ignoreCase = true)) {
-            materialCost += it.price * res.gravelM3
-        }
-    }
-
-    // Malla
-    if (res.suggestedMesh != null) {
-        prices.materialPrices.find {
-            it.name.contains("Malla", ignoreCase = true) || it.name.contains(
-                "Sima",
-                ignoreCase = true
-            )
-        }?.let {
-            if (it.unit.contains("u", ignoreCase = true) || it.unit.contains("panel", ignoreCase = true)) {
-                materialCost += it.price * (res.meshPanelsNeeded ?: 0)
-            }
-        }
-    } else {
-        // Hierro
-        // Simplificación: Buscamos "Hierro" y usamos el precio por kg si existe, o por barra estimando
-        prices.materialPrices.find { it.name.contains("Hierro", ignoreCase = true) }?.let {
-            if (it.unit.contains("kg", ignoreCase = true)) {
-                materialCost += it.price * res.totalWeightKg
-            }
-        }
-    }
-
-    // Mano de Obra (Losa)
-    var laborCost = 0.0
-    prices.laborPrices.find { it.name.contains("Losa", ignoreCase = true) }?.let {
-        if (it.unit.contains("m2", ignoreCase = true)) {
-            // Estimamos área: volumen / espesor promedio (o usamos inputs si los tuviéramos aquí)
-            // Como no tenemos el área directa en SlabResult, usamos volumen / 0.1 (espesor aprox) o lo omitimos
-            // Mejor: Si es m3, usamos volumen
-            if (it.unit.contains("m3", ignoreCase = true)) {
-                laborCost += it.price * res.volumeConcreteM3
-            }
-        }
-    }
-
-    PriceResultSection(materialCost, laborCost)
+    PriceResultSection(res.materialCost, res.laborCost)
 }
 
 // Función interna para calcular separación en cm

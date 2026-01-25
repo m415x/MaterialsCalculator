@@ -101,7 +101,7 @@ fun AppResultBottomSheet(
             content()
 
             // Separador antes de los botones
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Línea divisoria sutil (opcional, pero ayuda visualmente)
             HorizontalDivider(color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.2f))
@@ -275,49 +275,35 @@ fun PriceResultSection(
     currencySymbol: String = "$"
 ) {
     if (materialCost > 0 || laborCost > 0) {
-        Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider(color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.2f))
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            stringResource(Res.string.settings_prices_result_title),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        
-        if (materialCost > 0) {
-            ResultRow(
-                label = stringResource(Res.string.settings_prices_result_materials),
-                value = "$currencySymbol ${materialCost.toInt()}", // Formato simple
-                labelStyle = MaterialTheme.typography.bodyMedium
-            )
-        }
-        
-        if (laborCost > 0) {
-            ResultRow(
-                label = stringResource(Res.string.settings_prices_result_labor),
-                value = "$currencySymbol ${laborCost.toInt()}",
-                labelStyle = MaterialTheme.typography.bodyMedium
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(4.dp))
-        
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        ResultSection(
+            title = stringResource(Res.string.settings_prices_result_title)
         ) {
-            Text(
-                text = stringResource(Res.string.settings_prices_result_total),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "$currencySymbol ${(materialCost + laborCost).toInt()}",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+
+            if (materialCost > 0) {
+                ResultRow(
+                    label = stringResource(Res.string.settings_prices_result_materials),
+                    value = "$currencySymbol ${materialCost.toInt()}", // Formato simple
+                    labelStyle = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            if (laborCost > 0) {
+                ResultRow(
+                    label = stringResource(Res.string.settings_prices_result_labor),
+                    value = "$currencySymbol ${laborCost.toInt()}",
+                    labelStyle = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            ResultRow(
+                label = stringResource(Res.string.settings_prices_result_total),
+                value = "$currencySymbol ${(materialCost + laborCost).toInt()}"
             )
         }
     }

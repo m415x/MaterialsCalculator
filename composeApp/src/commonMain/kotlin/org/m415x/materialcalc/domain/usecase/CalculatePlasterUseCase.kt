@@ -20,10 +20,9 @@ package org.m415x.materialcalc.domain.usecase
 
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
 import org.m415x.materialcalc.domain.common.calculateWetMaterials
-import org.m415x.materialcalc.domain.model.Aperture
-import org.m415x.materialcalc.domain.model.MortarDosing
-import org.m415x.materialcalc.domain.model.PlasterResult
+import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.domain.utils.calculateNetSurface
+import kotlin.math.ceil
 
 /**
  * Calcula los materiales para un muro.
@@ -46,6 +45,7 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
      * @param limeBagWeightKg Peso de la bolsa de cal en kg.
      * @param premixBagWeightKg Peso de la bolsa de fino premezcla en kg.
      * @param percentagePlasterWaste Porcentaje de desperdicio en revoque.
+     * @param priceSettings Configuración de precios para calcular costos.
      * @return Resultado del cálculo encapsulado en Result.
      */
     operator fun invoke(
@@ -60,6 +60,7 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
         limeBagWeightKg: Int,
         premixBagWeightKg: Int,
         percentagePlasterWaste: Double,
+        priceSettings: PriceSettings? = null
     ): Result<PlasterResult> {
 
         return try {
@@ -97,6 +98,7 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
 
             // Opción 2: Tradicional
             val finePlasterRecipe = repository.getFinePlasterRecipe()
+
             val mathFine = calculateWetMaterials(
                 volumeM3 = geometricThinVolume,
                 recipe = finePlasterRecipe,
@@ -104,6 +106,45 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
                 limeBagWeight = limeBagWeightKg,
                 cementBagWeight = cementBagWeightKg
             )
+
+            // CÁLCULO DE COSTOS
+            var materialCost = 0.0
+            var laborCost = 0.0
+
+            if (priceSettings != null) {
+                // Cemento (Bolsas) - Sumamos grueso + fino (si aplica)
+                priceSettings.materialPrices.find { it.id == MaterialIds.CEMENT }?.let {
+                    // Cemento del grueso
+                    materialCost += it.price * mathThick.cementBags
+                    // Cemento del fino (si la receta tradicional lleva cemento)
+                    materialCost += it.price * mathFine.cementBags
+                }
+
+                // Cal (Bolsas) - Sumamos grueso + fino
+                priceSettings.materialPrices.find { it.id == MaterialIds.LIME }?.let {
+                    materialCost += it.price * mathThick.limeBags
+                    materialCost += it.price * mathFine.limeBags
+                }
+
+                // Arena (1/2 m3) - Sumamos grueso + fino
+                priceSettings.materialPrices.find { it.id == MaterialIds.SAND }?.let {
+                    val totalSand = mathThick.sandM3 + mathFine.sandM3
+                    val sandRounded = ceil(totalSand * 2) / 2.0
+                    materialCost += it.price * sandRounded
+                }
+
+                // Fino Premezcla (Bolsas)
+                // Calculamos bolsas de premezcla
+                val premixBags = ceil(totalFinePemix / premixBagWeightKg).toInt()
+                priceSettings.materialPrices.find { it.id == MaterialIds.PREMIX }?.let {
+                    materialCost += it.price * premixBags
+                }
+
+                // Mano de Obra (Revoque M2)
+                priceSettings.laborPrices.find { it.id == LaborIds.PLASTER_M2 }?.let {
+                    laborCost += it.price * totalCalculationArea
+                }
+            }
 
             Result.success(
                 PlasterResult(
@@ -122,7 +163,9 @@ class CalculatePlasterUseCase(private val repository: StaticMaterialRepository) 
                     fineLimeKg = mathFine.limeKg,
                     fineSandM3 = mathFine.sandM3,
                     finePercentageWaste = finePercentageWaste,
-                    fineDosage = finePlasterRecipe.mixingRatio
+                    fineDosage = finePlasterRecipe.mixingRatio,
+                    materialCost = materialCost,
+                    laborCost = laborCost
                 )
             )
         } catch (e: Exception) {

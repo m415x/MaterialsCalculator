@@ -24,6 +24,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import materialscalculator.composeapp.generated.resources.*
@@ -38,7 +39,6 @@ import org.m415x.materialcalc.ui.common.utils.toSafeDoubleOrNull
 import org.m415x.materialcalc.ui.screen.settings.EditPriceSetting
 import org.m415x.materialcalc.ui.screen.settings.SettingsAccordion
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 // Clase auxiliar para definir los materiales básicos con sus propiedades
 data class BasicMaterial(
@@ -55,10 +55,6 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
     val laborPrices by repository.laborPrices.collectAsState(initial = emptyList())
 
     var selectedTab by remember { mutableStateOf(0) } // 0: Materiales, 1: Mano de Obra
-
-    // Estado para el diálogo de "Nuevo Item Personalizado" (Solo para la categoría "Otros")
-    var showNewItemDialog by remember { mutableStateOf(false) }
-    var newItemIsLabor by remember { mutableStateOf(false) }
 
     // --- PRE-RESOLUCIÓN DE STRINGS ---
     val unitUnit = MaterialUnits.UNIT.asString()
@@ -157,18 +153,7 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                     onClick = { selectedTab = 1 },
                     text = { Text(stringResource(Res.string.settings_prices_tab_labor)) })
             }
-        },
-        /*floatingActionButton = {
-            // FAB solo para agregar items personalizados ("Otros")
-            ExtendedFloatingActionButton(
-                onClick = {
-                    newItemIsLabor = (selectedTab == 1)
-                    showNewItemDialog = true
-                },
-                icon = { Icon(Icons.Default.Add, null) },
-                text = { Text(stringResource(Res.string.button_new)) }
-            )
-        }*/
+        }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(16.dp)) {
             if (selectedTab == 0) {
@@ -179,7 +164,11 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                             title = stringResource(Res.string.settings_prices_cat_basic),
                             defaultExpanded = true
                         ) {
-                            basicMaterials.forEach { basicMat ->
+                            // Creamos una lista de FocusRequesters
+                            val focusRequesters =
+                                remember(basicMaterials.size) { List(basicMaterials.size) { FocusRequester() } }
+
+                            basicMaterials.forEachIndexed { index, basicMat ->
                                 val name = basicMat.name.asString()
                                 val unit = basicMat.unit.asString()
                                 val currentPrice = materialPrices.find { it.id == basicMat.id }?.price ?: 0.0
@@ -194,7 +183,9 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                                                 MaterialPrice(basicMat.id, name, unit, newPrice)
                                             )
                                         }
-                                    }
+                                    },
+                                    focusRequester = focusRequesters[index],
+                                    nextFocusRequester = if (index < focusRequesters.lastIndex) focusRequesters[index + 1] else null
                                 )
                             }
                         }
@@ -203,7 +194,9 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                     // 2. LADRILLOS
                     item {
                         SettingsAccordion(title = stringResource(Res.string.settings_prices_cat_bricks)) {
-                            allBricks.forEach { (id, nameSource) ->
+                            val focusRequesters = remember(allBricks.size) { List(allBricks.size) { FocusRequester() } }
+
+                            allBricks.forEachIndexed { index, (id, nameSource) ->
                                 val name = nameSource.asString()
                                 val currentPrice = materialPrices.find { it.id == id }?.price ?: 0.0
 
@@ -217,7 +210,9 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                                                 MaterialPrice(id, name, unitUnit, newPrice)
                                             )
                                         }
-                                    }
+                                    },
+                                    focusRequester = focusRequesters[index],
+                                    nextFocusRequester = if (index < focusRequesters.lastIndex) focusRequesters[index + 1] else null
                                 )
                             }
                         }
@@ -226,7 +221,9 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                     // 3. HIERROS
                     item {
                         SettingsAccordion(title = stringResource(Res.string.settings_prices_cat_irons)) {
-                            allIrons.forEach { (id, nameSource) ->
+                            val focusRequesters = remember(allIrons.size) { List(allIrons.size) { FocusRequester() } }
+
+                            allIrons.forEachIndexed { index, (id, nameSource) ->
                                 val name = nameSource.asString()
                                 val currentPrice = materialPrices.find { it.id == id }?.price ?: 0.0
 
@@ -240,37 +237,13 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                                                 MaterialPrice(id, name, unitBar, newPrice)
                                             )
                                         }
-                                    }
+                                    },
+                                    focusRequester = focusRequesters[index],
+                                    nextFocusRequester = if (index < focusRequesters.lastIndex) focusRequesters[index + 1] else null
                                 )
                             }
                         }
                     }
-
-                    // 4. OTROS (Personalizados)
-                    /*val predefinedIds = basicMaterials.map { it.id }.toSet() +
-                            allBricks.map { it.first }.toSet() +
-                            allIrons.map { it.first }.toSet()
-                    val otherPrices = materialPrices.filter { it.id !in predefinedIds }
-
-                    if (otherPrices.isNotEmpty()) {
-                        item {
-                            SettingsAccordion(title = stringResource(Res.string.settings_prices_cat_others)) {
-                                otherPrices.forEach { item ->
-                                    EditPriceSetting(
-                                        label = item.name,
-                                        value = item.price,
-                                        unit = item.unit,
-                                        onSave = { newPrice ->
-                                            scope.launch {
-                                                repository.saveMaterialPrice(item.copy(price = newPrice))
-                                            }
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }*/
-
                     item { Spacer(modifier = Modifier.height(80.dp)) }
                 }
             } else {
@@ -281,7 +254,10 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                             title = stringResource(Res.string.settings_prices_cat_labor_std),
                             defaultExpanded = true
                         ) {
-                            laborConcepts.forEach { basicLabor ->
+                            val focusRequesters =
+                                remember(laborConcepts.size) { List(laborConcepts.size) { FocusRequester() } }
+
+                            laborConcepts.forEachIndexed { index, basicLabor ->
                                 val name = basicLabor.name.asString()
                                 val unit = basicLabor.unit.asString()
                                 val currentPrice = laborPrices.find { it.id == basicLabor.id }?.price ?: 0.0
@@ -296,7 +272,9 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                                                 LaborPrice(basicLabor.id, name, unit, newPrice)
                                             )
                                         }
-                                    }
+                                    },
+                                    focusRequester = focusRequesters[index],
+                                    nextFocusRequester = if (index < focusRequesters.lastIndex) focusRequesters[index + 1] else null
                                 )
                             }
                         }
@@ -308,7 +286,10 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                     if (otherLabor.isNotEmpty()) {
                         item {
                             SettingsAccordion(title = stringResource(Res.string.settings_prices_cat_others)) {
-                                otherLabor.forEach { item ->
+                                val focusRequesters =
+                                    remember(otherLabor.size) { List(otherLabor.size) { FocusRequester() } }
+
+                                otherLabor.forEachIndexed { index, item ->
                                     EditPriceSetting(
                                         label = item.name,
                                         value = item.price,
@@ -317,7 +298,9 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                                             scope.launch {
                                                 repository.saveLaborPrice(item.copy(price = newPrice))
                                             }
-                                        }
+                                        },
+                                        focusRequester = focusRequesters[index],
+                                        nextFocusRequester = if (index < focusRequesters.lastIndex) focusRequesters[index + 1] else null
                                     )
                                 }
                             }
@@ -328,25 +311,6 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                 }
             }
         }
-    }
-
-    // Diálogo para crear NUEVOS items (Categoría Otros)
-    if (showNewItemDialog) {
-        NewPriceItemDialog(
-            isLabor = newItemIsLabor,
-            onDismiss = { showNewItemDialog = false },
-            onSave = { name, unit, price ->
-                scope.launch {
-                    val id = Uuid.random().toString()
-                    if (newItemIsLabor) {
-                        repository.saveLaborPrice(LaborPrice(id, name, unit, price))
-                    } else {
-                        repository.saveMaterialPrice(MaterialPrice(id, name, unit, price))
-                    }
-                    showNewItemDialog = false
-                }
-            }
-        )
     }
 }
 

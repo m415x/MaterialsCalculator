@@ -37,6 +37,8 @@ import kotlin.math.ceil
  * @param nameConcrete Nombre del concreto.
  * @param proportionConcrete Proporción del concreto.
  * @param appName Nombre de la aplicación.
+ * @param materialCost Costo estimado de materiales.
+ * @param laborCost Costo estimado de mano de obra.
  * @return Texto para compartir.
  */
 @Composable
@@ -48,7 +50,9 @@ fun rememberConcreteShareText(
     quantity: Int,
     nameConcrete: String,
     proportionConcrete: String,
-    appName: String
+    appName: String,
+    materialCost: Double = 0.0,
+    laborCost: Double = 0.0
 ): String {
     val titleStr = stringResource(Res.string.share_concrete_title)
     val sectionDetailsStr = stringResource(Res.string.share_section_details)
@@ -76,7 +80,23 @@ fun rememberConcreteShareText(
     val waterStr = stringResource(Res.string.share_common_water)
     val proportionStr = stringResource(Res.string.share_common_proportion)
 
-    return remember(result, width, length, thickness, quantity, nameConcrete, appName, titleStr) {
+    val costTitleStr = stringResource(Res.string.settings_prices_result_title)
+    val costMaterialsStr = stringResource(Res.string.settings_prices_result_materials)
+    val costLaborStr = stringResource(Res.string.settings_prices_result_labor)
+    val costTotalStr = stringResource(Res.string.settings_prices_result_total)
+
+    return remember(
+        result,
+        width,
+        length,
+        thickness,
+        quantity,
+        nameConcrete,
+        appName,
+        titleStr,
+        materialCost,
+        laborCost
+    ) {
         val bagQty = ceil(result.cementKg / result.cementBagKg.toDouble()).toInt()
         val bagStr = if (bagQty == 1) unitBag else unitBags
         val cementInBags = "$bagQty $bagStr"
@@ -107,6 +127,18 @@ fun rememberConcreteShareText(
                 appendLine(proportionConcrete)
                 appendLine()
             }
+
+            if (materialCost > 0 || laborCost > 0) {
+                appendLine(costTitleStr)
+                appendLine("-------------------------")
+                if (materialCost > 0) appendLine("● *$costMaterialsStr:* $${materialCost.toInt()}")
+                if (laborCost > 0) appendLine("● *$costLaborStr:* $${laborCost.toInt()}")
+                if (materialCost > 0 && laborCost > 0) {
+                    appendLine("► *$costTotalStr: $${(materialCost + laborCost).toInt()}*")
+                }
+                appendLine()
+            }
+
             appendLine("_________________________")
             append("_${generatedByStr}_")
         }
@@ -124,6 +156,8 @@ fun rememberConcreteShareText(
  * @param openings Lista de aberturas en la pared.
  * @param mixDetail Detalles de la mezcla.
  * @param appName Nombre de la aplicación.
+ * @param materialCost Costo estimado de materiales.
+ * @param laborCost Costo estimado de mano de obra.
  * @return Texto para compartir.
  */
 @Composable
@@ -135,7 +169,9 @@ fun rememberWallShareText(
     brickDetail: String,
     openings: List<Aperture>,
     mixDetail: String,
-    appName: String
+    appName: String,
+    materialCost: Double = 0.0,
+    laborCost: Double = 0.0
 ): String {
     val titleStr = stringResource(Res.string.share_wall_title)
     val sectionDetailsStr = stringResource(Res.string.share_section_details)
@@ -172,7 +208,23 @@ fun rememberWallShareText(
     val aroundStr = stringResource(Res.string.share_common_around)
     val proportionStr = stringResource(Res.string.share_common_proportion)
 
-    return remember(result, length, height, brickType, brickDetail, openings, mixDetail, appName) {
+    val costTitleStr = stringResource(Res.string.settings_prices_result_title)
+    val costMaterialsStr = stringResource(Res.string.settings_prices_result_materials)
+    val costLaborStr = stringResource(Res.string.settings_prices_result_labor)
+    val costTotalStr = stringResource(Res.string.settings_prices_result_total)
+
+    return remember(
+        result,
+        length,
+        height,
+        brickType,
+        brickDetail,
+        openings,
+        mixDetail,
+        appName,
+        materialCost,
+        laborCost
+    ) {
         val grossArea = length * height
         val grossOpenings = openings.sumOf { it.widthMeters * it.heightMeters * it.quantity }
 
@@ -224,6 +276,18 @@ fun rememberWallShareText(
                 appendLine(mixDetail)
                 appendLine()
             }
+
+            if (materialCost > 0 || laborCost > 0) {
+                appendLine(costTitleStr)
+                appendLine("-------------------------")
+                if (materialCost > 0) appendLine("● *$costMaterialsStr:* $${materialCost.toInt()}")
+                if (laborCost > 0) appendLine("● *$costLaborStr:* $${laborCost.toInt()}")
+                if (materialCost > 0 && laborCost > 0) {
+                    appendLine("► *$costTotalStr: $${(materialCost + laborCost).toInt()}*")
+                }
+                appendLine()
+            }
+
             appendLine("_________________________")
             append("_${generatedByStr}_")
         }
@@ -242,7 +306,9 @@ fun rememberStructureShareText(
     isCircular: Boolean,
     concreteType: ConcreteType,
     stirrupSpacingCm: Double,
-    appName: String
+    appName: String,
+    materialCost: Double = 0.0,
+    laborCost: Double = 0.0
 ): String {
     val titleStr = stringResource(Res.string.share_structure_title)
     val sectionDetailsStr = stringResource(Res.string.share_section_details)
@@ -278,7 +344,23 @@ fun rememberStructureShareText(
     val unitBag = stringResource(Res.string.unit_bag)
     val unitBags = stringResource(Res.string.unit_bags)
 
-    return remember(result, length, sideA, sideB, isCircular, concreteType, stirrupSpacingCm, appName) {
+    val costTitleStr = stringResource(Res.string.settings_prices_result_title)
+    val costMaterialsStr = stringResource(Res.string.settings_prices_result_materials)
+    val costLaborStr = stringResource(Res.string.settings_prices_result_labor)
+    val costTotalStr = stringResource(Res.string.settings_prices_result_total)
+
+    return remember(
+        result,
+        length,
+        sideA,
+        sideB,
+        isCircular,
+        concreteType,
+        stirrupSpacingCm,
+        appName,
+        materialCost,
+        laborCost
+    ) {
         val geometryDetail =
             if (isCircular) "Columna Circular: Ø $sideA $unitM" else "Rectangular: $sideA x $sideB $unitM"
 
@@ -317,6 +399,18 @@ fun rememberStructureShareText(
             appendLine("● $totalWeightStr ${result.stirrupIronKg.roundToDecimals(1)} $unitKg")
             appendLine("    └ $buyStr ${result.stirrupIronAmount} $bars12mStr")
             appendLine()
+
+            if (materialCost > 0 || laborCost > 0) {
+                appendLine(costTitleStr)
+                appendLine("-------------------------")
+                if (materialCost > 0) appendLine("● *$costMaterialsStr:* $${materialCost.toInt()}")
+                if (laborCost > 0) appendLine("● *$costLaborStr:* $${laborCost.toInt()}")
+                if (materialCost > 0 && laborCost > 0) {
+                    appendLine("► *$costTotalStr: $${(materialCost + laborCost).toInt()}*")
+                }
+                appendLine()
+            }
+
             appendLine("_________________________")
             append("_${generatedByStr}_")
         }
@@ -333,7 +427,9 @@ fun rememberSlabShareText(
     length: Double,
     thickness: Double,
     concreteType: ConcreteType,
-    appName: String
+    appName: String,
+    materialCost: Double = 0.0,
+    laborCost: Double = 0.0
 ): String {
     val titleStr = stringResource(Res.string.share_slab_title)
     val sectionDetailsStr = stringResource(Res.string.share_section_details)
@@ -371,7 +467,12 @@ fun rememberSlabShareText(
     val unitBag = stringResource(Res.string.unit_bag)
     val unitBags = stringResource(Res.string.unit_bags)
 
-    return remember(result, width, length, thickness, concreteType, appName) {
+    val costTitleStr = stringResource(Res.string.settings_prices_result_title)
+    val costMaterialsStr = stringResource(Res.string.settings_prices_result_materials)
+    val costLaborStr = stringResource(Res.string.settings_prices_result_labor)
+    val costTotalStr = stringResource(Res.string.settings_prices_result_total)
+
+    return remember(result, width, length, thickness, concreteType, appName, materialCost, laborCost) {
         val bagQty = ceil(result.cementKg / result.cementBagKg.toDouble()).toInt()
         val bagStr = if (bagQty == 1) unitBag else unitBags
 
@@ -417,6 +518,18 @@ fun rememberSlabShareText(
             }
 
             appendLine()
+
+            if (materialCost > 0 || laborCost > 0) {
+                appendLine(costTitleStr)
+                appendLine("-------------------------")
+                if (materialCost > 0) appendLine("● *$costMaterialsStr:* $${materialCost.toInt()}")
+                if (laborCost > 0) appendLine("● *$costLaborStr:* $${laborCost.toInt()}")
+                if (materialCost > 0 && laborCost > 0) {
+                    appendLine("► *$costTotalStr: $${(materialCost + laborCost).toInt()}*")
+                }
+                appendLine()
+            }
+
             appendLine("_________________________")
             append("_${generatedByStr}_")
         }
@@ -433,7 +546,9 @@ fun rememberPlasterShareText(
     height: Double,
     thicknessMeters: Double,
     bothSides: Boolean,
-    appName: String
+    appName: String,
+    materialCost: Double = 0.0,
+    laborCost: Double = 0.0
 ): String {
     val titleStr = stringResource(Res.string.share_plaster_title)
     val sectionDetailsStr = stringResource(Res.string.share_section_details)
@@ -469,7 +584,23 @@ fun rememberPlasterShareText(
     val thickDosageStr = result.thickDosage.asString()
     val fineDosageStr = result.fineDosage.asString()
 
-    return remember(result, length, height, thicknessMeters, bothSides, appName, thickDosageStr, fineDosageStr) {
+    val costTitleStr = stringResource(Res.string.settings_prices_result_title)
+    val costMaterialsStr = stringResource(Res.string.settings_prices_result_materials)
+    val costLaborStr = stringResource(Res.string.settings_prices_result_labor)
+    val costTotalStr = stringResource(Res.string.settings_prices_result_total)
+
+    return remember(
+        result,
+        length,
+        height,
+        thicknessMeters,
+        bothSides,
+        appName,
+        thickDosageStr,
+        fineDosageStr,
+        materialCost,
+        laborCost
+    ) {
         val detailFaces = if (bothSides) bothSideStr else singleSideStr
 
         val cementBags = ceil(result.thickCementKg / result.cementBagKg.toDouble()).toInt()
@@ -527,6 +658,18 @@ fun rememberPlasterShareText(
                 appendLine(fineDosageStr)
                 appendLine()
             }
+
+            if (materialCost > 0 || laborCost > 0) {
+                appendLine(costTitleStr)
+                appendLine("-------------------------")
+                if (materialCost > 0) appendLine("● *$costMaterialsStr:* $${materialCost.toInt()}")
+                if (laborCost > 0) appendLine("● *$costLaborStr:* $${laborCost.toInt()}")
+                if (materialCost > 0 && laborCost > 0) {
+                    appendLine("► *$costTotalStr: $${(materialCost + laborCost).toInt()}*")
+                }
+                appendLine()
+            }
+
             appendLine("_________________________")
             append("_${generatedByStr}_")
         }

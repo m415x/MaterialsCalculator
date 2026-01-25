@@ -22,8 +22,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
@@ -71,6 +73,7 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
     val barrowVol = appSettings.barrowVolL
     val mixerVol = appSettings.mixerVolL
     val fineThick = appSettings.fineThicknessMm
+    val requestFocus = appSettings.requestFocusOnStart
     val wConcrete = appSettings.wasteConcretePct
     val wMortar = appSettings.wasteMortarPct
     val wBrick = appSettings.wasteBrickPct
@@ -300,6 +303,28 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                 focusRequester = focusFine,
                 nextFocusRequester = focusConcrete
             )
+            
+            // Switch para RequestFocusOnStart
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(Res.string.settings_params_request_focus_label),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = stringResource(Res.string.settings_params_request_focus_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = requestFocus,
+                    onCheckedChange = { scope.launch { repository.saveRequestFocusOnStart(it) } }
+                )
+            }
         }
 
         // --- SECCIÓN 5: DESPERDICIOS ---

@@ -84,6 +84,8 @@
     <string name="settings_params_mixer_label">Hormigonera</string>
     <string name="settings_params_technical_title">Configuración Técnica</string>
     <string name="settings_params_fine_thickness_label">Espesor Revoque Fino</string>
+    <string name="settings_params_request_focus_label">Foco Automático</string>
+    <string name="settings_params_request_focus_desc">Activa el teclado al abrir una pantalla</string>
     <string name="settings_params_waste_title">Desperdicios / Márgenes (%)</string>
     <string name="settings_params_waste_desc">Porcentaje extra que se sumará al cálculo para cubrir roturas y pérdidas.</string>
     <string name="settings_params_waste_concrete">Hormigón</string>
@@ -149,10 +151,10 @@
     <string name="settings_prices_labor_desc">Descripción Trabajo</string>
     <string name="settings_prices_delete_title">Eliminar Precio</string>
     <string name="settings_prices_delete_msg">¿Estás seguro de eliminar este precio?</string>
-    <string name="settings_prices_result_title">Estimación de Costos</string>
+    <string name="settings_prices_result_title">COSTOS ESTIMADOS</string>
     <string name="settings_prices_result_materials">Materiales</string>
     <string name="settings_prices_result_labor">Mano de Obra</string>
-    <string name="settings_prices_result_total">TOTAL ESTIMADO</string>
+    <string name="settings_prices_result_total">Total Estimado</string>
 
     <!-- SETTINGS: Prices (Basic Materials) -->
     <string name="settings_prices_basic_cement">Cemento</string>

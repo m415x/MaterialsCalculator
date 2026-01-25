@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -36,6 +38,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusEvent
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
@@ -44,6 +49,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.m415x.materialcalc.domain.model.TextSource
 import org.m415x.materialcalc.domain.model.asString
 import org.m415x.materialcalc.ui.theme.customColors
@@ -88,6 +94,14 @@ fun AppInput(
 
     // 1. Estado que espera a que el label termine de subir (200ms)
     var labelIsSafe by remember { mutableStateOf(false) }
+
+    // Scroll automático
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val coroutineScope = rememberCoroutineScope()
+    val density = LocalDensity.current
+
+    // Altura extra para compensar el FAB (aprox 80dp)
+    val extraScrollOffset = with(density) { 150.dp.toPx() }
 
     if (value != textFieldValue.text) {
         textFieldValue = textFieldValue.copy(
@@ -217,9 +231,23 @@ fun AppInput(
         colors = inputColors,
         visualTransformation = visualTransformation,
         interactionSource = interactionSource,
-        modifier = modifier.then(
-            if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier
-        ),
+        modifier = modifier
+            .bringIntoViewRequester(bringIntoViewRequester)
+            .onFocusEvent { focusState ->
+                if (focusState.isFocused) {
+                    coroutineScope.launch {
+                        delay(300) // Esperar a que el teclado aparezca
+                        // Solicitamos traer a la vista un rectángulo extendido hacia abajo
+                        // para asegurar que el FAB no tape el input
+                        bringIntoViewRequester.bringIntoView(
+                            rect = Rect(0f, 0f, 0f, extraScrollOffset)
+                        )
+                    }
+                }
+            }
+            .then(
+                if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier
+            ),
         keyboardOptions = KeyboardOptions(
             keyboardType = keyboardType,
             imeAction = imeAction

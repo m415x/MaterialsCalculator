@@ -33,12 +33,16 @@ import kotlinx.coroutines.launch
  *
  * @param focusRequester El solicitante de foco asociado al campo.
  * @param delayMs Tiempo de espera en milisegundos (Default: 500ms para Material Navigation).
+ * @param enabled Si es true, se ejecuta la solicitud de foco. Si es false, no hace nada.
  */
 @Composable
 fun RequestFocusOnStart(
     focusRequester: FocusRequester,
-    delayMs: Long = 500
+    delayMs: Long = 500,
+    enabled: Boolean = false
 ) {
+    if (!enabled) return
+
     val scope = rememberCoroutineScope()
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         scope.launch {

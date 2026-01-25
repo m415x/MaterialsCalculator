@@ -21,6 +21,10 @@ package org.m415x.materialcalc.domain.usecase
 import org.m415x.materialcalc.domain.common.calculateWetMaterials
 import org.m415x.materialcalc.domain.model.ConcreteDosing
 import org.m415x.materialcalc.domain.model.ConcreteResult
+import org.m415x.materialcalc.domain.model.LaborIds
+import org.m415x.materialcalc.domain.model.MaterialIds
+import org.m415x.materialcalc.domain.model.PriceSettings
+import kotlin.math.ceil
 
 /**
  * Calcula los materiales para un volumen de hormigón.
@@ -38,6 +42,7 @@ class CalculateConcreteUseCase {
      * @param cementBagWeightKg Peso de la bolsa de cemento en kg.
      * @param limeBagWeightKg Peso de la bolsa de cal en kg.
      * @param percentageConcreteWaste Porcentaje de desperdicio de hormigón.
+     * @param priceSettings Configuración de precios para calcular costos.
      * @return Resultado del cálculo encapsulado en Result.
      */
     operator fun invoke(
@@ -48,7 +53,8 @@ class CalculateConcreteUseCase {
         concreteDosing: ConcreteDosing,
         cementBagWeightKg: Int,
         limeBagWeightKg: Int,
-        percentageConcreteWaste: Double
+        percentageConcreteWaste: Double,
+        priceSettings: PriceSettings? = null
     ): Result<ConcreteResult> {
 
         return try {
@@ -64,7 +70,39 @@ class CalculateConcreteUseCase {
                 limeBagWeight = limeBagWeightKg
             )
 
-            // 3. Mapeo al resultado final
+            // 3. Cálculo de costos (si hay configuración de precios)
+            var materialCost = 0.0
+            var laborCost = 0.0
+
+            if (priceSettings != null) {
+                // Cemento (Se compra por bolsa)
+                priceSettings.materialPrices.find { it.id == MaterialIds.CEMENT }?.let {
+                    // Asumimos que el precio es por bolsa si la unidad no es explícitamente kg
+                    // O si queremos ser estrictos, verificamos si es bolsa.
+                    // Pero dado que mathConcrete.cementBags ya es un entero redondeado hacia arriba,
+                    // multiplicamos precio * cantidad de bolsas.
+                    materialCost += it.price * mathConcrete.cementBags
+                }
+
+                // Arena (Se compra por 1/2 m3, redondeamos hacia arriba a 0.5)
+                priceSettings.materialPrices.find { it.id == MaterialIds.SAND }?.let {
+                    val sandRounded = ceil(mathConcrete.sandM3 * 2) / 2.0
+                    materialCost += it.price * sandRounded
+                }
+
+                // Piedra (Se compra por 1/2 m3, redondeamos hacia arriba a 0.5)
+                priceSettings.materialPrices.find { it.id == MaterialIds.STONE }?.let {
+                    val gravelRounded = ceil(mathConcrete.gravelM3 * 2) / 2.0
+                    materialCost += it.price * gravelRounded
+                }
+
+                // Mano de Obra (Hormigón)
+                priceSettings.laborPrices.find { it.id == LaborIds.CONCRETE_M3 }?.let {
+                    laborCost += it.price * geometricVolume
+                }
+            }
+
+            // 4. Mapeo al resultado final
             Result.success(
                 ConcreteResult(
                     totalVolumeM3 = geometricVolume,
@@ -74,7 +112,9 @@ class CalculateConcreteUseCase {
                     waterLiters = mathConcrete.waterLiters,
                     cementBagKg = cementBagWeightKg,
                     percentageConcreteWaste = percentageConcreteWaste,
-                    mixingRatio = concreteDosing.descriptionProportion
+                    mixingRatio = concreteDosing.descriptionProportion,
+                    materialCost = materialCost,
+                    laborCost = laborCost
                 )
             )
         } catch (e: Exception) {

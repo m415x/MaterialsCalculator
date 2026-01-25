@@ -132,12 +132,14 @@ class StaticMaterialRepository : MaterialRepository {
         // // --- Ladrillos Macizos ---
         // Junta más gruesa (1.5 cm a 2.0 cm)
         BrickType.COMUN to BrickProps(
+            id = BrickType.COMUN.name,
             width = 0.12,
             height = 0.05,
             length = 0.25,
             gasketThickness = 0.015
         ),
         BrickType.LADRILLON to BrickProps(
+            id = BrickType.LADRILLON.name,
             width = 0.18,
             height = 0.05,
             length = 0.25,
@@ -147,18 +149,21 @@ class StaticMaterialRepository : MaterialRepository {
         // --- Cerámicos HUECOS (No Portantes) ---
         // Altura 18 cm. Junta suele ser 1.5 cm aprox.
         BrickType.HUECO_8 to BrickProps(
+            id = BrickType.HUECO_8.name,
             width = 0.08,
             height = 0.18,
             length = 0.33,
             gasketThickness = 0.015
         ),
         BrickType.HUECO_12 to BrickProps(
+            id = BrickType.HUECO_12.name,
             width = 0.12,
             height = 0.18,
             length = 0.33,
             gasketThickness = 0.015
         ),
         BrickType.HUECO_18 to BrickProps(
+            id = BrickType.HUECO_18.name,
             width = 0.18,
             height = 0.18,
             length = 0.33,
@@ -168,12 +173,14 @@ class StaticMaterialRepository : MaterialRepository {
         // --- Cerámicos PORTANTES ---
         // Altura 19 cm. Se usan con menos mezcla (1 cm) para modulación perfecta de 20cm.
         BrickType.PORTANTE_12 to BrickProps(
+            id = BrickType.PORTANTE_12.name,
             width = 0.12,
             height = 0.19,
             length = 0.33,
             gasketThickness = 0.012
         ),
         BrickType.PORTANTE_18 to BrickProps(
+            id = BrickType.PORTANTE_18.name,
             width = 0.18,
             height = 0.19,
             length = 0.33,
@@ -184,24 +191,28 @@ class StaticMaterialRepository : MaterialRepository {
         // Medidas estándar Argentina: Largo 39, Alto 19.
         // Bloques de Hormigón: Junta fina (1.0 cm)
         BrickType.BLOQUE_10 to BrickProps(
+            id = BrickType.BLOQUE_10.name,
             width = 0.1,
             height = 0.19,
             length = 0.39,
             gasketThickness = 0.01
         ),
         BrickType.BLOQUE_13 to BrickProps(
+            id = BrickType.BLOQUE_13.name,
             width = 0.13,
             height = 0.19,
             length = 0.39,
             gasketThickness = 0.01
         ),
         BrickType.BLOQUE_15 to BrickProps(
+            id = BrickType.BLOQUE_15.name,
             width = 0.15,
             height = 0.19,
             length = 0.39,
             gasketThickness = 0.01
         ),
         BrickType.BLOQUE_20 to BrickProps(
+            id = BrickType.BLOQUE_20.name,
             width = 0.2,
             height = 0.19,
             length = 0.39,

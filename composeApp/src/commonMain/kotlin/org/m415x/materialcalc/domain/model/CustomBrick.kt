@@ -51,6 +51,7 @@ data class CustomBrick(
  * @return BrickProps
  */
 fun CustomBrick.toProperties() = BrickProps(
+    id = this.id,
     width = this.width,
     height = this.height,
     length = this.length,

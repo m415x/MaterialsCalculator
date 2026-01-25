@@ -53,6 +53,7 @@ data class AppSettingsState(
 
     // Configuración Técnica
     val fineThicknessMm: Double = 3.0,
+    val requestFocusOnStart: Boolean = false,
 
     // Valores por Defecto (IDs)
     val defaultBrickId: String = "LADRILLON",

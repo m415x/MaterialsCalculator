@@ -80,6 +80,7 @@ fun App(
         launch { settingsRepository.wastePlasterPct.collect { value = value.copy(wastePlasterPct = it) } }
 
         launch { settingsRepository.fineThicknessMm.collect { value = value.copy(fineThicknessMm = it) } }
+        launch { settingsRepository.requestFocusOnStart.collect { value = value.copy(requestFocusOnStart = it) } }
 
         launch { settingsRepository.defaultBrickId.collect { value = value.copy(defaultBrickId = it) } }
         launch { settingsRepository.defaultConcreteGenId.collect { value = value.copy(defaultConcreteGenId = it) } }
@@ -242,6 +243,7 @@ fun App(
                             CalculatorTabContent(
                                 currentScreen = calculatorStack.lastOrNull() ?: Screen.Home,
                                 appSettings = appSettings, // Pasamos el estado
+                                repository = settingsRepository,
                                 onNavigate = { newScreen -> calculatorStack.add(newScreen) }
                             )
                         }

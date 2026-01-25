@@ -49,6 +49,8 @@ enum class ConcreteType(val nameRes: StringResource, val resistanceKgCm2: Int, v
  * @property gravelM3 Cantidad de piedra en m³.
  * @property waterLiters Cantidad de agua en litros.
  * @property mixingRatio Razón de mezcla.
+ * @property materialCost Costo estimado de materiales.
+ * @property laborCost Costo estimado de mano de obra.
  */
 data class ConcreteResult(
     val totalVolumeM3: Double,
@@ -58,5 +60,8 @@ data class ConcreteResult(
     val sandM3: Double,
     val gravelM3: Double,
     val waterLiters: Double,
-    val mixingRatio: TextSource
+    val mixingRatio: TextSource,
+    // Costos
+    val materialCost: Double = 0.0,
+    val laborCost: Double = 0.0
 )

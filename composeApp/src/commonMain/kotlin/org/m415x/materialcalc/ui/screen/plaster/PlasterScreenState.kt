@@ -107,7 +107,7 @@ class PlasterScreenState(
     }
 
     // --- LÓGICA DE CÁLCULO ---
-    fun calculate() {
+    fun calculate(updatedPrices: PriceSettings) {
         // Primero validamos
         if (!validate()) {
             errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
@@ -132,7 +132,8 @@ class PlasterScreenState(
                 limeBagWeightKg = appSettings.bagLimeKg,
                 premixBagWeightKg = appSettings.bagPremixKg,
                 // CONVERTIMOS PORCENTAJE A DECIMAL (/100)
-                percentagePlasterWaste = appSettings.wastePlasterPct / 100.0
+                percentagePlasterWaste = appSettings.wastePlasterPct / 100.0,
+                priceSettings = updatedPrices
             )
 
             calcResult.fold(

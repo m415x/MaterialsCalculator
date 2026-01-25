@@ -57,12 +57,14 @@ enum class BrickType(
 /**
  * Propiedades físicas del ladrillo para el cálculo. Todas las medidas en METROS.
  *
+ * @property id Identificador único del ladrillo (para buscar precios).
  * @property width Ancho de la unidad en metros
  * @property height Alto de la unidad en metros
  * @property length Largo de la unidad en metros
  * @property gasketThickness Espesor de la junta en metros
  */
 data class BrickProps(
+    val id: String, // Agregado para identificar el ladrillo en precios
     val width: Double,
     val height: Double,
     val length: Double,
@@ -99,6 +101,8 @@ data class Aperture(
  * @property mixingRatio Proporción de la mezcla
  * @property cementBagKg Cantidad de bolsas de cemento
  * @property limeBagKg Cantidad de bolsas de cal
+ * @property materialCost Costo estimado de materiales.
+ * @property laborCost Costo estimado de mano de obra.
  */
 data class WallResult(
     val netAreaM2: Double,
@@ -117,7 +121,6 @@ data class WallResult(
     val cementBagKg: Int,
     val limeBagKg: Int,
     // Costos
-    val materialsCost: Double = 0.0,
-    val laborCost: Double = 0.0,
-    val totalCost: Double = 0.0
+    val materialCost: Double = 0.0,
+    val laborCost: Double = 0.0
 )

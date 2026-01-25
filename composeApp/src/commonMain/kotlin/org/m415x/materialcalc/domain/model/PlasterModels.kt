@@ -18,7 +18,8 @@
 
 package org.m415x.materialcalc.domain.model
 
-import materialscalculator.composeapp.generated.resources.*
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.plaster_type_std_jaharro
 import org.jetbrains.compose.resources.StringResource
 
 /**
@@ -71,5 +72,8 @@ data class PlasterResult(
     val fineLimeKg: Double,
     val fineSandM3: Double,
     val finePercentageWaste: Double,
-    val fineDosage: TextSource
+    val fineDosage: TextSource,
+    // Costos
+    val materialCost: Double = 0.0,
+    val laborCost: Double = 0.0
 )

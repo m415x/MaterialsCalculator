@@ -129,6 +129,9 @@ data class StructureResult(
     val stirrupIronAmount: Int,
     val percentageStirrupIronWaste: Double,
     val commercialBarLength: Int = 12,
+    // Costos
+    val materialCost: Double = 0.0,
+    val laborCost: Double = 0.0
 )
 
 /**
@@ -180,5 +183,8 @@ data class SlabResult(
     val gravelM3: Double,
     val waterLiters: Double,
     val cementBagKg: Int,
-    val percentageConcreteWaste: Double
+    val percentageConcreteWaste: Double,
+    // Costos
+    val materialCost: Double = 0.0,
+    val laborCost: Double = 0.0
 )

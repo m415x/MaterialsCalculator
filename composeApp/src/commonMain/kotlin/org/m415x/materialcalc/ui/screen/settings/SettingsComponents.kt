@@ -168,7 +168,7 @@ fun BaseEditSetting(
     inputContent: @Composable RowScope.() -> Unit
 ) {
     // La lógica de modificación se centraliza aquí
-    val isModified = currentText != defaultText && currentText.isEmpty()
+    val isModified = (currentText != defaultText && currentText.isNotEmpty()) || currentText.isEmpty()
 
     Row(
         verticalAlignment = Alignment.CenterVertically,

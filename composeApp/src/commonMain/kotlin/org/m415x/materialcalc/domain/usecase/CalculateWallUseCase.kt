@@ -19,13 +19,7 @@
 package org.m415x.materialcalc.domain.usecase
 
 import org.m415x.materialcalc.domain.common.calculateWetMaterials
-import org.m415x.materialcalc.domain.model.Aperture
-import org.m415x.materialcalc.domain.model.BrickProps
-import org.m415x.materialcalc.domain.model.LaborPrice
-import org.m415x.materialcalc.domain.model.MaterialPrice
-import org.m415x.materialcalc.domain.model.MortarDosing
-import org.m415x.materialcalc.domain.model.WallResult
-import org.m415x.materialcalc.domain.service.CostCalculator
+import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.domain.utils.calculateNetSurface
 import kotlin.math.ceil
 
@@ -46,8 +40,7 @@ class CalculateWallUseCase {
      * @param limeBagWeightKg Peso de la bolsa de cal en kg.
      * @param percentageBrickWaste Porcentaje de desperdicio en ladrillos.
      * @param percentageMortarWaste Porcentaje de desperdicio en mortero.
-     * @param materialPrices Lista de precios de materiales (opcional).
-     * @param laborPrices Lista de precios de mano de obra (opcional).
+     * @param priceSettings Configuración de precios para calcular costos.
      * @return Resultado del cálculo encapsulado en Result.
      */
     operator fun invoke(
@@ -60,8 +53,7 @@ class CalculateWallUseCase {
         limeBagWeightKg: Int,
         percentageBrickWaste: Double,
         percentageMortarWaste: Double,
-        materialPrices: List<MaterialPrice> = emptyList(),
-        laborPrices: List<LaborPrice> = emptyList()
+        priceSettings: PriceSettings? = null
     ): Result<WallResult> {
 
         return try {
@@ -94,31 +86,37 @@ class CalculateWallUseCase {
             )
 
             // 4. CÁLCULO DE COSTOS
-            val costCalc = CostCalculator(materialPrices, laborPrices)
-            
-            // Costo Materiales
-            var matCost = 0.0
-            
-            // Cemento (Bolsas o Kg)
-            val bagsCement = mathMortar.cementKg / cementBagWeightKg
-            matCost += costCalc.getBagMaterialCost("Cemento", bagsCement, mathMortar.cementKg)
-            
-            // Cal (Bolsas o Kg)
-            if (mathMortar.limeKg > 0) {
-                val bagsLime = mathMortar.limeKg / limeBagWeightKg
-                matCost += costCalc.getBagMaterialCost("Cal", bagsLime, mathMortar.limeKg)
-            }
-            
-            // Arena (m3)
-            matCost += costCalc.getMaterialCost("Arena", mathMortar.sandM3)
-            
-            // Ladrillos (Unidades)
-            // Buscamos "Ladrillo" genérico o específico si tuviéramos el nombre
-            matCost += costCalc.getMaterialCost("Ladrillo", actualQuantityBricks.toDouble())
+            var materialCost = 0.0
+            var laborCost = 0.0
 
-            // Costo Mano de Obra
-            // Buscamos "Muro" o "Pared"
-            val labCost = costCalc.getLaborCost("Muro", netSurface)
+            if (priceSettings != null) {
+                // Cemento (Bolsas)
+                priceSettings.materialPrices.find { it.id == MaterialIds.CEMENT }?.let {
+                    materialCost += it.price * mathMortar.cementBags
+                }
+
+                // Cal (Bolsas)
+                priceSettings.materialPrices.find { it.id == MaterialIds.LIME }?.let {
+                    materialCost += it.price * mathMortar.limeBags
+                }
+
+                // Arena (1/2 m3)
+                priceSettings.materialPrices.find { it.id == MaterialIds.SAND }?.let {
+                    val sandRounded = ceil(mathMortar.sandM3 * 2) / 2.0
+                    materialCost += it.price * sandRounded
+                }
+
+                // Ladrillos (Unidades)
+                // Buscamos por ID del ladrillo (ej: "LADRILLON", "HUECO_12", o custom ID)
+                priceSettings.materialPrices.find { it.id == brickProps.id }?.let {
+                    materialCost += it.price * actualQuantityBricks
+                }
+
+                // Mano de Obra (Muro M2)
+                priceSettings.laborPrices.find { it.id == LaborIds.WALL_M2 }?.let {
+                    laborCost += it.price * netSurface
+                }
+            }
 
             // 5. RESULTADO FINAL
             Result.success(
@@ -135,9 +133,8 @@ class CalculateWallUseCase {
                     mixingRatio = mortarDosing.mixingRatio,
                     cementBagKg = cementBagWeightKg,
                     limeBagKg = limeBagWeightKg,
-                    materialsCost = matCost,
-                    laborCost = labCost,
-                    totalCost = matCost + labCost
+                    materialCost = materialCost,
+                    laborCost = laborCost
                 )
             )
         } catch (e: Exception) {

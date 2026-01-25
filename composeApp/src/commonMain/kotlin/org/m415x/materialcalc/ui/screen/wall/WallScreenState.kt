@@ -54,7 +54,7 @@ class WallScreenState(
     // Nota: WallScreen tiene una lógica especial donde la mezcla cambia según el ladrillo.
     var selectedMix by mutableStateOf<MortarDosing?>(null)
 
-    var showMezclaDialog by mutableStateOf(false)
+    var showWasteDialog by mutableStateOf(false)
     var result by mutableStateOf<WallResult?>(null)
     var errorMsg by mutableStateOf<TextSource?>(null)
     var showResultSheet by mutableStateOf(false)
@@ -77,7 +77,7 @@ class WallScreenState(
 
     fun onMixSelected(dosing: MortarDosing) {
         selectedMix = dosing
-        showMezclaDialog = false
+        showWasteDialog = false
     }
 
     // --- GESTIÓN DE ABERTURAS ---
@@ -121,7 +121,7 @@ class WallScreenState(
     }
 
     // --- LÓGICA DE CÁLCULO ---
-    fun calculate() {
+    fun calculate(updatedPrices: PriceSettings) {
         // Primero validamos
         if (!validate()) {
             errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
@@ -145,9 +145,7 @@ class WallScreenState(
                 limeBagWeightKg = appSettings.bagLimeKg,
                 percentageBrickWaste = appSettings.wasteBrickPct / 100.0,
                 percentageMortarWaste = appSettings.wasteMortarPct / 100.0,
-                // Pasamos los precios al UseCase
-                materialPrices = prices.materialPrices,
-                laborPrices = prices.laborPrices
+                priceSettings = updatedPrices
             )
 
             calcResult.fold(

@@ -29,6 +29,8 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,10 +41,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
+import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
 import org.m415x.materialcalc.domain.common.toPresentationUnit
 import org.m415x.materialcalc.domain.model.AppSettingsState
 import org.m415x.materialcalc.domain.model.PlasterResult
+import org.m415x.materialcalc.domain.model.PriceSettings
 import org.m415x.materialcalc.domain.model.asString
 import org.m415x.materialcalc.domain.usecase.CalculatePlasterUseCase
 import org.m415x.materialcalc.ui.common.dialogs.AppDialog
@@ -62,11 +66,20 @@ import org.m415x.materialcalc.ui.common.utils.*
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlasterScreen(appSettings: AppSettingsState) {
+fun PlasterScreen(appSettings: AppSettingsState, repository: SettingsRepository) {
     val keyboardController = LocalSoftwareKeyboardController.current
 
     // Nombre de la app
     val appName = stringResource(Res.string.app_name)
+
+    // Observamos los precios en tiempo real
+    val materialPrices by repository.materialPrices.collectAsState(initial = emptyList())
+    val laborPrices by repository.laborPrices.collectAsState(initial = emptyList())
+
+    // Creamos un objeto PriceSettings actualizado
+    val currentPriceSettings = remember(materialPrices, laborPrices) {
+        PriceSettings(materialPrices, laborPrices)
+    }
 
     val staticRepo = remember { StaticMaterialRepository() }
     val calculatePlaster = remember { CalculatePlasterUseCase(staticRepo) }
@@ -119,7 +132,7 @@ fun PlasterScreen(appSettings: AppSettingsState) {
         remember { FocusRequester() } // Foco puente pertenecerá al input "Ancho" dentro de OpeningsSection
 
     // Auto-Foco al abrir
-    RequestFocusOnStart(focusLength)
+    RequestFocusOnStart(focusLength, enabled = appSettings.requestFocusOnStart)
 
     Scaffold(
         // El FAB vive aquí, donde tiene acceso a las variables 'largo' y 'alto'
@@ -127,7 +140,7 @@ fun PlasterScreen(appSettings: AppSettingsState) {
             ExtendedFloatingActionButton(
                 onClick = {
                     keyboardController?.hide()
-                    state.calculate()
+                    state.calculate(currentPriceSettings)
                 },
                 icon = { Icon(Icons.Default.Calculate, null) },
                 text = { Text(stringResource(Res.string.button_calculate)) }
@@ -319,7 +332,9 @@ fun PlasterScreen(appSettings: AppSettingsState) {
             height = state.height.toSafeDoubleOrNull() ?: 0.0,
             thicknessMeters = state.thickThickness.toSafeDoubleOrNull() ?: 0.0,
             bothSides = state.bothSides,
-            appName = appName
+            appName = appName,
+            materialCost = state.result!!.materialCost,
+            laborCost = state.result!!.laborCost
         )
 
         AppResultBottomSheet(
@@ -328,7 +343,7 @@ fun PlasterScreen(appSettings: AppSettingsState) {
             onEdit = { state.showResultSheet = false },
             onShare = { shareManager.shareText(shareText) }
         ) {
-            PlasterResultContent(state.result!!, appSettings)
+            PlasterResultContent(state.result!!)
         }
     }
 }
@@ -339,7 +354,7 @@ fun PlasterScreen(appSettings: AppSettingsState) {
  * @param res Resultado del cálculo.
  */
 @Composable
-fun PlasterResultContent(res: PlasterResult, appSettings: AppSettingsState) {
+fun PlasterResultContent(res: PlasterResult) {
     val unitM2 = stringResource(Res.string.unit_square_meters)
     val unitKg = stringResource(Res.string.unit_kilograms)
     val unitM3 = stringResource(Res.string.unit_cubic_meters)
@@ -455,51 +470,5 @@ fun PlasterResultContent(res: PlasterResult, appSettings: AppSettingsState) {
         )
     }
 
-    // --- CÁLCULO DE PRECIOS ---
-    val prices = appSettings.priceSettings
-    var materialCost = 0.0
-    
-    // Cemento
-    prices.materialPrices.find { it.name.contains("Cemento", ignoreCase = true) }?.let {
-        if (it.unit.contains("bolsa", ignoreCase = true)) {
-            materialCost += it.price * res.cementBagKg
-        } else if (it.unit.contains("kg", ignoreCase = true)) {
-            materialCost += it.price * res.thickCementKg
-        }
-    }
-    
-    // Cal
-    if (res.thickLimeKg > 0 || res.fineLimeKg > 0) {
-        prices.materialPrices.find { it.name.contains("Cal", ignoreCase = true) }?.let {
-             if (it.unit.contains("bolsa", ignoreCase = true)) {
-                materialCost += it.price * res.limeBagKg
-            } else if (it.unit.contains("kg", ignoreCase = true)) {
-                materialCost += it.price * (res.thickLimeKg + res.fineLimeKg)
-            }
-        }
-    }
-    
-    // Arena
-    prices.materialPrices.find { it.name.contains("Arena", ignoreCase = true) }?.let {
-        if (it.unit.contains("m3", ignoreCase = true)) {
-            materialCost += it.price * (res.thickSandKg + res.fineSandM3)
-        }
-    }
-    
-    // Premezcla (Opción A) - Sumamos si hay precio, asumiendo que se elige A
-    prices.materialPrices.find { it.name.contains("Premezcla", ignoreCase = true) || it.name.contains("Fino", ignoreCase = true) }?.let {
-        if (it.unit.contains("bolsa", ignoreCase = true)) {
-            materialCost += it.price * res.premixBagKg
-        }
-    }
-
-    // Mano de Obra (Revoque)
-    var laborCost = 0.0
-    prices.laborPrices.find { it.name.contains("Revoque", ignoreCase = true) || it.name.contains("Jaharro", ignoreCase = true) }?.let {
-        if (it.unit.contains("m2", ignoreCase = true)) {
-            laborCost += it.price * res.totalAreaM2
-        }
-    }
-
-    PriceResultSection(materialCost, laborCost)
+    PriceResultSection(res.materialCost, res.laborCost)
 }

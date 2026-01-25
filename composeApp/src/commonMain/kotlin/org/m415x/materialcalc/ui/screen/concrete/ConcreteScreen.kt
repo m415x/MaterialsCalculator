@@ -25,6 +25,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -33,9 +35,11 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
+import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.domain.common.toPresentationUnit
 import org.m415x.materialcalc.domain.model.AppSettingsState
 import org.m415x.materialcalc.domain.model.ConcreteResult
+import org.m415x.materialcalc.domain.model.PriceSettings
 import org.m415x.materialcalc.domain.model.asString
 import org.m415x.materialcalc.domain.usecase.CalculateConcreteUseCase
 import org.m415x.materialcalc.ui.common.display.*
@@ -54,9 +58,19 @@ import org.m415x.materialcalc.ui.common.utils.*
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ConcreteScreen(appSettings: AppSettingsState) {
+fun ConcreteScreen(appSettings: AppSettingsState, repository: SettingsRepository) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val appName = stringResource(Res.string.app_name)
+
+    // Observamos los precios en tiempo real
+    val materialPrices by repository.materialPrices.collectAsState(initial = emptyList())
+    val laborPrices by repository.laborPrices.collectAsState(initial = emptyList())
+
+    // Creamos un objeto PriceSettings actualizado
+    val currentPriceSettings = remember(materialPrices, laborPrices) {
+        PriceSettings(materialPrices, laborPrices)
+    }
+
     val calculateConcrete = remember { CalculateConcreteUseCase() }
 
     // Instanciamos el Presenter
@@ -97,14 +111,14 @@ fun ConcreteScreen(appSettings: AppSettingsState) {
     val focusHigh = remember { FocusRequester() }
     val focusConcrete = remember { FocusRequester() }
 
-    RequestFocusOnStart(focusWidth)
+    RequestFocusOnStart(focusWidth, enabled = appSettings.requestFocusOnStart)
 
     Scaffold(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = {
                     keyboardController?.hide()
-                    state.calculate()
+                    state.calculate(currentPriceSettings)
                 },
                 icon = { Icon(Icons.Default.Calculate, null) },
                 text = { Text(stringResource(Res.string.button_calculate)) }
@@ -190,7 +204,9 @@ fun ConcreteScreen(appSettings: AppSettingsState) {
             quantity = state.quantity.toIntOrNull() ?: 1,
             nameConcrete = state.selectedConcrete?.label?.asString() ?: "N/A",
             proportionConcrete = state.selectedConcrete?.recipe?.descriptionProportion?.asString() ?: "N/A",
-            appName = appName
+            appName = appName,
+            materialCost = state.result!!.materialCost,
+            laborCost = state.result!!.laborCost
         )
 
         AppResultBottomSheet(
@@ -199,13 +215,13 @@ fun ConcreteScreen(appSettings: AppSettingsState) {
             onEdit = { state.showResultSheet = false },
             onShare = { shareManager.shareText(shareText) }
         ) {
-            ConcreteResultContent(state.result!!, appSettings)
+            ConcreteResultContent(state.result!!)
         }
     }
 }
 
 @Composable
-fun ConcreteResultContent(res: ConcreteResult, appSettings: AppSettingsState) {
+fun ConcreteResultContent(res: ConcreteResult) {
     val unitM3 = stringResource(Res.string.unit_cubic_meters)
     val unitKg = stringResource(Res.string.unit_kilograms)
     val unitLt = stringResource(Res.string.unit_liters)
@@ -221,7 +237,6 @@ fun ConcreteResultContent(res: ConcreteResult, appSettings: AppSettingsState) {
             (res.percentageConcreteWaste * 100).toInt()
         )
     ) {
-
         ResultRow(
             label = stringResource(Res.string.concrete_result_cement),
             subLabel = stringResource(
@@ -263,50 +278,6 @@ fun ConcreteResultContent(res: ConcreteResult, appSettings: AppSettingsState) {
             )
         )
     }
-    // --- CÁLCULO DE PRECIOS ---
-    val prices = appSettings.priceSettings
-    var materialCost = 0.0
 
-    // Cemento
-    prices.materialPrices.find { it.name.contains("Cemento", ignoreCase = true) }?.let {
-        if (it.unit.contains("bolsa", ignoreCase = true)) {
-            materialCost += it.price * res.cementBagKg
-        } else if (it.unit.contains("kg", ignoreCase = true)) {
-            materialCost += it.price * res.cementKg
-        }
-    }
-
-    // Arena
-    prices.materialPrices.find { it.name.contains("Arena", ignoreCase = true) }?.let {
-        if (it.unit.contains("m3", ignoreCase = true)) {
-            materialCost += it.price * res.sandM3
-        }
-    }
-
-    // Piedra
-    prices.materialPrices.find {
-        it.name.contains("Piedra", ignoreCase = true) || it.name.contains(
-            "Canto",
-            ignoreCase = true
-        )
-    }?.let {
-        if (it.unit.contains("m3", ignoreCase = true)) {
-            materialCost += it.price * res.gravelM3
-        }
-    }
-
-    // Mano de Obra (Hormigón)
-    var laborCost = 0.0
-    prices.laborPrices.find {
-        it.name.contains("Hormigón", ignoreCase = true) || it.name.contains(
-            "Llenado",
-            ignoreCase = true
-        )
-    }?.let {
-        if (it.unit.contains("m3", ignoreCase = true)) {
-            laborCost += it.price * res.totalVolumeM3
-        }
-    }
-
-    PriceResultSection(materialCost, laborCost)
+    PriceResultSection(res.materialCost, res.laborCost)
 }
