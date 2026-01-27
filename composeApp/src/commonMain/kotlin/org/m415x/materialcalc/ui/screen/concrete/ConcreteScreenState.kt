@@ -19,9 +19,7 @@
 package org.m415x.materialcalc.ui.screen.concrete
 
 import androidx.compose.runtime.*
-import materialscalculator.composeapp.generated.resources.Res
-import materialscalculator.composeapp.generated.resources.message_error_unknown
-import materialscalculator.composeapp.generated.resources.message_error_validation_input
+import materialscalculator.composeapp.generated.resources.*
 import org.m415x.materialcalc.domain.model.AppSettingsState
 import org.m415x.materialcalc.domain.model.ConcreteResult
 import org.m415x.materialcalc.domain.model.PriceSettings
@@ -65,7 +63,7 @@ class ConcreteScreenState(
         // Validar Ancho
         val w = width.toSafeDoubleOrNull()
         if (w == null || w <= 0) {
-            widthError = TextSource.Resource(Res.string.message_error_validation_input) // O un mensaje más específico
+            widthError = TextSource.Resource(Res.string.message_error_invalid_value) // O un mensaje más específico
             isValid = false
         } else {
             widthError = null
@@ -74,7 +72,7 @@ class ConcreteScreenState(
         // Validar Largo
         val l = length.toSafeDoubleOrNull()
         if (l == null || l <= 0) {
-            lengthError = TextSource.Resource(Res.string.message_error_validation_input)
+            lengthError = TextSource.Resource(Res.string.message_error_invalid_value)
             isValid = false
         } else {
             lengthError = null
@@ -83,7 +81,7 @@ class ConcreteScreenState(
         // Validar Espesor
         val h = high.toSafeDoubleOrNull()
         if (h == null || h <= 0) {
-            highError = TextSource.Resource(Res.string.message_error_validation_input)
+            highError = TextSource.Resource(Res.string.message_error_invalid_value)
             isValid = false
         } else {
             highError = null
@@ -92,7 +90,7 @@ class ConcreteScreenState(
         // Validar Cantidad
         val q = quantity.toIntOrNull()
         if (q == null || q <= 0) {
-            quantityError = TextSource.Resource(Res.string.message_error_validation_input)
+            quantityError = TextSource.Resource(Res.string.message_error_invalid_value)
             isValid = false
         } else {
             quantityError = null
@@ -142,7 +140,7 @@ class ConcreteScreenState(
                 }
             )
         } else {
-            errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
+            errorMsg = TextSource.Resource(Res.string.message_error_concrete_selected)
             result = null
         }
     }

@@ -25,7 +25,7 @@ package org.m415x.materialcalc.domain.registry
  * @property id Identificador único de la malla.
  * @property name Nombre de la malla.
  * @property phiMm Diámetro del alambre en milímetros.
- * @property separationCm Separación entre alambres en centímetros.
+ * @property sepWidthCm Separación entre alambres en centímetros.
  * @property weightKgM2 Peso de la malla en kilogramos por metro cuadrado.
  * @property panelWidthM Ancho del panel en metros.
  * @property panelLengthM Longitud del panel en metros.
@@ -34,10 +34,11 @@ data class SimaMesh(
     val id: String,
     val name: String,
     val phiMm: Double,
-    val separationCm: Int,
-    val weightKgM2: Double,
-    val panelWidthM: Double = 2.0,
-    val panelLengthM: Double = 5.0
+    val sepWidthCm: Int,
+    val sepLengthCm: Int,
+    val weightKgM2: Double = 0.0,
+    val panelWidthM: Double = 2.4,
+    val panelLengthM: Double = 6.0
 )
 
 /** 
@@ -46,11 +47,16 @@ data class SimaMesh(
  */
 object SimaMeshRegistry {
     val standardMeshes = listOf(
-        SimaMesh("q92", "Q-92", 4.2, 15, 1.48),
-        SimaMesh("q131", "Q-131", 5.0, 15, 2.09),
-        SimaMesh("q188", "Q-188", 6.0, 15, 3.02),
-        SimaMesh("q257", "Q-257", 7.0, 15, 4.11),
-        SimaMesh("q335", "Q-335", 8.0, 15, 5.37)
+        // Cuadradas (Q) - Generalmente 15x15
+        SimaMesh("q92", "Q-92", 4.2, 15, 15, 1.48),
+        SimaMesh("q131", "Q-131", 5.0, 15, 15, 2.09),
+        SimaMesh("q188", "Q-188", 6.0, 15, 15, 3.02),
+        SimaMesh("q257", "Q-257", 7.0, 15, 15, 4.11),
+        SimaMesh("q335", "Q-335", 8.0, 15, 15, 5.37),
+
+        // Rectangulares (R) - Generalmente 15x25 (Ideales para viguetas)
+        SimaMesh("r92", "R-92", 4.2, 15, 25, 1.13),
+        SimaMesh("r131", "R-131", 5.0, 15, 25, 1.59)
     )
 
     fun getMeshById(id: String) = standardMeshes.find { it.id == id } ?: standardMeshes[1] // Default Q131

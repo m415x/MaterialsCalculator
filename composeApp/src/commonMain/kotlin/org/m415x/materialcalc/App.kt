@@ -77,6 +77,7 @@ fun App(
         launch { settingsRepository.wasteBricksPct.collect { value = value.copy(wasteBrickPct = it) } }
         launch { settingsRepository.wasteIronMainPct.collect { value = value.copy(wasteIronMainPct = it) } }
         launch { settingsRepository.wasteIronStirrupPct.collect { value = value.copy(wasteIronStirrupPct = it) } }
+        launch { settingsRepository.wasteIronMeshPct.collect { value = value.copy(wasteIronMeshPct = it) } }
         launch { settingsRepository.wastePlasterPct.collect { value = value.copy(wastePlasterPct = it) } }
 
         launch { settingsRepository.fineThicknessMm.collect { value = value.copy(fineThicknessMm = it) } }

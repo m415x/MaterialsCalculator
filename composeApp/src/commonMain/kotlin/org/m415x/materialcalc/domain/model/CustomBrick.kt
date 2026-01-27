@@ -26,6 +26,7 @@ import kotlinx.serialization.Serializable
  * @Serializable permite convertirlo a JSON automáticamente.
  * @property id Identificador único (usaremos UUID o Timestamp)
  * @property name Nombre descriptivo del ladrillo
+ * @property family Familia del ladrillo
  * @property width Ancho del ladrillo en metros
  * @property height Alto del ladrillo en metros
  * @property length Largo del ladrillo en metros
@@ -36,12 +37,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CustomBrick(
     val id: String,
-    val name: String,                
-    val width: Double,               
-    val height: Double,              
-    val length: Double,              
-    val joint: Double,               
-    val isBearing: Boolean = false, 
+    val name: String,
+    val family: BrickFamily = BrickFamily.SOLID_BRICK, // Valor por defecto para migración
+    val width: Double,
+    val height: Double,
+    val length: Double,
+    val joint: Double,
+    val isBearing: Boolean = false,
     val description: String = "" 
 )
 
@@ -55,5 +57,6 @@ fun CustomBrick.toProperties() = BrickProps(
     width = this.width,
     height = this.height,
     length = this.length,
-    gasketThickness = this.joint
+    gasketThickness = this.joint,
+    family = this.family
 )

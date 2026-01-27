@@ -20,9 +20,9 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-val appCode = 4
-val appVersion = "1.2.1-beta.3"
-val appVersionDesktop = "1.2.1"
+val appCode = 5
+val appVersion = "1.3.0-beta.4"
+val appVersionDesktop = "1.3.0"
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -74,6 +74,7 @@ kotlin {
             implementation("com.russhwolf:multiplatform-settings:1.3.0")
             implementation("com.russhwolf:multiplatform-settings-coroutines:1.3.0")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+            implementation(libs.human.readable)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

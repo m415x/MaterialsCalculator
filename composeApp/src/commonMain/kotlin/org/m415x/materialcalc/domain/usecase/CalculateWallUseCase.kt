@@ -34,6 +34,7 @@ class CalculateWallUseCase {
      * @param lengthMeters Largo del muro en metros.
      * @param heightMeters Alto del muro en metros.
      * @param brickProps Propiedades del ladrillo.
+     * @param wallLayout Disposición del ladrillo en el muro.
      * @param mortarDosing Receta de mortero.
      * @param openingList Lista de aberturas en el muro.
      * @param cementBagWeightKg Peso de la bolsa de cemento en kg.
@@ -47,6 +48,7 @@ class CalculateWallUseCase {
         lengthMeters: Double,
         heightMeters: Double,
         brickProps: BrickProps,
+        wallLayout: WallLayout,
         mortarDosing: MortarDosing,
         openingList: List<Aperture>,
         cementBagWeightKg: Int,
@@ -64,17 +66,28 @@ class CalculateWallUseCase {
                 openingsList = openingList
             )
 
-            // 2. CÁLCULO DE LADRILLOS (Unidades Físicas)
-            val brickSurfaceWithJoint =
-                (brickProps.length + brickProps.gasketThickness) * (brickProps.height + brickProps.gasketThickness)
+            // 2. DETERMINAR DIMENSIONES SEGÚN DISPOSICIÓN (LAYOUT)
+            // L = Largo visible, H = Alto visible, W = Espesor del muro
+            val (L, H, W) = when (wallLayout) {
+                WallLayout.STRETCHER -> Triple(brickProps.length, brickProps.height, brickProps.width)
+                WallLayout.HEADER -> Triple(brickProps.width, brickProps.height, brickProps.length)
+                WallLayout.ROWLOCK -> Triple(brickProps.length, brickProps.width, brickProps.height)
+            }
+
+            // 3. CÁLCULO DE LADRILLOS (Unidades Físicas)
+            // Superficie de un ladrillo con junta (L + junta) * (H + junta)
+            val brickSurfaceWithJoint = (L + brickProps.gasketThickness) * (H + brickProps.gasketThickness)
             val bricksM2 = 1.0 / brickSurfaceWithJoint
             val totalTheoreticalBricks = netSurface * bricksM2
             val actualQuantityBricks = ceil(totalTheoreticalBricks * (1 + percentageBrickWaste)).toInt()
 
-            // 3. CÁLCULO DE MORTERO (Mezcla Húmeda)
-            val wallVolumeM3 = netSurface * brickProps.width
-            val volumeSolidBricks =
-                totalTheoreticalBricks * (brickProps.length * brickProps.height * brickProps.width)
+            // 4. CÁLCULO DE MORTERO (Mezcla Húmeda)
+            // Volumen total del muro = Superficie * Espesor (W)
+            val wallVolumeM3 = netSurface * W
+            // Volumen ocupado por los ladrillos (sin junta)
+            // Cantidad teórica * Volumen unitario del ladrillo (siempre es l*h*w sin importar la posición)
+            val volumeSolidBricks = totalTheoreticalBricks * (brickProps.length * brickProps.height * brickProps.width)
+
             val geometricMortarVolume = (wallVolumeM3 - volumeSolidBricks).coerceAtLeast(0.0)
 
             val mathMortar = calculateWetMaterials(
@@ -85,7 +98,7 @@ class CalculateWallUseCase {
                 limeBagWeight = limeBagWeightKg
             )
 
-            // 4. CÁLCULO DE COSTOS
+            // 5. CÁLCULO DE COSTOS
             var materialCost = 0.0
             var laborCost = 0.0
 
@@ -118,7 +131,7 @@ class CalculateWallUseCase {
                 }
             }
 
-            // 5. RESULTADO FINAL
+            // 6. RESULTADO FINAL
             Result.success(
                 WallResult(
                     netAreaM2 = netSurface,

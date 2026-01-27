@@ -56,8 +56,9 @@ class IronPresenter {
             }
         }
 
-        // 2. Procesar hierros personalizados
-        customIrons.sortedBy { it.diameterMm }.forEach { custom ->
+        // 2. Procesar hierros personalizados (FILTRANDO MALLAS)
+        // Las mallas no deben aparecer en el selector de hierros (barras)
+        customIrons.filter { !it.isMesh }.sortedBy { it.diameterMm }.forEach { custom ->
             val label = "Ø ${custom.diameterMm} mm"
             // Usamos HIERRO_10 como placeholder seguro para el enum, pero el ID y peso son los reales
             val option = createOption(custom.id, label, custom.linearWeight, true, IronDiameter.HIERRO_10)

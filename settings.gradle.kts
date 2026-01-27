@@ -25,6 +25,13 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
+        // Repositorio necesario para HumanReadable (si no está en Maven Central)
+        // Según la documentación de la librería, suele estar en Maven Central, pero a veces requiere jitpack si es una versión muy nueva o snapshot.
+        // Sin embargo, el error dice "Could not find", lo que sugiere que no está en los repositorios declarados o la versión es incorrecta.
+        // Verificando la librería: nl.jacobras:HumanReadable suele estar en Maven Central.
+        // Si falla, probamos añadir jitpack por si acaso, o verificamos la versión.
+        // La versión 1.10.2 parece reciente.
+        maven { url = uri("https://jitpack.io") }
     }
 }
 

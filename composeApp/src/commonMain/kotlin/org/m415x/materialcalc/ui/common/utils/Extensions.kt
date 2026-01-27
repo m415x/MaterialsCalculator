@@ -23,6 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import kotlin.math.round
 
 /**
@@ -62,5 +67,27 @@ fun Modifier.clearFocusOnTap(): Modifier = composed {
         detectTapGestures(onTap = {
             focusManager.clearFocus()
         })
+    }
+}
+
+/**
+ * Convierte un String con formato **bold** en un AnnotatedString de Compose.
+ * Ideal para no ensuciar los strings.xml con placeholders de formato.
+ */
+fun String.toAnnotatedString(
+    boldStyle: SpanStyle = SpanStyle(fontWeight = FontWeight.Bold)
+): AnnotatedString {
+    val parts = this.split("**")
+    return buildAnnotatedString {
+        parts.forEachIndexed { index, part ->
+            if (index % 2 != 0) {
+                // Es una parte impar, por lo tanto estaba entre ** **
+                withStyle(style = boldStyle) {
+                    append(part)
+                }
+            } else {
+                append(part)
+            }
+        }
     }
 }

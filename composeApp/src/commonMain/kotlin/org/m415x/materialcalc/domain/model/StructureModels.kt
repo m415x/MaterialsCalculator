@@ -141,7 +141,7 @@ data class StructureResult(
  * @property totalMeters Metros lineales totales
  * @property countX Cantidad de varillas en dirección X
  * @property countY Cantidad de varillas en dirección Y
- * @property lengthX Largo de cada varilla X (con ganchos)
+ * @property widthX Largo de cada varilla X (con ganchos)
  * @property lengthY Largo de cada varilla Y (con ganchos)
  * @property diameterX Diámetro de cada varilla X
  * @property diameterY Diámetro de cada varilla Y
@@ -165,7 +165,7 @@ data class SlabResult(
     val totalMeters: Double,
     val countX: Int,
     val countY: Int,
-    val lengthX: Double,
+    val widthX: Double,
     val lengthY: Double,
     val diameterX: Double,
     val diameterY: Double,
@@ -174,6 +174,8 @@ data class SlabResult(
     val commercialBarLength: Int = 12,
     val wasteAmountKg: Double,
     val suggestedMesh: String? = null,
+    val meshWidthX: Double? = null,
+    val meshLengthY: Double? = null,
     val meshPanelsNeeded: Int? = null,
     val percentageIronWaste: Double,
     // Materiales de Hormigón

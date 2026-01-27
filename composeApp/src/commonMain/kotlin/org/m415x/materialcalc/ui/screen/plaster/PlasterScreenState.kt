@@ -20,6 +20,7 @@ package org.m415x.materialcalc.ui.screen.plaster
 
 import androidx.compose.runtime.*
 import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.message_error_invalid_value
 import materialscalculator.composeapp.generated.resources.message_error_unknown
 import materialscalculator.composeapp.generated.resources.message_error_validation_input
 import org.m415x.materialcalc.domain.model.*
@@ -79,7 +80,7 @@ class PlasterScreenState(
         // Validar Largo
         val l = length.toSafeDoubleOrNull()
         if (l == null || l <= 0) {
-            lengthError = TextSource.Resource(Res.string.message_error_validation_input)
+            lengthError = TextSource.Resource(Res.string.message_error_invalid_value)
             isValid = false
         } else {
             lengthError = null
@@ -88,7 +89,7 @@ class PlasterScreenState(
         // Validar Alto
         val h = height.toSafeDoubleOrNull()
         if (h == null || h <= 0) {
-            heightError = TextSource.Resource(Res.string.message_error_validation_input)
+            heightError = TextSource.Resource(Res.string.message_error_invalid_value)
             isValid = false
         } else {
             heightError = null
@@ -97,7 +98,7 @@ class PlasterScreenState(
         // Validar Espesor
         val t = thickThickness.toSafeDoubleOrNull()
         if (t == null || t <= 0) {
-            thicknessError = TextSource.Resource(Res.string.message_error_validation_input)
+            thicknessError = TextSource.Resource(Res.string.message_error_invalid_value)
             isValid = false
         } else {
             thicknessError = null

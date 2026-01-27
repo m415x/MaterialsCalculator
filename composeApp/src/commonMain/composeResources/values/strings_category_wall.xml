@@ -22,10 +22,13 @@
 
     <!-- SECTIONS -->
     <string name="wall_section_brick_mortar">Ladrillo y Mortero</string>
+    <string name="wall_section_layout">Disposición del Ladrillo</string>
 
     <!-- LABELS -->
+    <string name="wall_label_type">Tipo de Ladrillo</string>
     <string name="wall_label_mortar">Mortero</string>
     <string name="wall_label_seat_mortar">Mortero de Asiento</string>
+    <string name="wall_label_brick_family">Familia</string>
     <string name="wall_dialog_choose_mix">Elegir Mezcla</string>
     <string name="wall_result_net_area">Superficie Neta: %1$s %2$s</string>
     <string name="wall_result_bricks">Ladrillos</string>
@@ -34,6 +37,20 @@
     <string name="wall_result_lime">Cal Hidratada</string>
     <string name="wall_result_sand">Arena</string>
     <string name="wall_result_water">Agua</string>
+    <string name="label_layout_type">Disposición</string>
+    <string name="label_estimated_thickness">Espesor estimado: %1$s cm</string>
+
+    <!-- BRICK TYPES -->
+    <string name="brick_family_solid_name">Macizo Común</string>
+    <string name="brick_family_solid_desc">Ladrillo de barro cocido</string>
+    <string name="brick_family_load_bearing_hollow_name">Hueco portante</string>
+    <string name="brick_family_load_bearing_hollow_desc">Cerámico con tubos verticales</string>
+    <string name="brick_family_non_load_bearing_hollow_name">Hueco no portante</string>
+    <string name="brick_family_non_load_bearing_hollow_desc">Cerámico con tubos horizontales (solo cerramiento)</string>
+    <string name="brick_family_concrete_block_name">Bloque de hormigón</string>
+    <string name="brick_family_concrete_block_desc">De cemento y arena</string>
+    <string name="brick_family_retak_name">Retak</string>
+    <string name="brick_family_retak_desc">Hormigón celular (HCCA)</string>
 
     <!-- BRICK TYPES -->
     <string name="brick_name_comun">Ladrillo Común</string>
@@ -68,4 +85,15 @@
 
     <string name="brick_name_bloque_20">Bloque 20</string>
     <string name="brick_desc_bloque_20">Muros de carga</string>
+
+    <!-- WALL LAYOUTS -->
+    <string name="layout_stretcher_title">Soga</string>
+    <string name="layout_stretcher_desc">El lado largo del ladrillo se ve en el frente del muro.</string>
+    <string name="layout_header_title">Cabeza</string>
+    <string name="layout_header_desc">El lado corto del ladrillo se ve en el frente del muro.</string>
+    <string name="layout_rowlock_title">Canto (Pandereta)</string>
+    <string name="layout_rowlock_desc">El lado ancho del ladrillo se ve en el frente del muro.</string>
+
+    <!-- WARNINGS -->
+    <string name="wall_warning_cirsoc_103_sismo">**Advertencia Sismorresistente:** Esta disposición no es apta para muros portantes en zonas sísmicas según CIRSOC 103.</string>
 </resources>

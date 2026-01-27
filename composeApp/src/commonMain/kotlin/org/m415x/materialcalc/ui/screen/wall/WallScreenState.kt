@@ -19,9 +19,7 @@
 package org.m415x.materialcalc.ui.screen.wall
 
 import androidx.compose.runtime.*
-import materialscalculator.composeapp.generated.resources.Res
-import materialscalculator.composeapp.generated.resources.message_error_unknown
-import materialscalculator.composeapp.generated.resources.message_error_validation_input
+import materialscalculator.composeapp.generated.resources.*
 import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.domain.usecase.CalculateWallUseCase
 import org.m415x.materialcalc.ui.common.inputs.BrickOptionUi
@@ -54,6 +52,11 @@ class WallScreenState(
     // Nota: WallScreen tiene una lógica especial donde la mezcla cambia según el ladrillo.
     var selectedMix by mutableStateOf<MortarDosing?>(null)
 
+    // --- NUEVOS ESTADOS PARA LAYOUT ---
+    var selectedLayout by mutableStateOf(WallLayout.STRETCHER)
+    var showLayoutDialog by mutableStateOf(false)
+    var isSismoResistenteWarning by mutableStateOf(false)
+
     var showWasteDialog by mutableStateOf(false)
     var result by mutableStateOf<WallResult?>(null)
     var errorMsg by mutableStateOf<TextSource?>(null)
@@ -73,11 +76,24 @@ class WallScreenState(
         // si la actual es diferente a la nueva sugerida (para evitar sobrescribir si el usuario ya eligió otra igual)
         // O simplemente forzamos el cambio como comportamiento por defecto
         selectedMix = option.recipe
+        // Resetear layout a SOGA por defecto al cambiar de ladrillo
+        selectedLayout = WallLayout.STRETCHER
+        isSismoResistenteWarning = false
     }
 
     fun onMixSelected(dosing: MortarDosing) {
         selectedMix = dosing
         showWasteDialog = false
+    }
+
+    fun onLayoutSelected(layout: WallLayout) {
+        selectedLayout = layout
+        showLayoutDialog = false
+        // Verificar advertencia sismorresistente
+        // Si es portante y se elige CANTO, es peligroso.
+        // Si es portante y se elige CABEZA, es seguro pero inusual en ladrillos huecos (ya filtrado en availableLayouts).
+        // La advertencia principal es para Macizo Portante puesto de Canto (Panderete).
+        isSismoResistenteWarning = (selectedBrickOption?.isBearing == true && layout == WallLayout.ROWLOCK)
     }
 
     // --- GESTIÓN DE ABERTURAS ---
@@ -102,7 +118,7 @@ class WallScreenState(
         // Validar Largo
         val l = wallLength.toSafeDoubleOrNull()
         if (l == null || l <= 0) {
-            lengthError = TextSource.Resource(Res.string.message_error_validation_input)
+            lengthError = TextSource.Resource(Res.string.message_error_invalid_value)
             isValid = false
         } else {
             lengthError = null
@@ -111,7 +127,7 @@ class WallScreenState(
         // Validar Alto
         val h = wallHeight.toSafeDoubleOrNull()
         if (h == null || h <= 0) {
-            heightError = TextSource.Resource(Res.string.message_error_validation_input)
+            heightError = TextSource.Resource(Res.string.message_error_invalid_value)
             isValid = false
         } else {
             heightError = null
@@ -132,13 +148,11 @@ class WallScreenState(
         val h = wallHeight.toSafeDoubleOrNull()!!
 
         if (selectedBrickOption != null && selectedMix != null) {
-            // Obtenemos los precios actuales del estado global
-            val prices = appSettings.priceSettings
-
             val calcResult = calculateWall(
                 lengthMeters = l,
                 heightMeters = h,
                 brickProps = selectedBrickOption!!.props,
+                wallLayout = selectedLayout, // Pasamos el layout seleccionado
                 mortarDosing = selectedMix!!,
                 openingList = openings.toList(),
                 cementBagWeightKg = appSettings.bagCementKg,
@@ -166,10 +180,59 @@ class WallScreenState(
                 }
             )
         } else {
-            errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
+            errorMsg = TextSource.Resource(Res.string.message_error_brick_selected)
             result = null
         }
     }
+
+    // --- PROPIEDADES DERIVADAS PARA LA UI ---
+    val availableLayouts: List<WallLayout>
+        get() {
+            val brick = selectedBrickOption ?: return emptyList()
+            // Lógica de filtrado según tipo de ladrillo
+            // Si es custom, no tenemos flags isHollow, así que asumimos comportamiento genérico o basado en isBearing
+            // Para simplificar y ser seguros:
+            return when {
+                // Si es portante y es hueco (esto lo inferimos si el nombre contiene "HUECO" o "PORTANTE" y esBearing es true)
+                // O mejor, usamos la lógica del enum si no es custom.
+                !brick.isCustom -> {
+                    val type = try {
+                        BrickType.valueOf(brick.id)
+                    } catch (e: Exception) {
+                        null
+                    }
+                    when (type) {
+                        BrickType.PORTANTE_12, BrickType.PORTANTE_18, BrickType.BLOQUE_13, BrickType.BLOQUE_15, BrickType.BLOQUE_20 -> listOf(
+                            WallLayout.STRETCHER
+                        )
+
+                        BrickType.HUECO_8, BrickType.HUECO_12, BrickType.HUECO_18 -> listOf(
+                            WallLayout.STRETCHER,
+                            WallLayout.ROWLOCK
+                        ) // Hueco no portante permite canto (tabique)
+                        else -> listOf(WallLayout.STRETCHER, WallLayout.HEADER, WallLayout.ROWLOCK) // Macizos
+                    }
+                }
+                // Si es custom
+                brick.isBearing -> listOf(
+                    WallLayout.STRETCHER,
+                    WallLayout.HEADER
+                ) // Asumimos que si es portante custom, al menos soga y cabeza son válidos estructuralmente (aunque cabeza sea raro en huecos)
+                else -> listOf(WallLayout.STRETCHER, WallLayout.HEADER, WallLayout.ROWLOCK)
+            }
+        }
+
+    val estimatedWallThicknessCm: Double
+        get() {
+            val brick = selectedBrickOption ?: return 0.0
+            val thicknessM = when (selectedLayout) {
+                WallLayout.STRETCHER -> brick.props.width
+                WallLayout.HEADER -> brick.props.length
+                WallLayout.ROWLOCK -> brick.props.height
+            }
+            // Sumamos un espesor de revoque estimado (ej. 1.5cm por lado = 3cm total)
+            return (thicknessM * 100) + 3.0
+        }
 }
 
 @Composable

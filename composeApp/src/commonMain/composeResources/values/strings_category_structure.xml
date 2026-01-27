@@ -53,11 +53,17 @@
     <string name="structure_label_length_y">Largo Y (%1$s)</string>
     <string name="structure_label_armature_x">Armadura Eje X (Ancho)</string>
     <string name="structure_label_armature_y">Armadura Eje Y (Largo)</string>
-    <string name="structure_label_sep_x">Sep. X (%1$s)</string>
-    <string name="structure_label_sep_y">Sep. Y (%1$s)</string>
+    <string name="structure_label_sep_x">Sep. X</string>
+    <string name="structure_label_sep_y">Sep. Y</string>
     <string name="structure_label_iron_x">Hierro X</string>
     <string name="structure_label_iron_y">Hierro Y</string>
     <string name="structure_label_terminations_both">(Ambos ejes)</string>
+    <string name="structure_label_use_welded_wire_mesh">Usar Malla Electrosoldada</string>
+    <string name="structure_label_mesh_type">Tipo de Malla</string>
+    <string name="structure_label_mesh">Malla</string>
+    <string name="structure_label_meshes">Mallas</string>
+    <string name="structure_label_iron">Hierro</string>
+    <string name="structure_label_irons">Hierros</string>
 
     <!-- RESULTS -->
     <string name="structure_result_concrete">Hormigón: %1$s %2$s</string>
@@ -71,9 +77,9 @@
     <string name="structure_result_iron_kilograms">%1$s %2$s</string>
     <string name="structure_result_tip_main">- %1$d varilla%2$s de Ø %3$s mm de 12 m.</string>
     <string name="structure_result_tip_stirrup">- %1$d varilla%2$s de Ø %3$s mm de 12 m.</string>
-    <string name="structure_result_mesh">Malla Sima</string>
+    <string name="structure_result_mesh">Malla Sima: %1$s %2$s</string>
     <string name="structure_result_mesh_type">Tipo</string>
-    <string name="structure_result_mesh_panels">Paneles (2.4x6 m)</string>
+    <string name="structure_result_mesh_panels">Paneles (%1$sx%2$s m)</string>
     <string name="structure_result_iron_coord">Hierros en %1$s</string>
     <string name="structure_result_iron_generic">Hierro Ø %1$s mm</string>
     <string name="structure_result_detail_title">Detalle de Armado:</string>
@@ -81,6 +87,7 @@
     <string name="structure_result_weight_kg">%1$s kg</string>
     <string name="structure_result_bars">%1$d varillas</string>
     <string name="structure_result_tip_intro">Necesitas aprox:</string>
+    <string name="structure_result_mesh_waste_included">(Incluye %1$s% desperdicio por solape)</string>
 
     <!-- REBAR TERMINATION TYPES -->
     <string name="rebar_termination_straight">Recta</string>
@@ -95,5 +102,5 @@
 
     <!-- MESSAGES -->
     <string name="structure_warning_cirsoc_short">Revisa la norma</string>
-    <string name="structure_warning_cirsoc_30cm">Atención: Según el CIRSOC 201, la separación no debe superar los 30 cm para evitar fisuración excesiva.</string>
+    <string name="structure_warning_cirsoc_30cm">**Advertencia:** Según el CIRSOC 201, la separación no debe superar los 30 cm para evitar fisuración excesiva.</string>
 </resources>

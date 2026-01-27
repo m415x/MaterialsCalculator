@@ -19,11 +19,9 @@
 package org.m415x.materialcalc.ui.screen.structure
 
 import androidx.compose.runtime.*
-import materialscalculator.composeapp.generated.resources.Res
-import materialscalculator.composeapp.generated.resources.message_error_unknown
-import materialscalculator.composeapp.generated.resources.message_error_validation_input
-import materialscalculator.composeapp.generated.resources.structure_warning_cirsoc_short
+import materialscalculator.composeapp.generated.resources.*
 import org.m415x.materialcalc.domain.model.*
+import org.m415x.materialcalc.domain.registry.SimaMeshRegistry
 import org.m415x.materialcalc.domain.usecase.CalculateStructureUseCase
 import org.m415x.materialcalc.ui.common.inputs.ConcreteOptionUi
 import org.m415x.materialcalc.ui.common.inputs.IronOptionUi
@@ -187,7 +185,7 @@ class StructureScreenState(
     // --- VALIDACIÓN ---
     fun validate(): Boolean {
         var isValid = true
-        val errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
+        val errorMsg = TextSource.Resource(Res.string.message_error_invalid_value)
         // Mensaje corto para el input
         val warningMsgShort = TextSource.Resource(Res.string.structure_warning_cirsoc_short)
 
@@ -312,6 +310,43 @@ class StructureScreenState(
             return
         }
 
+        // Validación de Hierros seleccionados (si aplica)
+        if (selectedStructureType != StructureType.SLAB) {
+            if (selectedMainIron == null || selectedStirrup == null) {
+                errorMsg = TextSource.Resource(Res.string.message_error_iron_selected)
+                return
+            }
+        } else if (isManualRebar) {
+            if (selectedPhiX == null || selectedPhiY == null) {
+                errorMsg = TextSource.Resource(Res.string.message_error_iron_selected)
+                return
+            }
+        } else {
+            // Malla
+            if (selectedMeshId.isEmpty()) {
+                errorMsg = TextSource.Resource(Res.string.message_error_mesh_selected)
+                return
+            }
+            
+            // Validación adicional: ¿La malla seleccionada existe realmente?
+            // Esto cubre el caso donde se borraron todas las mallas y selectedMeshId quedó con un valor viejo
+            val availableMeshIds = SimaMeshRegistry.standardMeshes
+                .filter { it.id !in appSettings.hiddenIronIds }
+                .map { it.id } +
+                    appSettings.customIrons.filter { it.isMesh }.map { it.id }
+
+            if (selectedMeshId !in availableMeshIds) {
+                errorMsg = TextSource.Resource(Res.string.message_error_mesh_selected)
+                return
+            }
+        }
+
+        // Validación de Hormigón seleccionado
+        if (selectedConcreteOption == null) {
+            errorMsg = TextSource.Resource(Res.string.message_error_concrete_selected)
+            return
+        }
+
         if (selectedStructureType == StructureType.SLAB) {
             calculateSlab(updatedPrices)
         } else {
@@ -360,7 +395,9 @@ class StructureScreenState(
                 cementBagWeightKg = appSettings.bagCementKg,
                 limeBagWeightKg = appSettings.bagLimeKg,
                 percentageConcreteWaste = appSettings.wasteConcretePct / 100.0,
-                priceSettings = updatedPrices
+                percentageMeshWaste = appSettings.wasteIronMeshPct / 100.0,
+                priceSettings = updatedPrices,
+                customMeshes = appSettings.customIrons // Pasamos las mallas custom
             )
         }
 
@@ -437,7 +474,7 @@ class StructureScreenState(
                 }
             )
         } else {
-            errorMsg = TextSource.Resource(Res.string.message_error_validation_input)
+            errorMsg = TextSource.Resource(Res.string.message_error_iron_selected)
             result = null
         }
     }

@@ -72,7 +72,6 @@ class MortarPresenter(
         // 1. Estándar (Según el filtro)
         if (filterType == "PLASTER") {
             val jaharro = staticRepo.getThickPlasterRecipe()
-            // TODO: Verificar si está oculto en hiddenIds si implementamos ocultar estáticos de este tipo
             factoryList.add(createOption("STD_JAHARRO", jaharro.name, jaharro, false, TextSource.Raw(labelStdJaharro)))
         } else {
             // Agregamos los morteros estándar para WallScreen

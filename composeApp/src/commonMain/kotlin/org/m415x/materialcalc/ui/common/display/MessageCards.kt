@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,6 +33,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import org.m415x.materialcalc.domain.model.TextSource
 import org.m415x.materialcalc.domain.model.asString
+import org.m415x.materialcalc.ui.common.utils.toAnnotatedString
 import org.m415x.materialcalc.ui.theme.customColors
 
 /**
@@ -59,6 +61,11 @@ fun MessageCard(
         enter = fadeIn() + expandVertically(),
         exit = fadeOut() + shrinkVertically()
     ) {
+        val rawString = msg?.asString() ?: ""
+        val annotatedMsg = remember(rawString) {
+            rawString.toAnnotatedString()
+        }
+
         Card(
             colors = CardDefaults.cardColors(cardColor),
             modifier = modifier
@@ -73,7 +80,7 @@ fun MessageCard(
                     Spacer(Modifier.width(8.dp))
                 }
                 Text(
-                    text = msg?.asString() ?: "",
+                    text = annotatedMsg,
                     Modifier.weight(1f),
                     style = MaterialTheme.typography.bodySmall,
                     color = txtColor

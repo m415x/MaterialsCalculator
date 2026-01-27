@@ -36,7 +36,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import materialscalculator.composeapp.generated.resources.*
@@ -51,6 +50,7 @@ import org.m415x.materialcalc.domain.model.asString
 import org.m415x.materialcalc.domain.usecase.CalculatePlasterUseCase
 import org.m415x.materialcalc.ui.common.dialogs.AppDialog
 import org.m415x.materialcalc.ui.common.display.*
+import org.m415x.materialcalc.ui.common.inputs.BaseSelectorCard
 import org.m415x.materialcalc.ui.common.inputs.CmInput
 import org.m415x.materialcalc.ui.common.inputs.NumericInput
 import org.m415x.materialcalc.ui.common.layout.InputRow
@@ -203,42 +203,14 @@ fun PlasterScreen(appSettings: AppSettingsState, repository: SettingsRepository)
 
             InputSection(title = stringResource(Res.string.plaster_section_thick), showDivider = false) {
                 if (state.selectMortar != null) {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
-                                alpha = 0.5f
-                            )
-                        ),
-                        shape = MaterialTheme.shapes.medium,
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-                    ) {
-                        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.Science,
-                                null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    state.selectMortar!!.name.asString(),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    state.selectMortar!!.mixingRatio.asString(),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                            if (state.recipeOptions.size > 1) {
-                                TextButton(onClick = { state.showMixDialog = true }) {
-                                    Text(stringResource(Res.string.button_change))
-                                }
-                            }
-                        }
-                    }
+                    BaseSelectorCard(
+                        icon = Icons.Default.Science,
+                        title = state.selectMortar!!.name.asString(),
+                        value = state.selectMortar!!.mixingRatio.asString(),
+                        onClick = { state.showMixDialog = true },
+                        showEditIcon = state.recipeOptions.size > 1,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
                 }
 
                 InputRow(horizontalArrangement = Arrangement.SpaceBetween) {
@@ -339,7 +311,7 @@ fun PlasterScreen(appSettings: AppSettingsState, repository: SettingsRepository)
 
         AppResultBottomSheet(
             onDismissRequest = { state.showResultSheet = false },
-            onSave = { /* ... */ },
+            onSave = { /* TODO */ },
             onEdit = { state.showResultSheet = false },
             onShare = { shareManager.shareText(shareText) }
         ) {
@@ -425,8 +397,8 @@ fun PlasterResultContent(res: PlasterResult) {
 
     // Sección FINO
     ResultSection(
-        stringResource(Res.string.plaster_result_fine_title),
-        stringResource(Res.string.label_result_waste_included, (res.finePercentageWaste * 100).toInt()),
+        title = stringResource(Res.string.plaster_result_fine_title),
+        subTitle = stringResource(Res.string.label_result_waste_included, (res.finePercentageWaste * 100).toInt()),
     ) {
         Text(stringResource(Res.string.plaster_result_choose_option), style = MaterialTheme.typography.labelLarge)
 

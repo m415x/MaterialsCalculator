@@ -31,16 +31,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
-import org.m415x.materialcalc.domain.model.BrickType
-import org.m415x.materialcalc.domain.model.CustomBrick
-import org.m415x.materialcalc.domain.model.TextSource
+import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.ui.common.dialogs.AppDialog
+import org.m415x.materialcalc.ui.common.inputs.AppDropdown
 import org.m415x.materialcalc.ui.common.inputs.AppInput
 import org.m415x.materialcalc.ui.common.inputs.NumericInput
 import org.m415x.materialcalc.ui.common.utils.RequestFocusOnStart
@@ -181,7 +181,8 @@ fun BricksTabContent(repository: SettingsRepository) {
                                                         length = props.length,
                                                         joint = props.gasketThickness,
                                                         isBearing = type.isBearing,
-                                                        description = ""
+                                                        description = "",
+                                                        family = type.family
                                                     )
                                                 } catch (e: Exception) {
                                                     brickToEdit = null
@@ -220,7 +221,8 @@ fun BricksTabContent(repository: SettingsRepository) {
                                                         length = props.length,
                                                         joint = props.gasketThickness,
                                                         isBearing = type.isBearing,
-                                                        description = ""
+                                                        description = "",
+                                                        family = type.family
                                                     )
                                                 } catch (e: Exception) {
                                                     brickToEdit = null
@@ -376,6 +378,7 @@ fun BrickEditorDialog(
     var name by remember { mutableStateOf(brickToEdit?.name ?: "") }
     var description by remember { mutableStateOf(brickToEdit?.description ?: "") }
     var isBearing by remember { mutableStateOf(brickToEdit?.isBearing ?: false) }
+    var family by remember { mutableStateOf(brickToEdit?.family ?: BrickFamily.SOLID_BRICK) }
 
     // Función auxiliar para formatear "0.18" -> "18"
     fun mToCmStr(m: Double): String {
@@ -416,6 +419,33 @@ fun BrickEditorDialog(
                 nextFocusRequester = focusBrickWidth
             )
 
+            // Selector de Familia
+            AppDropdown(
+                label = TextSource.Resource(Res.string.wall_label_brick_family).asString(),// TODO: Resource name
+                options = BrickFamily.entries,
+                selectedText = TextSource.Resource(family.familyName).asString(),// TODO: Resource name
+                onSelect = {
+                    family = it
+                    // Tip de UX: Si es hueco no portante, desactivar portante
+                    if (it == BrickFamily.NON_LOAD_BEARING_HOLLOW_BRICK) {
+                        isBearing = false
+                    }
+                }
+            ) {
+                Column {
+                    Text(
+                        TextSource.Resource(it.familyName).asString(),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        TextSource.Resource(it.description).asString(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().clickable { isBearing = !isBearing }
@@ -425,8 +455,16 @@ fun BrickEditorDialog(
                     onCheckedChange = { isBearing = it },
                     Modifier.focusRequester(focusIsBearing)
                 )
-                Text(stringResource(Res.string.settings_db_brick_bearing), style = MaterialTheme.typography.labelMedium)
-                Text(stringResource(Res.string.settings_db_brick_structural), style = MaterialTheme.typography.labelSmall)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        stringResource(Res.string.settings_db_brick_bearing),
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                    Text(
+                        stringResource(Res.string.settings_db_brick_structural),
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -506,7 +544,8 @@ fun BrickEditorDialog(
                         length = l,
                         joint = j,
                         isBearing = isBearing,
-                        description = description
+                        description = description,
+                        family = family
                     )
                     onSave(newBrick)
                 }

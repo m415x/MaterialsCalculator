@@ -21,18 +21,28 @@ package org.m415x.materialcalc.domain.model
 import kotlinx.serialization.Serializable
 
 /**
- * Representa un hierro creado por el usuario.
+ * Representa un hierro o malla creado por el usuario.
  *
  * @Serializable permite convertirlo a JSON automáticamente.
  * @property id Identificador único (usaremos UUID o Timestamp)
  * @property name Nombre descriptivo del hierro
- * @property diameterMm Diámetro del hierro en milímetros
- * @property linearWeight Peso lineal del hierro en kg/m
+ * @property diameterMm Diámetro del hierro en milímetros (0 si es malla)
+ * @property linearWeight Peso lineal del hierro en kg/m (0 si es malla)
+ * @property isMesh Indica si es una malla (true) o una barra (false)
+ * @property meshSepX Separación X en cm (solo si es malla)
+ * @property meshSepY Separación Y en cm (solo si es malla)
+ * @property panelWidth Ancho del panel en metros (solo si es malla)
+ * @property panelLength Largo del panel en metros (solo si es malla)
  */
 @Serializable
 data class CustomIron(
     val id: String,
     val name: String,
     val diameterMm: Double,
-    val linearWeight: Double
+    val linearWeight: Double,
+    val isMesh: Boolean = false,
+    val meshSepX: Double = 0.0,
+    val meshSepY: Double = 0.0,
+    val panelWidth: Double = 2.4, // Valor por defecto estándar
+    val panelLength: Double = 6.0 // Valor por defecto estándar
 )

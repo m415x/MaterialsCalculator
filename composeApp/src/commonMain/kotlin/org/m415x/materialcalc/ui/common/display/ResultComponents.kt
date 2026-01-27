@@ -30,10 +30,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import materialscalculator.composeapp.generated.resources.*
+import nl.jacobras.humanreadable.HumanReadable
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.domain.common.DisplayUnit
 import org.m415x.materialcalc.domain.common.PresentationUnit
@@ -101,7 +100,7 @@ fun AppResultBottomSheet(
             content()
 
             // Separador antes de los botones
-            Spacer(modifier = Modifier.height(16.dp))
+//            Spacer(modifier = Modifier.height(16.dp))
 
             // Línea divisoria sutil (opcional, pero ayuda visualmente)
             HorizontalDivider(color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.2f))
@@ -151,19 +150,23 @@ fun AppResultBottomSheet(
 fun ResultTitle(
     title: String,
     subTitle: String? = null,
-    titleFontSize: TextUnit = 20.sp,
+    titleStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+    titleFontWeight: FontWeight = FontWeight.Bold,
     spacer: Modifier = Modifier.height(16.dp)
 ) {
     Text(
         text = title,
-        fontWeight = FontWeight.Bold,
-        fontSize = titleFontSize
+        style = titleStyle.copy(
+            fontWeight = titleFontWeight,
+            color = MaterialTheme.colorScheme.onSecondaryContainer
+        )
     )
 
     if (subTitle != null) {
         Text(
             text = subTitle,
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 
@@ -174,7 +177,8 @@ fun ResultTitle(
 fun ResultSection(
     title: String,
     subTitle: String? = null,
-    titleFontSize: TextUnit = 20.sp,
+    titleStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+    titleFontWeight: FontWeight = FontWeight.Bold,
     titleSpacer: Modifier = Modifier.height(4.dp),
     sectionSpacer: Modifier = Modifier.height(16.dp),
     content: @Composable ColumnScope.() -> Unit
@@ -182,7 +186,8 @@ fun ResultSection(
     ResultTitle(
         title = title,
         subTitle = subTitle,
-        titleFontSize = titleFontSize,
+        titleStyle = titleStyle,
+        titleFontWeight = titleFontWeight,
         spacer = titleSpacer
     )
 
@@ -274,36 +279,48 @@ fun PriceResultSection(
     laborCost: Double,
     currencySymbol: String = "$"
 ) {
-    if (materialCost > 0 || laborCost > 0) {
+    val total = materialCost + laborCost
+
+    val formattedMaterialCost = HumanReadable.number(materialCost.toLong())
+    val formattedLaborCost = HumanReadable.number(laborCost.toLong())
+    val formattedTotalCost = HumanReadable.number(total.toLong())
+
+    if (total > 0) {
         HorizontalDivider(color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.2f))
 
         Spacer(modifier = Modifier.height(24.dp))
 
         ResultSection(
-            title = stringResource(Res.string.settings_prices_result_title)
+            title = stringResource(Res.string.settings_prices_result_title),
+            titleStyle = MaterialTheme.typography.titleLarge,
+            titleFontWeight = FontWeight.Normal,
         ) {
 
             if (materialCost > 0) {
                 ResultRow(
                     label = stringResource(Res.string.settings_prices_result_materials),
-                    value = "$currencySymbol ${materialCost.toInt()}", // Formato simple
-                    labelStyle = MaterialTheme.typography.bodyMedium
+                    value = "$currencySymbol $formattedMaterialCost"
                 )
             }
 
             if (laborCost > 0) {
                 ResultRow(
                     label = stringResource(Res.string.settings_prices_result_labor),
-                    value = "$currencySymbol ${laborCost.toInt()}",
-                    labelStyle = MaterialTheme.typography.bodyMedium
+                    value = "$currencySymbol $formattedLaborCost"
                 )
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth(0.4f).align(Alignment.End), // Línea corta a la derecha
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+            )
             Spacer(modifier = Modifier.height(4.dp))
 
             ResultRow(
                 label = stringResource(Res.string.settings_prices_result_total),
-                value = "$currencySymbol ${(materialCost + laborCost).toInt()}"
+                value = "$currencySymbol $formattedTotalCost"
             )
         }
     }

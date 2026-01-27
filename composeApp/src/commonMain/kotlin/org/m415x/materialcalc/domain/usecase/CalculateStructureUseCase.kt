@@ -20,6 +20,7 @@ package org.m415x.materialcalc.domain.usecase
 
 import org.m415x.materialcalc.domain.common.calculateWetMaterials
 import org.m415x.materialcalc.domain.model.*
+import org.m415x.materialcalc.domain.registry.SimaMeshRegistry
 import org.m415x.materialcalc.domain.repository.MaterialRepository
 import kotlin.math.PI
 import kotlin.math.ceil
@@ -238,11 +239,11 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
             // El gancho se aplica en ambos extremos
             val totalHookL = hookLengthMeters * 2
 
-            val individualLengthX = (widthX - covering) + totalHookL
+            val individualWidthX = (widthX - covering) + totalHookL
             val individualLengthY = (lengthY - covering) + totalHookL
 
             // 3. Totales
-            val netMetersX = countX * individualLengthX
+            val netMetersX = countX * individualWidthX
             val netMetersY = countY * individualLengthY
             val totalMeters = (netMetersX + netMetersY) * (1 + wastePct)
 
@@ -316,7 +317,7 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
                     totalMeters = totalMeters,
                     countX = countX,
                     countY = countY,
-                    lengthX = individualLengthX,
+                    widthX = individualWidthX,
                     lengthY = individualLengthY,
                     diameterX = phiX.milimeters,
                     diameterY = phiY.milimeters,
@@ -333,6 +334,7 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
                     waterLiters = mathConcrete.waterLiters,
                     cementBagKg = cementBagWeightKg,
                     percentageConcreteWaste = percentageConcreteWaste,
+                    commercialBarLength = 12,
                     materialCost = materialCost,
                     laborCost = laborCost
                 )
@@ -351,15 +353,31 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
         cementBagWeightKg: Int,
         limeBagWeightKg: Int,
         percentageConcreteWaste: Double,
-        priceSettings: PriceSettings? = null
+        percentageMeshWaste: Double,
+        priceSettings: PriceSettings? = null,
+        customMeshes: List<CustomIron> = emptyList() // Recibimos las mallas custom
     ): Result<SlabResult> {
         return try {
             // 1. Calcular paneles de malla
-            // Panel estándar de 2.4m x 6m = 14.4 m2
-            val panelArea = 2.4 * 6.0
+            // Buscamos primero en custom, luego en estándar
+            val customMesh = customMeshes.find { it.id == meshId }
+            
+            val panelWidth: Double
+            val panelLength: Double
+            
+            if (customMesh != null) {
+                panelWidth = customMesh.panelWidth
+                panelLength = customMesh.panelLength
+            } else {
+                val standardMesh = SimaMeshRegistry.getMeshById(meshId)
+                panelWidth = standardMesh.panelWidthM
+                panelLength = standardMesh.panelLengthM
+            }
+
+            val panelArea = panelWidth * panelLength
             val slabArea = widthX * lengthY
             // Se suele agregar un desperdicio por solapes (aprox 10-15%)
-            val panelsNeeded = ceil((slabArea * 1.15) / panelArea).toInt()
+            val panelsNeeded = ceil((slabArea * (1 + percentageMeshWaste)) / panelArea).toInt()
 
             // 2. Hormigón
             val volumeM3 = widthX * lengthY * thickness
@@ -394,9 +412,8 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
                     materialCost += it.price * gravelRounded
                 }
 
-                // Malla (No tenemos precio de malla en DB estándar, habría que buscar por ID si existiera)
-                // Por ahora lo dejamos en 0 o buscamos si hay un custom material con ese ID
-                // priceSettings.materialPrices.find { it.id == meshId }?.let { materialCost += it.price * panelsNeeded }
+                // Malla
+                priceSettings.materialPrices.find { it.id == meshId }?.let { materialCost += it.price * panelsNeeded }
 
                 // Mano de Obra (Losa M3)
                 priceSettings.laborPrices.find { it.id == LaborIds.STRUCTURE_SLAB }?.let {
@@ -410,8 +427,8 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
                     totalMeters = 0.0,
                     countX = 0,
                     countY = 0,
-                    lengthX = 0.0,
-                    lengthY = 0.0,
+                    widthX = widthX,
+                    lengthY = lengthY,
                     diameterX = 0.0,
                     diameterY = 0.0,
                     weightX = 0.0,
@@ -420,7 +437,7 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
                     wasteAmountKg = 0.0,
                     suggestedMesh = meshId.uppercase(),
                     meshPanelsNeeded = panelsNeeded,
-                    percentageIronWaste = 0.0,
+                    percentageIronWaste = percentageMeshWaste, // Usamos el desperdicio de malla aquí para mostrarlo
                     volumeConcreteM3 = volumeM3 * (1 + percentageConcreteWaste),
                     cementKg = mathConcrete.cementKg,
                     sandM3 = mathConcrete.sandM3,

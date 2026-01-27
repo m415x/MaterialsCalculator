@@ -79,6 +79,7 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
     val wBrick = appSettings.wasteBrickPct
     val wIronMain = appSettings.wasteIronMainPct
     val wIronStirrup = appSettings.wasteIronStirrupPct
+    val wIronMesh = appSettings.wasteIronMeshPct
     val wPlaster = appSettings.wastePlasterPct
 
     // Defaults Seleccionados
@@ -174,6 +175,7 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
     val focusPlaster = remember { FocusRequester() }
     val focusIron = remember { FocusRequester() }
     val focusStirrup = remember { FocusRequester() }
+    val focusMesh = remember { FocusRequester() }
 
     Column(
         modifier = Modifier
@@ -182,11 +184,36 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // --- SECCIÓN 1: MATERIALES PREDETERMINADOS ---
+        // --- SECCIÓN 0: CONFIGURACIONES GENERALES ---
         SettingsAccordion(
-            title = stringResource(Res.string.settings_params_default_title),
+            title = stringResource(Res.string.settings_params_general_settings_title),
             defaultExpanded = true
         ) {
+            // Switch para RequestFocusOnStart
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(Res.string.settings_params_request_focus_label),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = stringResource(Res.string.settings_params_request_focus_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = requestFocus,
+                    onCheckedChange = { scope.launch { repository.saveRequestFocusOnStart(it) } }
+                )
+            }
+        }
+
+        // --- SECCIÓN 1: MATERIALES PREDETERMINADOS ---
+        SettingsAccordion(title = stringResource(Res.string.settings_params_default_materials_title)) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 BrickSelectorField(
                     options = brickOptions,
@@ -270,7 +297,8 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                 suffix = stringResource(Res.string.unit_liters),
                 onSave = { scope.launch { repository.saveVolumeCapacity("bucket", it) } },
                 focusRequester = focusBucket,
-                nextFocusRequester = focusBarrow
+                nextFocusRequester = focusBarrow,
+                decimalDigits = 1
             )
             EditDoubleSetting(
                 label = stringResource(Res.string.settings_params_barrow_label),
@@ -279,7 +307,8 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                 suffix = stringResource(Res.string.unit_liters),
                 onSave = { scope.launch { repository.saveVolumeCapacity("barrow", it) } },
                 focusRequester = focusBarrow,
-                nextFocusRequester = focusMixer
+                nextFocusRequester = focusMixer,
+                decimalDigits = 1
             )
             EditDoubleSetting(
                 label = stringResource(Res.string.settings_params_mixer_label),
@@ -288,7 +317,8 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                 suffix = stringResource(Res.string.unit_liters),
                 onSave = { scope.launch { repository.saveVolumeCapacity("mixer", it) } },
                 focusRequester = focusMixer,
-                nextFocusRequester = focusFine
+                nextFocusRequester = focusFine,
+                decimalDigits = 1
             )
         }
 
@@ -301,30 +331,9 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                 suffix = stringResource(Res.string.unit_millimeters),
                 onSave = { scope.launch { repository.saveFineThickness(it) } },
                 focusRequester = focusFine,
-                nextFocusRequester = focusConcrete
+                nextFocusRequester = focusConcrete,
+                decimalDigits = 1
             )
-            
-            // Switch para RequestFocusOnStart
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(Res.string.settings_params_request_focus_label),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = stringResource(Res.string.settings_params_request_focus_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(
-                    checked = requestFocus,
-                    onCheckedChange = { scope.launch { repository.saveRequestFocusOnStart(it) } }
-                )
-            }
         }
 
         // --- SECCIÓN 5: DESPERDICIOS ---
@@ -341,7 +350,8 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                 defaultValue = Defaults.DEFAULT_WASTE_CONCRETE,
                 onSave = { nuevoValor -> scope.launch { repository.saveWaste("concrete", nuevoValor) } },
                 focusRequester = focusConcrete,
-                nextFocusRequester = focusMortar
+                nextFocusRequester = focusMortar,
+                decimalDigits = 1
             )
             EditPercentSetting(
                 label = stringResource(Res.string.settings_params_waste_mortar),
@@ -351,7 +361,8 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                     scope.launch { repository.saveWaste("mortar", nuevoValor) }
                 },
                 focusRequester = focusMortar,
-                nextFocusRequester = focusBrick
+                nextFocusRequester = focusBrick,
+                decimalDigits = 1
             )
             EditPercentSetting(
                 label = stringResource(Res.string.settings_params_waste_bricks),
@@ -361,7 +372,8 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                     scope.launch { repository.saveWaste("bricks", nuevoValor) }
                 },
                 focusRequester = focusBrick,
-                nextFocusRequester = focusPlaster
+                nextFocusRequester = focusPlaster,
+                decimalDigits = 1
             )
             EditPercentSetting(
                 label = stringResource(Res.string.settings_params_waste_plaster),
@@ -371,7 +383,8 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                     scope.launch { repository.saveWaste("plaster", nuevoValor) }
                 },
                 focusRequester = focusPlaster,
-                nextFocusRequester = focusIron
+                nextFocusRequester = focusIron,
+                decimalDigits = 1
             )
             EditPercentSetting(
                 label = stringResource(Res.string.settings_params_waste_iron_main),
@@ -381,7 +394,8 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                     scope.launch { repository.saveWaste("iron_main", nuevoValor) }
                 },
                 focusRequester = focusIron,
-                nextFocusRequester = focusStirrup
+                nextFocusRequester = focusStirrup,
+                decimalDigits = 1
             )
             EditPercentSetting(
                 label = stringResource(Res.string.settings_params_waste_iron_stirrup),
@@ -391,6 +405,17 @@ fun GlobalParamsSubScreen(repository: SettingsRepository, appSettings: AppSettin
                     scope.launch { repository.saveWaste("iron_stirrup", nuevoValor) }
                 },
                 focusRequester = focusStirrup,
+                nextFocusRequester = focusMesh,
+                decimalDigits = 1
+            )
+            EditPercentSetting(
+                label = stringResource(Res.string.settings_params_waste_iron_mesh),
+                value = wIronMesh,
+                defaultValue = Defaults.DEFAULT_WASTE_IRON_MESH,
+                onSave = { nuevoValor ->
+                    scope.launch { repository.saveWaste("iron_mesh", nuevoValor) }
+                },
+                focusRequester = focusMesh,
                 onDone = {}
             )
         }

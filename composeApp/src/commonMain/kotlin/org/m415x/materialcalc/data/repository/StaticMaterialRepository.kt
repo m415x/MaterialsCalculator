@@ -130,20 +130,22 @@ class StaticMaterialRepository : MaterialRepository {
      */
     private val brickDB = mapOf(
         // // --- Ladrillos Macizos ---
-        // Junta más gruesa (1.5 cm a 2.0 cm)
+        // Junta más gruesa a 2.0 cm
         BrickType.COMUN to BrickProps(
             id = BrickType.COMUN.name,
             width = 0.12,
             height = 0.05,
             length = 0.25,
-            gasketThickness = 0.015
+            gasketThickness = 0.02,
+            family = BrickFamily.SOLID_BRICK
         ),
         BrickType.LADRILLON to BrickProps(
             id = BrickType.LADRILLON.name,
             width = 0.18,
-            height = 0.05,
-            length = 0.25,
-            gasketThickness = 0.015
+            height = 0.07,
+            length = 0.29,
+            gasketThickness = 0.02,
+            family = BrickFamily.SOLID_BRICK
         ),
 
         // --- Cerámicos HUECOS (No Portantes) ---
@@ -153,21 +155,24 @@ class StaticMaterialRepository : MaterialRepository {
             width = 0.08,
             height = 0.18,
             length = 0.33,
-            gasketThickness = 0.015
+            gasketThickness = 0.015,
+            family = BrickFamily.NON_LOAD_BEARING_HOLLOW_BRICK
         ),
         BrickType.HUECO_12 to BrickProps(
             id = BrickType.HUECO_12.name,
             width = 0.12,
             height = 0.18,
             length = 0.33,
-            gasketThickness = 0.015
+            gasketThickness = 0.015,
+            family = BrickFamily.NON_LOAD_BEARING_HOLLOW_BRICK
         ),
         BrickType.HUECO_18 to BrickProps(
             id = BrickType.HUECO_18.name,
             width = 0.18,
             height = 0.18,
             length = 0.33,
-            gasketThickness = 0.015
+            gasketThickness = 0.015,
+            family = BrickFamily.NON_LOAD_BEARING_HOLLOW_BRICK
         ),
 
         // --- Cerámicos PORTANTES ---
@@ -177,14 +182,16 @@ class StaticMaterialRepository : MaterialRepository {
             width = 0.12,
             height = 0.19,
             length = 0.33,
-            gasketThickness = 0.012
+            gasketThickness = 0.015,
+            family = BrickFamily.LOAD_BEARING_HOLLOW_BRICK
         ),
         BrickType.PORTANTE_18 to BrickProps(
             id = BrickType.PORTANTE_18.name,
             width = 0.18,
             height = 0.19,
             length = 0.33,
-            gasketThickness = 0.012
+            gasketThickness = 0.015,
+            family = BrickFamily.LOAD_BEARING_HOLLOW_BRICK
         ),
 
         // --- Bloques de Hormigón ---
@@ -195,28 +202,32 @@ class StaticMaterialRepository : MaterialRepository {
             width = 0.1,
             height = 0.19,
             length = 0.39,
-            gasketThickness = 0.01
+            gasketThickness = 0.01,
+            family = BrickFamily.CONCRETE_BLOCK
         ),
         BrickType.BLOQUE_13 to BrickProps(
             id = BrickType.BLOQUE_13.name,
             width = 0.13,
             height = 0.19,
             length = 0.39,
-            gasketThickness = 0.01
+            gasketThickness = 0.01,
+            family = BrickFamily.CONCRETE_BLOCK
         ),
         BrickType.BLOQUE_15 to BrickProps(
             id = BrickType.BLOQUE_15.name,
             width = 0.15,
             height = 0.19,
             length = 0.39,
-            gasketThickness = 0.01
+            gasketThickness = 0.01,
+            family = BrickFamily.CONCRETE_BLOCK
         ),
         BrickType.BLOQUE_20 to BrickProps(
             id = BrickType.BLOQUE_20.name,
             width = 0.2,
             height = 0.19,
             length = 0.39,
-            gasketThickness = 0.01
+            gasketThickness = 0.01,
+            family = BrickFamily.CONCRETE_BLOCK
         )
     )
 

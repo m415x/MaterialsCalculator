@@ -21,6 +21,7 @@ package org.m415x.materialcalc.ui.common.utils
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import materialscalculator.composeapp.generated.resources.*
+import nl.jacobras.humanreadable.HumanReadable
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.domain.common.metersToCm
 import org.m415x.materialcalc.domain.model.*
@@ -100,6 +101,11 @@ fun rememberConcreteShareText(
         val bagQty = ceil(result.cementKg / result.cementBagKg.toDouble()).toInt()
         val bagStr = if (bagQty == 1) unitBag else unitBags
         val cementInBags = "$bagQty $bagStr"
+        val totalCost = materialCost + laborCost
+
+        val formattedMaterialCost = HumanReadable.number(materialCost.toLong())
+        val formattedLaborCost = HumanReadable.number(laborCost.toLong())
+        val formattedTotalCost = HumanReadable.number(totalCost.toLong())
 
         buildString {
             appendLine(titleStr)
@@ -128,13 +134,13 @@ fun rememberConcreteShareText(
                 appendLine()
             }
 
-            if (materialCost > 0 || laborCost > 0) {
-                appendLine(costTitleStr)
+            if (totalCost > 0) {
+                appendLine("*${costTitleStr.uppercase()}*")
                 appendLine("-------------------------")
-                if (materialCost > 0) appendLine("● *$costMaterialsStr:* $${materialCost.toInt()}")
-                if (laborCost > 0) appendLine("● *$costLaborStr:* $${laborCost.toInt()}")
+                if (materialCost > 0) appendLine("● *$costMaterialsStr:* $ ${formattedMaterialCost}")
+                if (laborCost > 0) appendLine("● *$costLaborStr:* $ ${formattedLaborCost}")
                 if (materialCost > 0 && laborCost > 0) {
-                    appendLine("► *$costTotalStr: $${(materialCost + laborCost).toInt()}*")
+                    appendLine("► *$costTotalStr: $ ${formattedTotalCost}*")
                 }
                 appendLine()
             }
@@ -239,6 +245,11 @@ fun rememberWallShareText(
 
         val limeBags = if (result.limeKg > 0) ceil(result.limeKg / result.limeBagKg.toDouble()).toInt() else 0
         val limeBagStr = if (limeBags == 1) unitBag else unitBags
+        val totalCost = materialCost + laborCost
+
+        val formattedMaterialCost = HumanReadable.number(materialCost.toLong())
+        val formattedLaborCost = HumanReadable.number(laborCost.toLong())
+        val formattedTotalCost = HumanReadable.number(totalCost.toLong())
 
         buildString {
             appendLine(titleStr)
@@ -277,13 +288,13 @@ fun rememberWallShareText(
                 appendLine()
             }
 
-            if (materialCost > 0 || laborCost > 0) {
-                appendLine(costTitleStr)
+            if (totalCost > 0) {
+                appendLine("*${costTitleStr.uppercase()}*")
                 appendLine("-------------------------")
-                if (materialCost > 0) appendLine("● *$costMaterialsStr:* $${materialCost.toInt()}")
-                if (laborCost > 0) appendLine("● *$costLaborStr:* $${laborCost.toInt()}")
+                if (materialCost > 0) appendLine("● *$costMaterialsStr:* $ ${formattedMaterialCost}")
+                if (laborCost > 0) appendLine("● *$costLaborStr:* $ ${formattedLaborCost}")
                 if (materialCost > 0 && laborCost > 0) {
-                    appendLine("► *$costTotalStr: $${(materialCost + laborCost).toInt()}*")
+                    appendLine("► *$costTotalStr: $ ${formattedTotalCost}*")
                 }
                 appendLine()
             }
@@ -366,6 +377,11 @@ fun rememberStructureShareText(
 
         val bagQty = ceil(result.cementKg / result.cementBagKg.toDouble()).toInt()
         val bagStr = if (bagQty == 1) unitBag else unitBags
+        val totalCost = materialCost + laborCost
+
+        val formattedMaterialCost = HumanReadable.number(materialCost.toLong())
+        val formattedLaborCost = HumanReadable.number(laborCost.toLong())
+        val formattedTotalCost = HumanReadable.number(totalCost.toLong())
 
         buildString {
             appendLine(titleStr)
@@ -400,13 +416,13 @@ fun rememberStructureShareText(
             appendLine("    └ $buyStr ${result.stirrupIronAmount} $bars12mStr")
             appendLine()
 
-            if (materialCost > 0 || laborCost > 0) {
-                appendLine(costTitleStr)
+            if (totalCost > 0) {
+                appendLine("*${costTitleStr.uppercase()}*")
                 appendLine("-------------------------")
-                if (materialCost > 0) appendLine("● *$costMaterialsStr:* $${materialCost.toInt()}")
-                if (laborCost > 0) appendLine("● *$costLaborStr:* $${laborCost.toInt()}")
+                if (materialCost > 0) appendLine("● *$costMaterialsStr:* $ ${formattedMaterialCost}")
+                if (laborCost > 0) appendLine("● *$costLaborStr:* $ ${formattedLaborCost}")
                 if (materialCost > 0 && laborCost > 0) {
-                    appendLine("► *$costTotalStr: $${(materialCost + laborCost).toInt()}*")
+                    appendLine("► *$costTotalStr: $ ${formattedTotalCost}*")
                 }
                 appendLine()
             }
@@ -427,6 +443,8 @@ fun rememberSlabShareText(
     length: Double,
     thickness: Double,
     concreteType: ConcreteType,
+    meshWidth: Double,
+    meshLength: Double,
     appName: String,
     materialCost: Double = 0.0,
     laborCost: Double = 0.0
@@ -449,7 +467,11 @@ fun rememberSlabShareText(
     val ironSectionStr = stringResource(Res.string.share_structure_iron_section)
     val meshSectionStr = stringResource(Res.string.share_slab_mesh_section)
     val meshSuggestedStr = stringResource(Res.string.share_slab_mesh_suggested)
-    val meshPanelsStr = stringResource(Res.string.share_slab_mesh_panels)
+    val meshPanelsStr = stringResource(
+        Res.string.share_slab_mesh_panels,
+        meshWidth,
+        meshLength
+    )
     val ironXStr = stringResource(Res.string.share_slab_iron_x)
     val ironYStr = stringResource(Res.string.share_slab_iron_y)
     val rodsStr = stringResource(Res.string.share_structure_rods)
@@ -475,6 +497,11 @@ fun rememberSlabShareText(
     return remember(result, width, length, thickness, concreteType, appName, materialCost, laborCost) {
         val bagQty = ceil(result.cementKg / result.cementBagKg.toDouble()).toInt()
         val bagStr = if (bagQty == 1) unitBag else unitBags
+        val totalCost = materialCost + laborCost
+
+        val formattedMaterialCost = HumanReadable.number(materialCost.toLong())
+        val formattedLaborCost = HumanReadable.number(laborCost.toLong())
+        val formattedTotalCost = HumanReadable.number(totalCost.toLong())
 
         buildString {
             appendLine(titleStr)
@@ -519,13 +546,13 @@ fun rememberSlabShareText(
 
             appendLine()
 
-            if (materialCost > 0 || laborCost > 0) {
-                appendLine(costTitleStr)
+            if (totalCost > 0) {
+                appendLine("*${costTitleStr.uppercase()}*")
                 appendLine("-------------------------")
-                if (materialCost > 0) appendLine("● *$costMaterialsStr:* $${materialCost.toInt()}")
-                if (laborCost > 0) appendLine("● *$costLaborStr:* $${laborCost.toInt()}")
+                if (materialCost > 0) appendLine("● *$costMaterialsStr:* $ ${formattedMaterialCost}")
+                if (laborCost > 0) appendLine("● *$costLaborStr:* $ ${formattedLaborCost}")
                 if (materialCost > 0 && laborCost > 0) {
-                    appendLine("► *$costTotalStr: $${(materialCost + laborCost).toInt()}*")
+                    appendLine("► *$costTotalStr: $ ${formattedTotalCost}*")
                 }
                 appendLine()
             }
@@ -614,6 +641,11 @@ fun rememberPlasterShareText(
 
         val aerialLimeBags = ceil(result.fineLimeKg / result.limeBagKg.toDouble()).toInt()
         val aerialLimeBagStr = if (aerialLimeBags == 1) unitBag else unitBags
+        val totalCost = materialCost + laborCost
+
+        val formattedMaterialCost = HumanReadable.number(materialCost.toLong())
+        val formattedLaborCost = HumanReadable.number(laborCost.toLong())
+        val formattedTotalCost = HumanReadable.number(totalCost.toLong())
 
         buildString {
             appendLine(titleStr)
@@ -659,13 +691,13 @@ fun rememberPlasterShareText(
                 appendLine()
             }
 
-            if (materialCost > 0 || laborCost > 0) {
-                appendLine(costTitleStr)
+            if (totalCost > 0) {
+                appendLine("*${costTitleStr.uppercase()}*")
                 appendLine("-------------------------")
-                if (materialCost > 0) appendLine("● *$costMaterialsStr:* $${materialCost.toInt()}")
-                if (laborCost > 0) appendLine("● *$costLaborStr:* $${laborCost.toInt()}")
+                if (materialCost > 0) appendLine("● *$costMaterialsStr:* $ ${formattedMaterialCost}")
+                if (laborCost > 0) appendLine("● *$costLaborStr:* $ ${formattedLaborCost}")
                 if (materialCost > 0 && laborCost > 0) {
-                    appendLine("► *$costTotalStr: $${(materialCost + laborCost).toInt()}*")
+                    appendLine("► *$costTotalStr: $ ${formattedTotalCost}*")
                 }
                 appendLine()
             }

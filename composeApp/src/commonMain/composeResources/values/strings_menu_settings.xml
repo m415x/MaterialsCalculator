@@ -70,7 +70,8 @@
     <string name="settings_appearance_contrast_info">El modo de alto contraste ayuda a mejorar la visibilidad bajo la luz directa del sol.</string>
 
     <!-- SETTINGS: Global Params -->
-    <string name="settings_params_default_title">Materiales Predeterminados</string>
+    <string name="settings_params_general_settings_title">Configuraciones Generales</string>
+    <string name="settings_params_default_materials_title">Materiales Predeterminados</string>
     <string name="settings_params_concrete_gen_label">Hormigón General (Pisos/Losas)</string>
     <string name="settings_params_concrete_str_label">Hormigón Estructural (Vigas/Columnas)</string>
     <string name="settings_params_plaster_rough_label">Mezcla Revoque Grueso</string>
@@ -85,7 +86,7 @@
     <string name="settings_params_technical_title">Configuración Técnica</string>
     <string name="settings_params_fine_thickness_label">Espesor Revoque Fino</string>
     <string name="settings_params_request_focus_label">Foco Automático</string>
-    <string name="settings_params_request_focus_desc">Activa el teclado al abrir una pantalla</string>
+    <string name="settings_params_request_focus_desc">Activa el teclado al abrir una calculadora</string>
     <string name="settings_params_waste_title">Desperdicios / Márgenes (%)</string>
     <string name="settings_params_waste_desc">Porcentaje extra que se sumará al cálculo para cubrir roturas y pérdidas.</string>
     <string name="settings_params_waste_concrete">Hormigón</string>
@@ -94,6 +95,7 @@
     <string name="settings_params_waste_plaster">Revoques</string>
     <string name="settings_params_waste_iron_main">Hierro Principal</string>
     <string name="settings_params_waste_iron_stirrup">Estribos</string>
+    <string name="settings_params_waste_iron_mesh">Mallas Electrosoldadas</string>
     <string name="settings_params_reset_desc">Restablecer</string>
 
     <!-- SETTINGS: Materials DB -->
@@ -117,7 +119,7 @@
     <string name="settings_db_irons_desc">Gestiona los hierros disponibles en la calculadora.</string>
     <string name="settings_db_iron_new">Nuevo Hierro</string>
     <string name="settings_db_iron_edit">Editar Hierro</string>
-    <string name="settings_db_iron_name">Nombre del hierro</string>
+    <string name="settings_db_iron_name">Nombre</string>
     <string name="settings_db_iron_diameter">Diámetro</string>
     <string name="settings_db_iron_weight">Peso/Metro</string>
     <string name="settings_db_recipes_desc">Gestiona las mezclas disponibles en la calculadora.</string>
@@ -151,7 +153,7 @@
     <string name="settings_prices_labor_desc">Descripción Trabajo</string>
     <string name="settings_prices_delete_title">Eliminar Precio</string>
     <string name="settings_prices_delete_msg">¿Estás seguro de eliminar este precio?</string>
-    <string name="settings_prices_result_title">COSTOS ESTIMADOS</string>
+    <string name="settings_prices_result_title">Costos Estimados</string>
     <string name="settings_prices_result_materials">Materiales</string>
     <string name="settings_prices_result_labor">Mano de Obra</string>
     <string name="settings_prices_result_total">Total Estimado</string>

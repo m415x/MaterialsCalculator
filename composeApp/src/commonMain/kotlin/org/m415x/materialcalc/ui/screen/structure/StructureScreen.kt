@@ -37,13 +37,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
 import org.m415x.materialcalc.domain.common.toPresentationUnit
 import org.m415x.materialcalc.domain.model.*
+import org.m415x.materialcalc.domain.registry.SimaMeshRegistry
 import org.m415x.materialcalc.domain.usecase.CalculateStructureUseCase
 import org.m415x.materialcalc.ui.common.display.*
 import org.m415x.materialcalc.ui.common.inputs.*
@@ -155,7 +155,12 @@ fun StructureScreen(appSettings: AppSettingsState, repository: SettingsRepositor
 
             when (state.selectedStructureType) {
                 StructureType.SLAB -> {
-                    SlabInputs(state = state, requestFocus = appSettings.requestFocusOnStart)
+                    SlabInputs(
+                        state = state,
+                        requestFocus = appSettings.requestFocusOnStart,
+                        customMeshes = appSettings.customIrons, // Pasamos las mallas custom
+                        hiddenMeshIds = appSettings.hiddenIronIds
+                    )
                 }
 
                 StructureType.BEAM, StructureType.COLUMN -> {
@@ -170,9 +175,23 @@ fun StructureScreen(appSettings: AppSettingsState, repository: SettingsRepositor
     }
 
     if (state.showResultSheet) {
-        if (state.selectedStructureType == StructureType.SLAB && state.slabResult != null) {
+        val currentSlabResult = state.slabResult
+        val currentStructureResult = state.result
+
+        if (state.selectedStructureType == StructureType.SLAB && currentSlabResult != null) {
+            // Obtenemos las dimensiones de la malla seleccionada para el texto de compartir
+            val meshWidth = if (state.isManualRebar || state.selectedMeshId.isEmpty()) 0.0 else {
+                // Buscamos primero en custom, luego en estándar
+                val customMesh = appSettings.customIrons.find { it.id == state.selectedMeshId }
+                customMesh?.panelWidth ?: SimaMeshRegistry.getMeshById(state.selectedMeshId).panelWidthM
+            }
+            val meshLength = if (state.isManualRebar || state.selectedMeshId.isEmpty()) 0.0 else {
+                val customMesh = appSettings.customIrons.find { it.id == state.selectedMeshId }
+                customMesh?.panelLength ?: SimaMeshRegistry.getMeshById(state.selectedMeshId).panelLengthM
+            }
+
             val slabShareText = rememberSlabShareText(
-                result = state.slabResult!!,
+                result = currentSlabResult,
                 width = state.slabWidth.toSafeDoubleOrNull() ?: 0.0,
                 length = state.slabLength.toSafeDoubleOrNull() ?: 0.0,
                 thickness = state.slabThickness.toSafeDoubleOrNull() ?: 0.0,
@@ -181,22 +200,24 @@ fun StructureScreen(appSettings: AppSettingsState, repository: SettingsRepositor
                 } catch (e: Exception) {
                     ConcreteType.H21
                 },
+                meshWidth = meshWidth,
+                meshLength = meshLength,
                 appName = appName,
-                materialCost = state.slabResult!!.materialCost,
-                laborCost = state.slabResult!!.laborCost
+                materialCost = currentSlabResult.materialCost,
+                laborCost = currentSlabResult.laborCost
             )
 
             AppResultBottomSheet(
                 onDismissRequest = { state.showResultSheet = false },
-                onSave = { /* ... */ },
+                onSave = { /* TODO */ },
                 onEdit = { state.showResultSheet = false },
                 onShare = { shareManager.shareText(slabShareText) }
             ) {
-                SlabResultContent(state.slabResult!!)
+                SlabResultContent(currentSlabResult, appSettings.customIrons)
             }
-        } else if (state.result != null) {
+        } else if (currentStructureResult != null) {
             val shareText = rememberStructureShareText(
-                result = state.result!!,
+                result = currentStructureResult,
                 length = state.length.toSafeDoubleOrNull() ?: 0.0,
                 sideA = state.sideA.toSafeDoubleOrNull() ?: 0.0,
                 sideB = state.sideB.toSafeDoubleOrNull() ?: 0.0,
@@ -208,17 +229,17 @@ fun StructureScreen(appSettings: AppSettingsState, repository: SettingsRepositor
                 },
                 stirrupSpacingCm = state.stirrupSpacingM.toSafeDoubleOrNull()?.times(100) ?: 20.0,
                 appName = appName,
-                materialCost = state.result!!.materialCost,
-                laborCost = state.result!!.laborCost
+                materialCost = currentStructureResult.materialCost,
+                laborCost = currentStructureResult.laborCost
             )
 
             AppResultBottomSheet(
                 onDismissRequest = { state.showResultSheet = false },
-                onSave = { /* ... */ },
+                onSave = { /* TODO */ },
                 onEdit = { state.showResultSheet = false },
                 onShare = { shareManager.shareText(shareText) }
             ) {
-                StructureResultContent(state.result!!)
+                StructureResultContent(currentStructureResult)
             }
         }
     }
@@ -433,7 +454,12 @@ fun BeamColumnInputs(state: StructureScreenState, requestFocus: Boolean) {
 }
 
 @Composable
-fun SlabInputs(state: StructureScreenState, requestFocus: Boolean) {
+fun SlabInputs(
+    state: StructureScreenState,
+    requestFocus: Boolean,
+    customMeshes: List<CustomIron>,
+    hiddenMeshIds: Set<String>
+) {
     val focusWidth = remember { FocusRequester() }
     val focusLength = remember { FocusRequester() }
     val focusThickness = remember { FocusRequester() }
@@ -492,7 +518,9 @@ fun SlabInputs(state: StructureScreenState, requestFocus: Boolean) {
                 selectedMeshId = state.selectedMeshId,
                 onMeshSelected = { state.selectedMeshId = it },
                 isManualRebar = state.isManualRebar,
-                onModeToggle = { state.isManualRebar = it }
+                onModeToggle = { state.isManualRebar = it },
+                customMeshes = customMeshes, // Pasamos las mallas custom
+                hiddenMeshIds = hiddenMeshIds
             )
             if (state.isManualRebar) {
                 // Configuración Eje X
@@ -508,10 +536,7 @@ fun SlabInputs(state: StructureScreenState, requestFocus: Boolean) {
                     CmInput(
                         value = state.separationX,
                         onValueChange = { state.separationX = it },
-                        label = stringResource(
-                            Res.string.structure_label_sep_x,
-                            stringResource(Res.string.unit_meters)
-                        ),
+                        label = "${stringResource(Res.string.structure_label_sep_x)} (${stringResource(Res.string.unit_meters)})",
                         errorText = state.separationXError,
                         warningText = state.separationXWarning, // Conectamos el warning
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
@@ -534,10 +559,7 @@ fun SlabInputs(state: StructureScreenState, requestFocus: Boolean) {
                     CmInput(
                         value = state.separationY,
                         onValueChange = { state.separationY = it },
-                        label = stringResource(
-                            Res.string.structure_label_sep_y,
-                            stringResource(Res.string.unit_meters)
-                        ),
+                        label = "${stringResource(Res.string.structure_label_sep_y)} (${stringResource(Res.string.unit_meters)})",
                         errorText = state.separationYError,
                         warningText = state.separationYWarning, // Conectamos el warning
                         suffix = { Text(stringResource(Res.string.unit_meters)) },
@@ -713,7 +735,6 @@ fun StructureResultContent(res: StructureResult) {
                     unitKg
                 )
             }",
-            titleFontSize = 16.sp,
             spacer = Modifier.height(0.dp)
         )
 
@@ -744,7 +765,6 @@ fun StructureResultContent(res: StructureResult) {
                     unitKg
                 )
             }",
-            titleFontSize = 16.sp,
             spacer = Modifier.height(0.dp)
         )
 
@@ -772,15 +792,16 @@ fun StructureResultContent(res: StructureResult) {
 }
 
 @Composable
-fun SlabResultContent(res: SlabResult) {
+fun SlabResultContent(res: SlabResult, customMeshes: List<CustomIron> = emptyList()) {
     val unitM3 = stringResource(Res.string.unit_cubic_meters)
+    val unitM2 = stringResource(Res.string.unit_square_meters)
     val unitKg = stringResource(Res.string.unit_kilograms)
     val unitLt = stringResource(Res.string.unit_liters)
     val unitM = stringResource(Res.string.unit_meters)
     val unitU = stringResource(Res.string.unit_units)
     val unitCm = stringResource(Res.string.unit_centimeters)
 
-    val spacingX = calculateSpacingCm(res.lengthX, res.countX)
+    val spacingX = calculateSpacingCm(res.widthX, res.countX)
     val spacingY = calculateSpacingCm(res.lengthY, res.countY)
 
     // Sección Hormigón
@@ -839,17 +860,42 @@ fun SlabResultContent(res: SlabResult) {
 
     // Sección Hierro
     if (res.suggestedMesh != null) {
+        val meshName = remember(res.suggestedMesh) {
+            val customMesh = customMeshes.find { it.id == res.suggestedMesh.lowercase() }
+            customMesh?.name ?: SimaMeshRegistry.getMeshById(res.suggestedMesh.lowercase()).name
+        }
+        val meshWith = remember(res.suggestedMesh) {
+            val customMesh = customMeshes.find { it.id == res.suggestedMesh.lowercase() }
+            customMesh?.panelWidth ?: SimaMeshRegistry.getMeshById(res.suggestedMesh.lowercase()).panelWidthM
+        }
+        val meshLength = remember(res.suggestedMesh) {
+            val customMesh = customMeshes.find { it.id == res.suggestedMesh.lowercase() }
+            customMesh?.panelLength ?: SimaMeshRegistry.getMeshById(res.suggestedMesh.lowercase()).panelLengthM
+        }
+
         ResultSection(
-            title = stringResource(Res.string.structure_result_mesh),
+            title = stringResource(
+                Res.string.structure_result_mesh,
+                (res.widthX * res.lengthY).roundToDecimals(2),
+                unitM2
+            ),
+            subTitle = stringResource(
+                Res.string.structure_result_mesh_waste_included,
+                (res.percentageIronWaste * 100).toInt()
+            ),
         ) {
             ResultRow(
                 label = stringResource(Res.string.structure_result_mesh_type),
-                value = res.suggestedMesh
+                value = meshName // Usamos el nombre legible
             )
 
             if (res.meshPanelsNeeded != null) {
                 ResultRow(
-                    label = stringResource(Res.string.structure_result_mesh_panels),
+                    label = stringResource(
+                        Res.string.structure_result_mesh_panels,
+                        meshWith.roundToDecimals(1),
+                        meshLength.roundToDecimals(1)
+                    ),
                     value = stringResource(
                         Res.string.label_result_unit,
                         res.meshPanelsNeeded,
@@ -885,7 +931,6 @@ fun SlabResultContent(res: SlabResult) {
                             unitKg
                         )
                     }",
-                    titleFontSize = 16.sp,
                     spacer = Modifier.height(0.dp)
                 )
 
@@ -896,10 +941,10 @@ fun SlabResultContent(res: SlabResult) {
                     ),
                     subLabel = stringResource(
                         Res.string.structure_result_iron_meters,
-                        (res.lengthX * res.countX).roundToDecimals(1),
+                        (res.widthX * res.countX).roundToDecimals(1),
                         unitM
                     ),
-                    value = ((res.lengthX * res.countX) * (1 + res.percentageIronWaste)).toPresentationUnit(
+                    value = ((res.widthX * res.countX) * (1 + res.percentageIronWaste)).toPresentationUnit(
                         res.commercialBarLength,
                         Res.string.unit_bar,
                         Res.string.unit_bars
@@ -921,7 +966,6 @@ fun SlabResultContent(res: SlabResult) {
                             unitKg
                         )
                     }",
-                    titleFontSize = 16.sp,
                     spacer = Modifier.height(0.dp)
                 )
 
@@ -952,12 +996,12 @@ fun SlabResultContent(res: SlabResult) {
                     ),
                     subLabel = stringResource(
                         Res.string.structure_result_iron_meters,
-                        ((res.lengthX * res.countX + res.lengthY * res.countY) * (1 + res.percentageIronWaste)).roundToDecimals(
+                        ((res.widthX * res.countX + res.lengthY * res.countY) * (1 + res.percentageIronWaste)).roundToDecimals(
                             1
                         ),
                         unitM
                     ),
-                    value = ((res.lengthX * res.countX + res.lengthY * res.countY) * (1 + res.percentageIronWaste)).toPresentationUnit(
+                    value = ((res.widthX * res.countX + res.lengthY * res.countY) * (1 + res.percentageIronWaste)).toPresentationUnit(
                         res.commercialBarLength,
                         Res.string.unit_bar,
                         Res.string.unit_bars
@@ -984,7 +1028,7 @@ fun SlabResultContent(res: SlabResult) {
                         Res.string.structure_result_detail_axis,
                         "X",
                         res.countX,
-                        res.lengthX.roundToDecimals(2),
+                        res.widthX.roundToDecimals(2),
                         unitM,
                         spacingX,
                         unitCm
@@ -1005,6 +1049,7 @@ fun SlabResultContent(res: SlabResult) {
                 )
             }
         }
+        Spacer(modifier = Modifier.height(24.dp))
     }
 
     PriceResultSection(res.materialCost, res.laborCost)

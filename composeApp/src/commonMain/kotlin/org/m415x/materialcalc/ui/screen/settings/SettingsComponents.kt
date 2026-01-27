@@ -104,17 +104,6 @@ fun SettingsMainMenu(onNavigate: (SettingsSection) -> Unit) {
                 onClick = { onNavigate(SettingsSection.PRICES) }
             )
         }
-        /*
-        item {
-            SettingsCategoryTitle("Datos")
-            SettingsMenuItem(
-                title = "Sincronización Nube",
-                subtitle = "Guardar mis datos (Próximamente)",
-                icon = Icons.Default.CloudUpload,
-                onClick = { /* TODO */ }
-            )
-        }
-        */
         item {
             SettingsCategoryTitle(labelInformation)
             SettingsMenuItem(
@@ -255,7 +244,8 @@ fun EditDoubleSetting(
     onSave: (Double) -> Unit,
     focusRequester: FocusRequester? = null,
     nextFocusRequester: FocusRequester? = null,
-    onDone: (() -> Unit)? = null
+    onDone: (() -> Unit)? = null,
+    decimalDigits: Int = 2
 ) {
     var text by remember(value) { mutableStateOf(value.toString()) }
 
@@ -268,17 +258,19 @@ fun EditDoubleSetting(
             text = defaultValue.toString()
         }
     ) {
-        NumericInput(
+        CmInput(
             value = text,
-            onValueChange = {
-                text = it
-                it.toDoubleOrNull()?.let { num -> onSave(num) }
+            onValueChange = { newValue ->
+                text = newValue
+                onSave(newValue.toSafeDoubleOrNull() ?: 0.0)
             },
             label = "",
             modifier = Modifier.width(150.dp),
             suffix = { suffix?.let { Text(it, style = MaterialTheme.typography.labelSmall) } },
             focusRequester = focusRequester,
-            nextFocusRequester = nextFocusRequester
+            nextFocusRequester = nextFocusRequester,
+            onDone = onDone,
+            decimalDigits = decimalDigits
         )
     }
 }
@@ -292,7 +284,8 @@ fun EditPercentSetting(
     onSave: (Double) -> Unit,
     focusRequester: FocusRequester? = null,
     nextFocusRequester: FocusRequester? = null,
-    onDone: (() -> Unit)? = null
+    onDone: (() -> Unit)? = null,
+    decimalDigits: Int = 1
 ) {
     // 1. Usamos el estado local para la edición fluida
     var text by remember(value) { mutableStateOf(value.toString()) }
@@ -308,22 +301,19 @@ fun EditPercentSetting(
             text = defaultValue.toString()
         }
     ) {
-        // 3. El Input se inyecta en el slot 'inputContent'
-        NumericInput(
+        CmInput(
             value = text,
-            onValueChange = { newText ->
-                text = newText
-                // Solo guardamos si es un número válido
-                newText.toDoubleOrNull()?.let { num -> onSave(num) }
+            onValueChange = { newValue ->
+                text = newValue
+                onSave(newValue.toSafeDoubleOrNull() ?: 0.0)
             },
-            label = "", // Sin label interno porque usamos el del Base
-            modifier = Modifier.width(150.dp), // Ancho consistente con los otros settings
-            suffix = {
-                Text(text = "%", style = MaterialTheme.typography.labelSmall)
-            },
+            label = "",
+            modifier = Modifier.width(150.dp),
+            suffix = { Text(text = "%", style = MaterialTheme.typography.labelSmall) },
             focusRequester = focusRequester,
             nextFocusRequester = nextFocusRequester,
-            onDone = onDone
+            onDone = onDone,
+            decimalDigits = decimalDigits
         )
     }
 }
@@ -341,7 +331,7 @@ fun EditPriceSetting(
 ) {
     // Usamos una función de formateo que imite lo que hace el CmInput
     val formattedInitialValue = remember(value) {
-        if (value == 0.0) "0.0"
+        if (value == 0.0) ""
         else {
             // Convertimos el Double (0.5) a Long (50) para evitar problemas de precisión
             val cents = (value * 100).toLong()

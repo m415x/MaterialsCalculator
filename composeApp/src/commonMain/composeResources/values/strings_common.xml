@@ -82,7 +82,12 @@
     <string name="abbr_water_cement_ratio">A/C</string>
 
     <!-- MESSAGES -->
-    <string name="message_error_validation_input">Verifica los valores ingresados.</string>
+    <string name="message_error_invalid_value">Valor inválido</string>
+    <string name="message_error_validation_input">**Error:** Verifica los valores ingresados.</string>
+    <string name="message_error_concrete_selected">**Error:** Seleccione un tipo de hormigón</string>
+    <string name="message_error_brick_selected">**Error:** Seleccione un tipo de ladrillo</string>
+    <string name="message_error_iron_selected">**Error:** Seleccione un tipo de hierro</string>
+    <string name="message_error_mesh_selected">**Error:** Seleccione un tipo de malla</string>
     <string name="message_error_unknown">"Error desconocido"</string>
 
     <!-- MATERIALS -->

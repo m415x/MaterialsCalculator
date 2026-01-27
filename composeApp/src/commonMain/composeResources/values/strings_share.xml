@@ -66,8 +66,8 @@
     <!-- SHARE: SLAB -->
     <string name="share_slab_title">*CÁLCULO DE LOSA*</string>
     <string name="share_slab_mesh_section">*MALLA SIMA*</string>
-    <string name="share_slab_mesh_suggested">Sugerida:</string>
-    <string name="share_slab_mesh_panels">Paneles (2.4x6 m):</string>
+    <string name="share_slab_mesh_suggested">Tipo</string>
+    <string name="share_slab_mesh_panels">Paneles (%1$sx%2$s m):</string>
     <string name="share_slab_iron_x">Dirección X:</string>
     <string name="share_slab_iron_y">Dirección Y:</string>
 

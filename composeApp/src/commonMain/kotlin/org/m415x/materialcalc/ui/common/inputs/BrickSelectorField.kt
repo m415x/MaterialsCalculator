@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import materialscalculator.composeapp.generated.resources.Res
 import materialscalculator.composeapp.generated.resources.label_custom
 import materialscalculator.composeapp.generated.resources.label_uses
+import materialscalculator.composeapp.generated.resources.wall_label_type
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.domain.model.BrickProps
 import org.m415x.materialcalc.domain.model.MortarDosing
@@ -52,7 +53,7 @@ data class BrickOptionUi(
 
 @Composable
 fun BrickSelectorField(
-    label: String = "Tipo de Ladrillo",
+    label: String = stringResource(Res.string.wall_label_type),
     options: List<BrickOptionUi>,
     selectedOption: BrickOptionUi?,
     onOptionSelected: (BrickOptionUi) -> Unit,
@@ -60,7 +61,7 @@ fun BrickSelectorField(
 ) {
     AppDropdown(
         label = label,
-        selectedText = selectedOption?.label?.asString() ?: "Cargando...",
+        selectedText = selectedOption?.label?.asString() ?: "",
         options = options,
         onSelect = onOptionSelected,
         modifier = modifier

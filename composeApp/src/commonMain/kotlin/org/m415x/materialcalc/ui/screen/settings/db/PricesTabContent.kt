@@ -31,6 +31,7 @@ import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.domain.model.*
+import org.m415x.materialcalc.domain.registry.SimaMeshRegistry
 import org.m415x.materialcalc.ui.common.dialogs.AppDialog
 import org.m415x.materialcalc.ui.common.inputs.AppInput
 import org.m415x.materialcalc.ui.common.inputs.CmInput
@@ -39,6 +40,7 @@ import org.m415x.materialcalc.ui.common.utils.toSafeDoubleOrNull
 import org.m415x.materialcalc.ui.screen.settings.EditPriceSetting
 import org.m415x.materialcalc.ui.screen.settings.SettingsAccordion
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 // Clase auxiliar para definir los materiales básicos con sus propiedades
 data class BasicMaterial(
@@ -52,9 +54,17 @@ data class BasicMaterial(
 fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsState) {
     val scope = rememberCoroutineScope()
     val materialPrices by repository.materialPrices.collectAsState(initial = emptyList())
+    val customBricks by repository.customBricks.collectAsState(initial = emptyList())
+    val hiddenBrickIds by repository.hiddenBrickIds.collectAsState(initial = emptySet())
+    val customIrons by repository.customIrons.collectAsState(initial = emptyList())
+    val hiddenIronIds by repository.hiddenIronIds.collectAsState(initial = emptySet())
     val laborPrices by repository.laborPrices.collectAsState(initial = emptyList())
 
     var selectedTab by remember { mutableStateOf(0) } // 0: Materiales, 1: Mano de Obra
+
+    // Estado para el diálogo de "Nuevo Item Personalizado" (Solo para la categoría "Otros")
+    var showNewItemDialog by remember { mutableStateOf(false) }
+    var newItemIsLabor by remember { mutableStateOf(false) }
 
     // --- PRE-RESOLUCIÓN DE STRINGS ---
     val unitUnit = MaterialUnits.UNIT.asString()
@@ -91,8 +101,6 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
         )
     }
 
-    val customBricks by repository.customBricks.collectAsState(initial = emptyList())
-    val hiddenBrickIds by repository.hiddenBrickIds.collectAsState(initial = emptySet())
     val allBricks = remember(customBricks, hiddenBrickIds) {
         val list = mutableListOf<Pair<String, TextSource>>()
         BrickType.entries.forEach {
@@ -102,15 +110,27 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
         list
     }
 
-    val customIrons by repository.customIrons.collectAsState(initial = emptyList())
-    val hiddenIronIds by repository.hiddenIronIds.collectAsState(initial = emptySet())
     val allIrons = remember(customIrons, hiddenIronIds) {
         val list = mutableListOf<Pair<String, TextSource>>()
         IronDiameter.entries.forEach {
             if (it.name !in hiddenIronIds) list.add(it.name to TextSource.Raw("Ø ${it.milimeters} mm"))
         }
-        customIrons.forEach { list.add(it.id to TextSource.Raw(it.name)) }
+        // Filtramos solo los que NO son mallas
+        customIrons.filter { !it.isMesh }.forEach { list.add(it.id to TextSource.Raw(it.name)) }
         list
+    }
+
+    // Filtramos las mallas para mostrarlas en su propia sección
+    // AHORA INCLUIMOS LAS MALLAS FACTORY (SimaMeshRegistry) Y FILTRAMOS LAS OCULTAS
+    val allMeshes = remember(customIrons, hiddenIronIds) {
+        val factoryMeshes = SimaMeshRegistry.standardMeshes
+            .filter { it.id !in hiddenIronIds } // Filtramos las ocultas
+            .map { it.id to TextSource.Raw(it.name) }
+
+        val customMeshes = customIrons.filter { it.isMesh }.map {
+            it.id to TextSource.Raw(it.name)
+        }
+        factoryMeshes + customMeshes
     }
 
     val laborConcepts = listOf(
@@ -192,58 +212,95 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                     }
 
                     // 2. LADRILLOS
-                    item {
-                        SettingsAccordion(title = stringResource(Res.string.settings_prices_cat_bricks)) {
-                            val focusRequesters = remember(allBricks.size) { List(allBricks.size) { FocusRequester() } }
+                    if (allBricks.isNotEmpty()) {
+                        item {
+                            SettingsAccordion(title = stringResource(Res.string.settings_prices_cat_bricks)) {
+                                val focusRequesters =
+                                    remember(allBricks.size) { List(allBricks.size) { FocusRequester() } }
 
-                            allBricks.forEachIndexed { index, (id, nameSource) ->
-                                val name = nameSource.asString()
-                                val currentPrice = materialPrices.find { it.id == id }?.price ?: 0.0
+                                allBricks.forEachIndexed { index, (id, nameSource) ->
+                                    val name = nameSource.asString()
+                                    val currentPrice = materialPrices.find { it.id == id }?.price ?: 0.0
 
-                                EditPriceSetting(
-                                    label = name,
-                                    value = currentPrice,
-                                    unit = unitUnit,
-                                    onSave = { newPrice ->
-                                        scope.launch {
-                                            repository.saveMaterialPrice(
-                                                MaterialPrice(id, name, unitUnit, newPrice)
-                                            )
-                                        }
-                                    },
-                                    focusRequester = focusRequesters[index],
-                                    nextFocusRequester = if (index < focusRequesters.lastIndex) focusRequesters[index + 1] else null
-                                )
+                                    EditPriceSetting(
+                                        label = name,
+                                        value = currentPrice,
+                                        unit = unitUnit,
+                                        onSave = { newPrice ->
+                                            scope.launch {
+                                                repository.saveMaterialPrice(
+                                                    MaterialPrice(id, name, unitUnit, newPrice)
+                                                )
+                                            }
+                                        },
+                                        focusRequester = focusRequesters[index],
+                                        nextFocusRequester = if (index < focusRequesters.lastIndex) focusRequesters[index + 1] else null
+                                    )
+                                }
                             }
                         }
                     }
 
                     // 3. HIERROS
-                    item {
-                        SettingsAccordion(title = stringResource(Res.string.settings_prices_cat_irons)) {
-                            val focusRequesters = remember(allIrons.size) { List(allIrons.size) { FocusRequester() } }
+                    if (allIrons.isNotEmpty()) {
+                        item {
+                            SettingsAccordion(title = stringResource(Res.string.settings_prices_cat_irons)) {
+                                val focusRequesters =
+                                    remember(allIrons.size) { List(allIrons.size) { FocusRequester() } }
 
-                            allIrons.forEachIndexed { index, (id, nameSource) ->
-                                val name = nameSource.asString()
-                                val currentPrice = materialPrices.find { it.id == id }?.price ?: 0.0
+                                allIrons.forEachIndexed { index, (id, nameSource) ->
+                                    val name = nameSource.asString()
+                                    val currentPrice = materialPrices.find { it.id == id }?.price ?: 0.0
 
-                                EditPriceSetting(
-                                    label = name,
-                                    value = currentPrice,
-                                    unit = unitBar,
-                                    onSave = { newPrice ->
-                                        scope.launch {
-                                            repository.saveMaterialPrice(
-                                                MaterialPrice(id, name, unitBar, newPrice)
-                                            )
-                                        }
-                                    },
-                                    focusRequester = focusRequesters[index],
-                                    nextFocusRequester = if (index < focusRequesters.lastIndex) focusRequesters[index + 1] else null
-                                )
+                                    EditPriceSetting(
+                                        label = name,
+                                        value = currentPrice,
+                                        unit = unitBar,
+                                        onSave = { newPrice ->
+                                            scope.launch {
+                                                repository.saveMaterialPrice(
+                                                    MaterialPrice(id, name, unitBar, newPrice)
+                                                )
+                                            }
+                                        },
+                                        focusRequester = focusRequesters[index],
+                                        nextFocusRequester = if (index < focusRequesters.lastIndex) focusRequesters[index + 1] else null
+                                    )
+                                }
                             }
                         }
                     }
+
+                    // 4. MALLAS (NUEVO)
+                    if (allMeshes.isNotEmpty()) {
+                        item {
+                            SettingsAccordion(title = stringResource(Res.string.structure_label_meshes)) {
+                                val focusRequesters =
+                                    remember(allMeshes.size) { List(allMeshes.size) { FocusRequester() } }
+
+                                allMeshes.forEachIndexed { index, (id, nameSource) ->
+                                    val name = nameSource.asString()
+                                    val currentPrice = materialPrices.find { it.id == id }?.price ?: 0.0
+
+                                    EditPriceSetting(
+                                        label = name,
+                                        value = currentPrice,
+                                        unit = unitUnit, // Las mallas se suelen vender por unidad (panel)
+                                        onSave = { newPrice ->
+                                            scope.launch {
+                                                repository.saveMaterialPrice(
+                                                    MaterialPrice(id, name, unitUnit, newPrice)
+                                                )
+                                            }
+                                        },
+                                        focusRequester = focusRequesters[index],
+                                        nextFocusRequester = if (index < focusRequesters.lastIndex) focusRequesters[index + 1] else null
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     item { Spacer(modifier = Modifier.height(80.dp)) }
                 }
             } else {
@@ -311,6 +368,25 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                 }
             }
         }
+    }
+
+    // Diálogo para crear NUEVOS items (Categoría Otros)
+    if (showNewItemDialog) {
+        NewPriceItemDialog(
+            isLabor = newItemIsLabor,
+            onDismiss = { showNewItemDialog = false },
+            onSave = { name, unit, price ->
+                scope.launch {
+                    val id = Uuid.random().toString()
+                    if (newItemIsLabor) {
+                        repository.saveLaborPrice(LaborPrice(id, name, unit, price))
+                    } else {
+                        repository.saveMaterialPrice(MaterialPrice(id, name, unit, price))
+                    }
+                    showNewItemDialog = false
+                }
+            }
+        )
     }
 }
 

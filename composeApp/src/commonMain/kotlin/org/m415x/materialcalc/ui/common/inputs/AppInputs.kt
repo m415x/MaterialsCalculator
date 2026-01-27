@@ -322,7 +322,8 @@ fun CmInput(
     suffix: (@Composable () -> Unit)? = null,
     focusRequester: FocusRequester? = null,
     nextFocusRequester: FocusRequester? = null,
-    onDone: (() -> Unit)? = null
+    onDone: (() -> Unit)? = null,
+    decimalDigits: Int = 2
 ) {
     AppInput(
         value = value,
@@ -331,9 +332,9 @@ fun CmInput(
             val formattedText = if (digits.isEmpty()) {
                 ""
             } else {
-                val padded = digits.padStart(3, '0')
-                val integerPart = padded.dropLast(2).trimStart('0').ifEmpty { "0" }
-                val decimalPart = padded.takeLast(2)
+                val padded = digits.padStart(decimalDigits + 1, '0')
+                val integerPart = padded.dropLast(decimalDigits).trimStart('0').ifEmpty { "0" }
+                val decimalPart = padded.takeLast(decimalDigits)
                 "$integerPart.$decimalPart"
             }
             if (formattedText != value) {

@@ -39,6 +39,7 @@ import org.m415x.materialcalc.data.repository.StaticMaterialRepository
 import org.m415x.materialcalc.domain.model.CustomIron
 import org.m415x.materialcalc.domain.model.IronDiameter
 import org.m415x.materialcalc.domain.model.TextSource
+import org.m415x.materialcalc.domain.registry.SimaMeshRegistry
 import org.m415x.materialcalc.ui.common.dialogs.AppDialog
 import org.m415x.materialcalc.ui.common.inputs.AppInput
 import org.m415x.materialcalc.ui.common.inputs.NumericInput
@@ -62,6 +63,7 @@ fun IronsTabContent(repository: SettingsRepository) {
     // 2. Lógica de Fusión y Agrupación
     val categorizedIrons = remember(customIrons, hiddenIds) {
         val standard = mutableListOf<MaterialUiModel>()
+        val meshes = mutableListOf<MaterialUiModel>()
         val custom = mutableListOf<MaterialUiModel>()
 
         // A. Agregamos los ESTÁTICOS (Respetando el orden del Enum)
@@ -78,28 +80,61 @@ fun IronsTabContent(repository: SettingsRepository) {
                             id = "",
                             name = "Ø ${type.milimeters} $unitMm",
                             diameterMm = type.milimeters,
-                            linearWeight = weight
+                            linearWeight = weight,
+                            isMesh = false
                         )
                     )
                 )
             }
         }
 
-        // B. Agregamos los CUSTOM
-        custom.addAll(customIrons.map {
-            MaterialUiModel(
-                id = it.id,
-                title = TextSource.Raw(it.name),
-                subtitle = TextSource.Raw("Ø ${it.diameterMm} $unitMm | ${it.linearWeight} $unitKgM"),
-                isCustom = true,
-                originalData = it
-            )
-        })
+        // B. Agregamos las MALLAS ESTÁNDAR (SimaMeshRegistry)
+        SimaMeshRegistry.standardMeshes.forEach { mesh ->
+            if (mesh.id !in hiddenIds) {
+                meshes.add(
+                    MaterialUiModel(
+                        id = mesh.id,
+                        title = TextSource.Raw(mesh.name),
+                        subtitle = TextSource.Raw("Ø ${mesh.phiMm} mm | ${mesh.sepWidthCm}x${mesh.sepLengthCm} cm | ${mesh.panelWidthM}x${mesh.panelLengthM} m"),
+                        isCustom = false, // No son custom del usuario, son factory
+                        originalData = CustomIron(
+                            id = mesh.id,
+                            name = mesh.name,
+                            diameterMm = mesh.phiMm,
+                            linearWeight = 0.0,
+                            isMesh = true,
+                            meshSepX = mesh.sepWidthCm.toDouble(),
+                            meshSepY = mesh.sepLengthCm.toDouble(),
+                            panelWidth = mesh.panelWidthM,
+                            panelLength = mesh.panelLengthM
+                        )
+                    )
+                )
+            }
+        }
 
-        Pair(standard, custom)
+        // C. Agregamos los CUSTOM (Usuario)
+        customIrons.forEach { item ->
+            val model = MaterialUiModel(
+                id = item.id,
+                title = TextSource.Raw(item.name),
+                subtitle = if (item.isMesh) TextSource.Raw("Ø ${item.diameterMm} mm | ${item.meshSepX.toInt()}x${item.meshSepY.toInt()} cm | ${item.panelWidth}x${item.panelLength} m") else TextSource.Raw(
+                    "Ø ${item.diameterMm} $unitMm | ${item.linearWeight} $unitKgM"
+                ),
+                isCustom = true,
+                originalData = item
+            )
+            if (item.isMesh) {
+                meshes.add(model)
+            } else {
+                custom.add(model)
+            }
+        }
+
+        Triple(standard, meshes, custom)
     }
 
-    val (standardIrons, customIronsList) = categorizedIrons
+    val (standardIrons, meshesList, customIronsList) = categorizedIrons
 
     var showEditor by remember { mutableStateOf(false) }
     var ironToEdit by remember { mutableStateOf<CustomIron?>(null) }
@@ -146,7 +181,7 @@ fun IronsTabContent(repository: SettingsRepository) {
                 )
             }
 
-            if (standardIrons.isEmpty() && customIronsList.isEmpty()) {
+            if (standardIrons.isEmpty() && customIronsList.isEmpty() && meshesList.isEmpty()) {
                 Box(Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
                     Text(stringResource(Res.string.settings_db_empty))
                 }
@@ -177,7 +212,36 @@ fun IronsTabContent(repository: SettingsRepository) {
                         }
                     }
 
-                    // 2. ACORDEÓN PERSONALIZADOS
+                    // 2. ACORDEÓN MALLAS
+                    if (meshesList.isNotEmpty()) {
+                        item {
+                            SettingsAccordion(
+                                title = stringResource(Res.string.structure_label_meshes),
+                                defaultExpanded = true
+                            ) {
+                                meshesList.forEach { item ->
+                                    IronItemRow(
+                                        item = item,
+                                        onEdit = {
+                                            if (item.isCustom) {
+                                                val original = item.originalData as? CustomIron
+                                                ironToEdit = original?.copy(id = original.id)
+                                                showEditor = true
+                                            } else {
+                                                // Factory mesh: create copy
+                                                val original = item.originalData as? CustomIron
+                                                ironToEdit = original?.copy(id = "")
+                                                showEditor = true
+                                            }
+                                        },
+                                        onDelete = { itemToDelete = it }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // 3. ACORDEÓN PERSONALIZADOS (Hierros)
                     if (customIronsList.isNotEmpty()) {
                         item {
                             SettingsAccordion(
@@ -271,11 +335,12 @@ fun RestoreIronsDialog(
                 modifier = Modifier.heightIn(max = 300.dp) // Limitar altura
             ) {
                 items(hiddenIds.toList()) { id ->
-                    // Buscamos el nombre legible usando el Enum
+                    // Buscamos el nombre legible usando el Enum o Registry
                     val name = try {
                         IronDiameter.valueOf(id).milimeters.toString()
                     } catch (e: Exception) {
-                        id
+                        // Si no es Enum, buscamos en Mallas
+                        SimaMeshRegistry.getMeshById(id).name
                     }
 
                     Row(
@@ -312,6 +377,7 @@ fun IronEditorDialog(
 ) {
     // Inicializamos valores (Convertimos Metros a String MM para inputs)
     var name by remember { mutableStateOf(ironToEdit?.name ?: "") }
+    var isMesh by remember { mutableStateOf(ironToEdit?.isMesh ?: false) }
 
     var diameter by remember {
         mutableStateOf(ironToEdit?.diameterMm?.let { if (it == 0.0) "" else it.toString() } ?: "")
@@ -319,14 +385,26 @@ fun IronEditorDialog(
 
     var linearWeight by remember { mutableStateOf((ironToEdit?.linearWeight ?: 0.0).toString()) }
 
+    // Nuevos campos para Malla
+    var sepX by remember {
+        mutableStateOf(ironToEdit?.meshSepX?.let { if (it == 0.0) "" else it.toInt().toString() } ?: "")
+    }
+    var sepY by remember {
+        mutableStateOf(ironToEdit?.meshSepY?.let { if (it == 0.0) "" else it.toInt().toString() } ?: "")
+    }
+    var panelW by remember {
+        mutableStateOf(ironToEdit?.panelWidth?.let { if (it == 0.0) "" else it.toString() } ?: "2.4")
+    }
+    var panelL by remember {
+        mutableStateOf(ironToEdit?.panelLength?.let { if (it == 0.0) "" else it.toString() } ?: "6.0")
+    }
+
     // Estado para saber si el usuario ha editado manualmente el peso
-    // Si estamos editando uno existente, asumimos que ya fue editado (o calculado) y no lo tocamos automáticamente
-    // a menos que el usuario cambie el diámetro.
     var isWeightManuallyEdited by remember { mutableStateOf(ironToEdit != null) }
 
     // Efecto para calcular el peso automáticamente
     LaunchedEffect(diameter) {
-        if (!isWeightManuallyEdited) {
+        if (!isWeightManuallyEdited && !isMesh) {
             val d = diameter.toSafeDoubleOrNull()
             if (d != null && d > 0) {
                 // Fórmula: (d^2) / 162.2
@@ -336,12 +414,20 @@ fun IronEditorDialog(
         }
     }
 
-    val isFormValid = name.isNotBlank() && diameter.isNotBlank() && linearWeight.isNotBlank()
+    val isFormValid = if (isMesh) {
+        name.isNotBlank() && diameter.isNotBlank() && sepX.isNotBlank() && sepY.isNotBlank() && panelW.isNotBlank() && panelL.isNotBlank()
+    } else {
+        name.isNotBlank() && diameter.isNotBlank() && linearWeight.isNotBlank()
+    }
 
     // Definimos los FocusRequesters necesarios
     val focusIronName = remember { FocusRequester() }
     val focusIronDiameter = remember { FocusRequester() }
     val focusIronWeight = remember { FocusRequester() }
+    val focusSepX = remember { FocusRequester() }
+    val focusSepY = remember { FocusRequester() }
+    val focusPanelW = remember { FocusRequester() }
+    val focusPanelL = remember { FocusRequester() }
 
     // Auto-Foco al abrir
     RequestFocusOnStart(focusIronName)
@@ -350,6 +436,23 @@ fun IronEditorDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (ironToEdit == null) stringResource(Res.string.settings_db_iron_new) else stringResource(Res.string.settings_db_iron_edit)) },
         content = {
+            // Selector de Tipo (Hierro / Malla)
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = !isMesh,
+                    onClick = { isMesh = false },
+                    label = { Text(stringResource(Res.string.structure_label_iron)) }
+                )
+                FilterChip(
+                    selected = isMesh,
+                    onClick = { isMesh = true },
+                    label = { Text(stringResource(Res.string.structure_label_mesh)) }
+                )
+            }
+
             AppInput(
                 value = name,
                 onValueChange = { name = it },
@@ -358,35 +461,87 @@ fun IronEditorDialog(
                 nextFocusRequester = focusIronDiameter
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                NumericInput(
-                    value = diameter,
-                    onValueChange = {
-                        diameter = it
-                        // Si cambiamos el diámetro, permitimos que se recalcule el peso si no fue editado manualmente
-                        // O podríamos resetear isWeightManuallyEdited a false para forzar el recálculo
-                        // Pero lo mejor es: si el usuario escribe en diam, recalculamos.
-                        // Si el usuario escribe en peso, dejamos de recalcular.
-                        isWeightManuallyEdited = false
-                    },
-                    label = stringResource(Res.string.settings_db_iron_diameter),
-                    suffix = { Text(stringResource(Res.string.unit_millimeters)) },
-                    modifier = Modifier.weight(1f),
-                    focusRequester = focusIronDiameter,
-                    nextFocusRequester = focusIronWeight
-                )
-                NumericInput(
-                    value = linearWeight,
-                    onValueChange = {
-                        linearWeight = it
-                        isWeightManuallyEdited = true // El usuario tocó el peso, dejamos de calcular
-                    },
-                    label = stringResource(Res.string.settings_db_iron_weight),
-                    suffix = { Text(stringResource(Res.string.unit_kg_m)) },
-                    modifier = Modifier.weight(1f),
-                    focusRequester = focusIronWeight,
-                    onDone = {}
-                )
+            if (isMesh) {
+                // Campos para Malla: Diámetro, Sep X, Sep Y, Panel W, Panel L
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    NumericInput(
+                        value = diameter,
+                        onValueChange = { diameter = it },
+                        label = stringResource(Res.string.settings_db_iron_diameter),
+                        suffix = { Text(stringResource(Res.string.unit_millimeters)) },
+                        modifier = Modifier.weight(1f),
+                        focusRequester = focusIronDiameter,
+                        nextFocusRequester = focusSepX
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    NumericInput(
+                        value = sepX,
+                        onValueChange = { sepX = it },
+                        label = stringResource(Res.string.structure_label_sep_x),
+                        suffix = { Text(stringResource(Res.string.unit_centimeters)) },
+                        modifier = Modifier.weight(1f),
+                        focusRequester = focusSepX,
+                        nextFocusRequester = focusSepY
+                    )
+                    NumericInput(
+                        value = sepY,
+                        onValueChange = { sepY = it },
+                        label = stringResource(Res.string.structure_label_sep_y),
+                        suffix = { Text(stringResource(Res.string.unit_centimeters)) },
+                        modifier = Modifier.weight(1f),
+                        focusRequester = focusSepY,
+                        nextFocusRequester = focusPanelW
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    NumericInput(
+                        value = panelW,
+                        onValueChange = { panelW = it },
+                        label = stringResource(Res.string.label_width, ""),
+                        suffix = { Text(stringResource(Res.string.unit_meters)) },
+                        modifier = Modifier.weight(1f),
+                        focusRequester = focusPanelW,
+                        nextFocusRequester = focusPanelL
+                    )
+                    NumericInput(
+                        value = panelL,
+                        onValueChange = { panelL = it },
+                        label = stringResource(Res.string.label_length, ""),
+                        suffix = { Text(stringResource(Res.string.unit_meters)) },
+                        modifier = Modifier.weight(1f),
+                        focusRequester = focusPanelL,
+                        onDone = {}
+                    )
+                }
+            } else {
+                // Campos para Hierro: Diámetro, Peso
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    NumericInput(
+                        value = diameter,
+                        onValueChange = {
+                            diameter = it
+                            isWeightManuallyEdited = false
+                        },
+                        label = stringResource(Res.string.settings_db_iron_diameter),
+                        suffix = { Text(stringResource(Res.string.unit_millimeters)) },
+                        modifier = Modifier.weight(1f),
+                        focusRequester = focusIronDiameter,
+                        nextFocusRequester = focusIronWeight
+                    )
+                    NumericInput(
+                        value = linearWeight,
+                        onValueChange = {
+                            linearWeight = it
+                            isWeightManuallyEdited = true
+                        },
+                        label = stringResource(Res.string.settings_db_iron_weight),
+                        suffix = { Text(stringResource(Res.string.unit_kg_m)) },
+                        modifier = Modifier.weight(1f),
+                        focusRequester = focusIronWeight,
+                        onDone = {}
+                    )
+                }
             }
         },
         actions = {
@@ -397,19 +552,27 @@ fun IronEditorDialog(
                 onClick = {
                     val d = diameter.toSafeDoubleOrNull() ?: 0.0
                     val w = linearWeight.toSafeDoubleOrNull() ?: 0.0
+                    val sx = sepX.toSafeDoubleOrNull() ?: 0.0
+                    val sy = sepY.toSafeDoubleOrNull() ?: 0.0
+                    val pw = panelW.toSafeDoubleOrNull() ?: 2.4
+                    val pl = panelL.toSafeDoubleOrNull() ?: 6.0
 
-                    // Verificamos si es nulo O ESTÁ VACÍO.
                     val finalId = if (ironToEdit?.id.isNullOrBlank()) {
-                        Uuid.random().toString() // Generar ID nuevo si es copia o nuevo
+                        Uuid.random().toString()
                     } else {
-                        ironToEdit.id // Mantener ID si es edición de uno existente
+                        ironToEdit.id
                     }
 
                     val newIron = CustomIron(
                         id = finalId,
                         name = name,
                         diameterMm = d,
-                        linearWeight = w
+                        linearWeight = if (isMesh) 0.0 else w,
+                        isMesh = isMesh,
+                        meshSepX = if (isMesh) sx else 0.0,
+                        meshSepY = if (isMesh) sy else 0.0,
+                        panelWidth = if (isMesh) pw else 2.4,
+                        panelLength = if (isMesh) pl else 6.0
                     )
                     onSave(newIron)
                 }

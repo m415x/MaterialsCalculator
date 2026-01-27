@@ -26,8 +26,8 @@
     <string name="openings_message_error_int">La cantidad debe ser un número entero mayor a 0.</string>
     <string name="openings_message_error_double">El ancho y alto deben ser números válidos mayores a 0.</string>
     <string name="openings_message_error_name_empty">El nombre no puede estar vacío.</string>
-    <string name="openings_message_error_exceed_wall">El área de aberturas (%1$s m²) supera el área del muro (%2$s m²).</string>
-    <string name="openings_message_error_equal_wall">El área de aberturas es igual al área del muro. No hay superficie para calcular.</string>
+    <string name="openings_message_error_exceed_wall">**Error:** El área de aberturas (%1$s m²) supera el área del muro (%2$s m²).</string>
+    <string name="openings_message_error_equal_wall">**Error:** El área de aberturas es igual al área del muro. No hay superficie para calcular.</string>
 
     <!-- CARD -->
     <string name="openings_aperture">Abertura</string>

@@ -44,15 +44,14 @@ import materialscalculator.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.domain.common.toPresentationUnit
-import org.m415x.materialcalc.domain.model.AppSettingsState
-import org.m415x.materialcalc.domain.model.PriceSettings
-import org.m415x.materialcalc.domain.model.WallResult
-import org.m415x.materialcalc.domain.model.asString
+import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.domain.usecase.CalculateWallUseCase
 import org.m415x.materialcalc.domain.utils.estimateProportionTxt
 import org.m415x.materialcalc.ui.common.dialogs.AppDialog
 import org.m415x.materialcalc.ui.common.display.*
+import org.m415x.materialcalc.ui.common.inputs.BaseSelectorCard
 import org.m415x.materialcalc.ui.common.inputs.BrickSelectorField
+import org.m415x.materialcalc.ui.common.inputs.LayoutSelectorCard
 import org.m415x.materialcalc.ui.common.inputs.NumericInput
 import org.m415x.materialcalc.ui.common.layout.InputRow
 import org.m415x.materialcalc.ui.common.layout.InputSection
@@ -206,43 +205,34 @@ fun WallScreen(appSettings: AppSettingsState, repository: SettingsRepository) {
                     modifier = Modifier.fillMaxWidth().focusRequester(focusBrickType)
                 )
 
+                LayoutSelectorCard(
+                    selectedLayout = state.selectedLayout,
+                    availableLayouts = state.availableLayouts,
+                    thicknessText = if (state.estimatedWallThicknessCm > 0) {
+                        stringResource(
+                            Res.string.label_estimated_thickness,
+                            state.estimatedWallThicknessCm.roundToDecimals(1)
+                        )
+                    } else {
+                        null
+                    },
+                    onLayoutClick = { state.showLayoutDialog = true }
+                )
+
+                // Advertencia Sismorresistente
+                if (state.isSismoResistenteWarning) {
+                    WarningMessageCard(TextSource.Resource(Res.string.wall_warning_cirsoc_103_sismo))
+                }
+
                 if (state.selectedMix != null) {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
-                                alpha = 0.5f
-                            )
-                        ),
-                        shape = MaterialTheme.shapes.medium,
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                    ) {
-                        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.Science,
-                                null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    stringResource(Res.string.wall_label_seat_mortar),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    // Aquí usamos estimateProportionTxt() para asegurar que se vea la proporción
-                                    // incluso si mixingRatio vino como nombre por defecto.
-                                    state.selectedMix!!.estimateProportionTxt().asString(),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                            TextButton(onClick = { state.showWasteDialog = true }) {
-                                Text(stringResource(Res.string.button_change))
-                            }
-                        }
-                    }
+                    BaseSelectorCard(
+                        icon = Icons.Default.Science,
+                        title = state.selectedMix!!.name.asString(),
+                        value = state.selectedMix!!.estimateProportionTxt().asString(),
+                        onClick = { state.showWasteDialog = true },
+                        showEditIcon = state.mortarOptions.size > 1,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
                 }
             }
 
@@ -252,6 +242,7 @@ fun WallScreen(appSettings: AppSettingsState, repository: SettingsRepository) {
         }
     }
 
+    // Diálogo de selección de mezcla
     if (state.showWasteDialog) {
         AppDialog(
             onDismissRequest = { state.showWasteDialog = false },
@@ -289,6 +280,51 @@ fun WallScreen(appSettings: AppSettingsState, repository: SettingsRepository) {
                 TextButton(onClick = {
                     state.showWasteDialog = false
                 }) { Text(stringResource(Res.string.button_cancel)) }
+            }
+        )
+    }
+
+    // Diálogo de selección de Layout
+    if (state.showLayoutDialog) {
+        AppDialog(
+            onDismissRequest = { state.showLayoutDialog = false },
+            title = { Text(stringResource(Res.string.label_layout_type)) },
+            content = {
+                Column {
+                    state.availableLayouts.forEach { layout ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { state.onLayoutSelected(layout) }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = (layout == state.selectedLayout),
+                                onClick = null
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = stringResource(layout.resName),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = stringResource(layout.description),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        HorizontalDivider()
+                    }
+                }
+            },
+            actions = {
+                TextButton(onClick = { state.showLayoutDialog = false }) {
+                    Text(stringResource(Res.string.button_cancel))
+                }
             }
         )
     }
@@ -345,7 +381,8 @@ fun WallResultContent(res: WallResult) {
         )
         Text(
             stringResource(Res.string.label_result_waste_included, (res.percentageBrickWaste * 100).toInt()),
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -356,7 +393,6 @@ fun WallResultContent(res: WallResult) {
                 Res.string.label_result_waste_included,
                 (res.percentageMortarWaste * 100).toInt()
             ),
-            titleFontSize = 16.sp,
             spacer = Modifier.height(8.dp)
         )
 

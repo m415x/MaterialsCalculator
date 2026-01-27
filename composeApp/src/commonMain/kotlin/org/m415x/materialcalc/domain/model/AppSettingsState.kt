@@ -49,6 +49,7 @@ data class AppSettingsState(
     val wasteBrickPct: Double = 5.0,
     val wasteIronMainPct: Double = 10.0,
     val wasteIronStirrupPct: Double = 5.0,
+    val wasteIronMeshPct: Double = 15.0,
     val wastePlasterPct: Double = 10.0,
 
     // Configuración Técnica
