@@ -219,7 +219,7 @@ fun RecipesTabContent(repository: SettingsRepository) {
                     if (factoryRecipes.isNotEmpty()) {
                         item {
                             SettingsAccordion(
-                                title = stringResource(Res.string.settings_prices_cat_concrete),
+                                title = stringResource(Res.string.settings_db_tab_concrete),
                                 defaultExpanded = true
                             ) {
                                 factoryRecipes.forEach { item ->

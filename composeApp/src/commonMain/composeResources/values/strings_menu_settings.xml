@@ -101,6 +101,7 @@
     <!-- SETTINGS: Materials DB -->
     <string name="settings_db_tab_bricks">Ladrillos</string>
     <string name="settings_db_tab_irons">Hierros</string>
+    <string name="settings_db_tab_concrete">Hormigones</string>
     <string name="settings_db_tab_recipes">Mezclas</string>
     <string name="settings_db_restore_factory">Restaurar materiales de fábrica (%1$d)</string>
     <string name="settings_db_bricks_desc">Gestiona los ladrillos disponibles en la calculadora.</string>
@@ -174,7 +175,7 @@
     <string name="settings_prices_labor_slab">Losa</string>
 
     <!-- SETTINGS: Prices (Categories) -->
-    <string name="settings_prices_cat_concrete">Hormigones</string>
+    <string name="settings_prices_cat_basic_materials">Materiales básicos</string>
     <string name="settings_prices_cat_bricks">Ladrillos</string>
     <string name="settings_prices_cat_bricks_bearing">Ladrillos Portantes</string>
     <string name="settings_prices_cat_bricks_non_bearing">Ladrillos No Portantes</string>

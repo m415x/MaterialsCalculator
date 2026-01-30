@@ -186,7 +186,7 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                     // 1. MATERIALES BÁSICOS
                     item {
                         SettingsAccordion(
-                            title = stringResource(Res.string.settings_prices_cat_concrete),
+                            title = stringResource(Res.string.settings_prices_cat_basic_materials),
                             defaultExpanded = true
                         ) {
                             // Creamos una lista de FocusRequesters
