@@ -31,6 +31,10 @@
     <string name="plaster_label_thickness">Espesor (%1$s)</string>
     <string name="plaster_label_both_sides">Ambas caras</string>
     <string name="plaster_label_x2_sup">x2 Sup.</string>
+    <string name="plaster_label_fine">Revoque Fino</string>
+    <string name="plaster_label_type_fine">Tipo de Fino</string>
+    <string name="plaster_label_fine_lime">A la Cal (Tradicional)</string>
+    <string name="plaster_label_fine_premix">Premezcla</string>
 
     <!-- DIALOG -->
     <string name="plaster_dialog_choose_mix">Elegir Mezcla</string>
@@ -44,9 +48,9 @@
     <string name="plaster_result_water">Agua</string>
     <string name="plaster_result_fine_title">2. Revoque Fino (Enlucido)</string>
     <string name="plaster_result_choose_option">Opciones:</string>
-    <string name="plaster_result_option_a">A) Premezcla</string>
-    <string name="plaster_result_option_b">B) Cal Aérea</string>
-    <string name="plaster_result_fine_sand">   Arena Fina</string>
+    <string name="plaster_result_option_a">Premezcla</string>
+    <string name="plaster_result_option_b">Cal Aérea</string>
+    <string name="plaster_result_fine_sand">Arena Fina</string>
 
     <!-- PLASTER TYPES -->
     <string name="plaster_type_std_jaharro">Tradicional (Jaharro)</string>

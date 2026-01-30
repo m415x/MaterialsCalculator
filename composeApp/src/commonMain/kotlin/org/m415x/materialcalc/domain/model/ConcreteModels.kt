@@ -51,6 +51,7 @@ enum class ConcreteType(val nameRes: StringResource, val resistanceKgCm2: Int, v
  * @property mixingRatio Razón de mezcla.
  * @property materialCost Costo estimado de materiales.
  * @property laborCost Costo estimado de mano de obra.
+ * @property costBreakdown Desglose de costos por material.
  */
 data class ConcreteResult(
     val totalVolumeM3: Double,
@@ -63,5 +64,6 @@ data class ConcreteResult(
     val mixingRatio: TextSource,
     // Costos
     val materialCost: Double = 0.0,
-    val laborCost: Double = 0.0
+    val laborCost: Double = 0.0,
+    val costBreakdown: List<Pair<String, Double>> = emptyList()
 )

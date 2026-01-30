@@ -322,7 +322,7 @@ fun EditPercentSetting(
 fun EditPriceSetting(
     label: String,
     value: Double,
-    defaultValue: Double = 0.0,
+    defaultValue: Double = 0.00,
     unit: String,
     onSave: (Double) -> Unit,
     focusRequester: FocusRequester? = null,
@@ -331,7 +331,7 @@ fun EditPriceSetting(
 ) {
     // Usamos una función de formateo que imite lo que hace el CmInput
     val formattedInitialValue = remember(value) {
-        if (value == 0.0) ""
+        if (value == 0.0) "0.00"
         else {
             // Convertimos el Double (0.5) a Long (50) para evitar problemas de precisión
             val cents = (value * 100).toLong()
@@ -346,10 +346,10 @@ fun EditPriceSetting(
     BaseEditSetting(
         label = label,
         currentText = text,
-        defaultText = defaultValue.toString(),
+        defaultText = "0.00", // Forzamos el formato con dos decimales para el valor por defecto
         onReset = {
             onSave(defaultValue)
-            text = defaultValue.toString()
+            text = "0.00" // Reseteamos a "0.00" explícitamente
         }
     ) {
         CmInput(

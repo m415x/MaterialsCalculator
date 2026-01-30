@@ -421,9 +421,9 @@ fun BrickEditorDialog(
 
             // Selector de Familia
             AppDropdown(
-                label = TextSource.Resource(Res.string.wall_label_brick_family).asString(),// TODO: Resource name
+                label = TextSource.Resource(Res.string.wall_label_brick_family).asString(),
                 options = BrickFamily.entries,
-                selectedText = TextSource.Resource(family.familyName).asString(),// TODO: Resource name
+                selectedText = TextSource.Resource(family.familyName).asString(),
                 onSelect = {
                     family = it
                     // Tip de UX: Si es hueco no portante, desactivar portante

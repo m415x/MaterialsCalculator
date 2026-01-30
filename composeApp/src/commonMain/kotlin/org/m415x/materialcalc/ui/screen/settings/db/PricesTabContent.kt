@@ -79,8 +79,13 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                 MaterialUnits.BAG
             ),
             BasicMaterial(
-                MaterialIds.LIME,
-                TextSource.Resource(Res.string.settings_prices_basic_lime),
+                MaterialIds.HYDRATED_LIME,
+                TextSource.Resource(Res.string.settings_prices_basic_hydrated_lime),
+                MaterialUnits.BAG
+            ),
+            BasicMaterial(
+                MaterialIds.AERIAL_LIME,
+                TextSource.Resource(Res.string.settings_prices_basic_aerial_lime),
                 MaterialUnits.BAG
             ),
             BasicMaterial(
@@ -181,7 +186,7 @@ fun PricesTabContent(repository: SettingsRepository, appSettings: AppSettingsSta
                     // 1. MATERIALES BÁSICOS
                     item {
                         SettingsAccordion(
-                            title = stringResource(Res.string.settings_prices_cat_basic),
+                            title = stringResource(Res.string.settings_prices_cat_concrete),
                             defaultExpanded = true
                         ) {
                             // Creamos una lista de FocusRequesters

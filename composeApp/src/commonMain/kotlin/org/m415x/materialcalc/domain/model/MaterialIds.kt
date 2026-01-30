@@ -21,7 +21,8 @@ package org.m415x.materialcalc.domain.model
 object MaterialIds {
     // Materiales Básicos
     const val CEMENT = "MAT_CEMENT"
-    const val LIME = "MAT_LIME"
+    const val HYDRATED_LIME = "MAT_HYDRATED_LIME" // Cal Hidratada (Común)
+    const val AERIAL_LIME = "MAT_AERIAL_LIME" // Cal Aérea (Para finos)
     const val SAND = "MAT_SAND"
     const val STONE = "MAT_STONE"
     const val WATER = "MAT_WATER"

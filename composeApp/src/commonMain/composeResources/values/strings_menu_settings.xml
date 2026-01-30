@@ -160,7 +160,8 @@
 
     <!-- SETTINGS: Prices (Basic Materials) -->
     <string name="settings_prices_basic_cement">Cemento</string>
-    <string name="settings_prices_basic_lime">Cal</string>
+    <string name="settings_prices_basic_hydrated_lime">Cal Hidratada</string>
+    <string name="settings_prices_basic_aerial_lime">Cal Aérea</string>
     <string name="settings_prices_basic_sand">Arena</string>
     <string name="settings_prices_basic_stone">Piedra</string>
     <string name="settings_prices_basic_premix">Premezcla</string>
@@ -173,7 +174,7 @@
     <string name="settings_prices_labor_slab">Losa</string>
 
     <!-- SETTINGS: Prices (Categories) -->
-    <string name="settings_prices_cat_basic">Materiales Básicos</string>
+    <string name="settings_prices_cat_concrete">Hormigones</string>
     <string name="settings_prices_cat_bricks">Ladrillos</string>
     <string name="settings_prices_cat_bricks_bearing">Ladrillos Portantes</string>
     <string name="settings_prices_cat_bricks_non_bearing">Ladrillos No Portantes</string>

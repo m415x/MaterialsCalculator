@@ -21,21 +21,26 @@ package org.m415x.materialcalc.ui.common.display
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import materialscalculator.composeapp.generated.resources.*
 import nl.jacobras.humanreadable.HumanReadable
 import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.domain.common.DisplayUnit
 import org.m415x.materialcalc.domain.common.PresentationUnit
+import kotlin.math.roundToInt
 
 /**
  * Tarjeta contenedora genérica para resultados.
@@ -58,7 +63,7 @@ fun AppResultBottomSheet(
     onEdit: () -> Unit,           // Acción botón Modificar (cerrar)
     onShare: () -> Unit, // Ahora solo ejecuta la acción
     modifier: Modifier = Modifier,
-    title: String = "Resultados Estimados",
+    title: String = stringResource(Res.string.label_result_estimated_detail_title),
     containerColor: Color = MaterialTheme.colorScheme.secondaryContainer, // Color por defecto
     content: @Composable ColumnScope.() -> Unit // Slot para el contenido específico
 ) {
@@ -73,26 +78,13 @@ fun AppResultBottomSheet(
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 48.dp) // Espacio extra abajo para seguridad en gestos
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween, // Separa Título e Icono
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-
-                // Botón Compartir
-                IconButton(onClick = onShare) {
-                    Icon(
-                        Icons.Default.Share,
-                        contentDescription = "Compartir",
-//                            tint = MaterialTheme.colorScheme.tertiary
-                    )
-                }
-            }
+            ResultTitle(
+                title = title,
+                titleStyle = MaterialTheme.typography.headlineSmall,
+                titleFontWeight = FontWeight.Normal,
+                icon = Icons.Default.Share,
+                onIconClick = onShare
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -152,15 +144,42 @@ fun ResultTitle(
     subTitle: String? = null,
     titleStyle: TextStyle = MaterialTheme.typography.bodyLarge,
     titleFontWeight: FontWeight = FontWeight.Bold,
-    spacer: Modifier = Modifier.height(16.dp)
+    spacer: Modifier = Modifier.height(16.dp),
+    icon: ImageVector? = null, // Nuevo parámetro opcional
+    onIconClick: (() -> Unit)? = null // Acción al hacer clic en el icono
 ) {
-    Text(
-        text = title,
-        style = titleStyle.copy(
-            fontWeight = titleFontWeight,
-            color = MaterialTheme.colorScheme.onSecondaryContainer
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = titleStyle.copy(
+                fontWeight = titleFontWeight,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
         )
-    )
+
+        if (icon != null) {
+            // Si hay acción, usamos IconButton, si no, solo Icon
+            if (onIconClick != null) {
+                IconButton(
+                    onClick = onIconClick
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                    )
+                }
+            } else {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                )
+            }
+        }
+    }
 
     if (subTitle != null) {
         Text(
@@ -181,19 +200,26 @@ fun ResultSection(
     titleFontWeight: FontWeight = FontWeight.Bold,
     titleSpacer: Modifier = Modifier.height(4.dp),
     sectionSpacer: Modifier = Modifier.height(16.dp),
+    icon: ImageVector? = null, // Nuevo parámetro opcional
+    onIconClick: (() -> Unit)? = null, // Acción para el icono
     content: @Composable ColumnScope.() -> Unit
 ) {
-    ResultTitle(
-        title = title,
-        subTitle = subTitle,
-        titleStyle = titleStyle,
-        titleFontWeight = titleFontWeight,
-        spacer = titleSpacer
-    )
+    Column {
+        ResultTitle(
+            title = title,
+            subTitle = subTitle,
+            titleStyle = titleStyle,
+            titleFontWeight = titleFontWeight,
+            spacer = titleSpacer,
+            icon = icon, // Pasamos el icono
+            onIconClick = onIconClick // Pasamos la acción
+        )
 
-    Column(modifier = Modifier.padding(vertical = 8.dp).padding(start = 8.dp)) {
-        content()
+        Column(modifier = Modifier.padding(vertical = 8.dp).padding(start = 8.dp)) {
+            content()
+        }
     }
+
     Spacer(modifier = sectionSpacer)
 }
 
@@ -277,9 +303,11 @@ fun ResultRow(
 fun PriceResultSection(
     materialCost: Double,
     laborCost: Double,
+    materialDetails: List<Pair<String, Double>> = emptyList(), // Lista para el detalle
     currencySymbol: String = "$"
 ) {
     val total = materialCost + laborCost
+    var showDetails by remember { mutableStateOf(false) } // Estado para la burbuja
 
     val formattedMaterialCost = HumanReadable.number(materialCost.toLong())
     val formattedLaborCost = HumanReadable.number(laborCost.toLong())
@@ -290,38 +318,99 @@ fun PriceResultSection(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        ResultSection(
-            title = stringResource(Res.string.settings_prices_result_title),
-            titleStyle = MaterialTheme.typography.titleLarge,
-            titleFontWeight = FontWeight.Normal,
-        ) {
+        // Contenedor relativo para el título y el icono
+        Box(modifier = Modifier.fillMaxWidth()) {
+            ResultSection(
+                title = stringResource(Res.string.settings_prices_result_title),
+                titleStyle = MaterialTheme.typography.titleLarge,
+                titleFontWeight = FontWeight.Normal,
+                icon = if (materialDetails.isNotEmpty()) Icons.Default.Info else null, // Icono a la izquierda del título
+                onIconClick = if (materialDetails.isNotEmpty()) {
+                    { showDetails = !showDetails }
+                } else null
+            ) {
 
-            if (materialCost > 0) {
+                if (materialCost > 0) {
+                    ResultRow(
+                        label = stringResource(Res.string.settings_prices_result_materials),
+                        value = "$currencySymbol $formattedMaterialCost"
+                    )
+                }
+
+                if (laborCost > 0) {
+                    ResultRow(
+                        label = stringResource(Res.string.settings_prices_result_labor),
+                        value = "$currencySymbol $formattedLaborCost"
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth(0.4f).align(Alignment.End), // Línea corta a la derecha
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+
                 ResultRow(
-                    label = stringResource(Res.string.settings_prices_result_materials),
-                    value = "$currencySymbol $formattedMaterialCost"
+                    label = stringResource(Res.string.settings_prices_result_total),
+                    value = "$currencySymbol $formattedTotalCost"
                 )
             }
 
-            if (laborCost > 0) {
-                ResultRow(
-                    label = stringResource(Res.string.settings_prices_result_labor),
-                    value = "$currencySymbol $formattedLaborCost"
-                )
+            // LA BURBUJA (Popup) - La mantenemos aquí pero posicionada relativa al icono que ahora está en el título
+            // Como el icono está dentro de ResultSection -> ResultTitle, la posición exacta del popup puede variar.
+            // Para simplificar y mantener el popup funcional, lo dejamos anclado al Box padre (TopStart o TopEnd)
+            // O mejor, si el icono está a la izquierda, el popup debería salir cerca.
+
+            if (showDetails) {
+                Popup(
+                    alignment = Alignment.TopStart, // Alineado al inicio (izquierda) donde está el icono
+                    offset = androidx.compose.ui.unit.IntOffset(x = 40, y = 20), // Ajuste fino
+                    onDismissRequest = { showDetails = false },
+                    properties = PopupProperties(focusable = true)
+                ) {
+                    Surface(
+                        modifier = Modifier.widthIn(max = 280.dp),
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest, // Color elevado
+                        tonalElevation = 8.dp,
+                        shadowElevation = 4.dp,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outlineVariant
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = stringResource(Res.string.label_result_cost_detail_title),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(Modifier.height(8.dp))
+
+                            materialDetails.forEach { (name, cost) ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        name,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Text(
+                                        "$currencySymbol ${HumanReadable.number(cost.roundToInt().toLong())}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-            HorizontalDivider(
-                modifier = Modifier.fillMaxWidth(0.4f).align(Alignment.End), // Línea corta a la derecha
-                thickness = 1.dp,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-
-            ResultRow(
-                label = stringResource(Res.string.settings_prices_result_total),
-                value = "$currencySymbol $formattedTotalCost"
-            )
         }
     }
 }

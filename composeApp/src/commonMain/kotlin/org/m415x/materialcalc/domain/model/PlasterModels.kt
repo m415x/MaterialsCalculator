@@ -33,6 +33,14 @@ enum class PlasterType(val displayNameRes: StringResource) {
 }
 
 /**
+ * Enumeración para el tipo de revoque fino.
+ */
+enum class FinePlasterType {
+    LIME, // A la cal (Tradicional)
+    PREMIX // Premezcla
+}
+
+/**
  * Empaqueta los resultados de forma ordenada.
  *
  * @property totalAreaM2 Superficie total (x1 o x2 caras)
@@ -51,6 +59,10 @@ enum class PlasterType(val displayNameRes: StringResource) {
  * @property fineSandM3 Cantidad de arena fina en metros cúbicos
  * @property finePercentageWaste Porcentaje de desperdicio fino
  * @property fineDosage Proporcion fina
+ * @property materialCost Costo estimado de materiales.
+ * @property laborCost Costo estimado de mano de obra.
+ * @property costBreakdown Desglose de costos por material.
+ * @property selectedFineType Tipo de fino seleccionado para el cálculo.
  */
 data class PlasterResult(
     val totalAreaM2: Double,
@@ -75,5 +87,7 @@ data class PlasterResult(
     val fineDosage: TextSource,
     // Costos
     val materialCost: Double = 0.0,
-    val laborCost: Double = 0.0
+    val laborCost: Double = 0.0,
+    val costBreakdown: List<Pair<String, Double>> = emptyList(),
+    val selectedFineType: FinePlasterType = FinePlasterType.LIME // Para saber qué mostrar en UI
 )

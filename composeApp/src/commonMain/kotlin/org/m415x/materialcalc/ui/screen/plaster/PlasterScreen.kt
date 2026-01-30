@@ -43,10 +43,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.m415x.materialcalc.data.repository.SettingsRepository
 import org.m415x.materialcalc.data.repository.StaticMaterialRepository
 import org.m415x.materialcalc.domain.common.toPresentationUnit
-import org.m415x.materialcalc.domain.model.AppSettingsState
-import org.m415x.materialcalc.domain.model.PlasterResult
-import org.m415x.materialcalc.domain.model.PriceSettings
-import org.m415x.materialcalc.domain.model.asString
+import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.domain.usecase.CalculatePlasterUseCase
 import org.m415x.materialcalc.ui.common.dialogs.AppDialog
 import org.m415x.materialcalc.ui.common.display.*
@@ -201,7 +198,7 @@ fun PlasterScreen(appSettings: AppSettingsState, repository: SettingsRepository)
                 )
             }
 
-            InputSection(title = stringResource(Res.string.plaster_section_thick), showDivider = false) {
+            InputSection(title = stringResource(Res.string.plaster_section_thick), showDivider = true) {
                 if (state.selectMortar != null) {
                     BaseSelectorCard(
                         icon = Icons.Default.Science,
@@ -254,6 +251,19 @@ fun PlasterScreen(appSettings: AppSettingsState, repository: SettingsRepository)
                 }
             }
 
+            InputSection(title = stringResource(Res.string.plaster_label_fine), showDivider = false) {
+                BaseSelectorCard(
+                    icon = Icons.Default.Science,
+                    title = stringResource(Res.string.plaster_label_type_fine),
+                    value = if (state.selectedFineType == FinePlasterType.LIME) stringResource(Res.string.plaster_label_fine_lime) else stringResource(
+                        Res.string.plaster_label_fine_premix
+                    ),
+                    onClick = { state.showFineTypeDialog = true },
+                    showEditIcon = true,
+                    useButton = false
+                )
+            }
+
             ErrorMessageCard(state.errorMsg)
 
             Spacer(modifier = Modifier.height(80.dp))
@@ -292,6 +302,64 @@ fun PlasterScreen(appSettings: AppSettingsState, repository: SettingsRepository)
             },
             actions = {
                 TextButton(onClick = { state.showMixDialog = false }) { Text(stringResource(Res.string.button_cancel)) }
+            }
+        )
+    }
+
+    // Diálogo de selección de tipo de fino
+    if (state.showFineTypeDialog) {
+        AppDialog(
+            onDismissRequest = { state.showFineTypeDialog = false },
+            title = { Text(stringResource(Res.string.plaster_label_type_fine)) },
+            content = {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                state.selectedFineType = FinePlasterType.LIME
+                                state.showFineTypeDialog = false
+                            }
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = (state.selectedFineType == FinePlasterType.LIME),
+                            onClick = null
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            stringResource(Res.string.plaster_result_option_b),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                    HorizontalDivider()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                state.selectedFineType = FinePlasterType.PREMIX
+                                state.showFineTypeDialog = false
+                            }
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = (state.selectedFineType == FinePlasterType.PREMIX),
+                            onClick = null
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            stringResource(Res.string.plaster_result_option_a),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            },
+            actions = {
+                TextButton(onClick = { state.showFineTypeDialog = false }) {
+                    Text(stringResource(Res.string.button_cancel))
+                }
             }
         )
     }
@@ -400,47 +468,52 @@ fun PlasterResultContent(res: PlasterResult) {
         title = stringResource(Res.string.plaster_result_fine_title),
         subTitle = stringResource(Res.string.label_result_waste_included, (res.finePercentageWaste * 100).toInt()),
     ) {
-        Text(stringResource(Res.string.plaster_result_choose_option), style = MaterialTheme.typography.labelLarge)
-
-        // Opción A
-        ResultRow(
-            label = stringResource(Res.string.plaster_result_option_a),
-            subLabel = stringResource(
-                Res.string.label_result_subtitle_unit,
-                res.finePremixKg.roundToDecimals(1),
-                unitKg
-            ),
-            value = res.finePremixKg.toPresentationUnit(
-                res.premixBagKg,
-                Res.string.unit_bag,
-                Res.string.unit_bags
+        // Mostramos solo la opción seleccionada
+        if (res.selectedFineType == FinePlasterType.PREMIX) {
+            // Opción A: Premezcla
+            ResultRow(
+                label = stringResource(Res.string.plaster_result_option_a),
+                subLabel = stringResource(
+                    Res.string.label_result_subtitle_unit,
+                    res.finePremixKg.roundToDecimals(1),
+                    unitKg
+                ),
+                value = res.finePremixKg.toPresentationUnit(
+                    res.premixBagKg,
+                    Res.string.unit_bag,
+                    Res.string.unit_bags
+                )
             )
-        )
-
-        // Opción B
-        ResultRow(
-            label = stringResource(Res.string.plaster_result_option_b),
-            subLabel = stringResource(
-                Res.string.label_result_subtitle_unit,
-                res.fineLimeKg.roundToDecimals(1),
-                unitKg
-            ),
-            value = res.fineLimeKg.toPresentationUnit(
-                res.limeBagKg,
-                Res.string.unit_bag,
-                Res.string.unit_bags
+        } else {
+            // Opción B: Tradicional
+            ResultRow(
+                label = stringResource(Res.string.plaster_result_option_b),
+                subLabel = stringResource(
+                    Res.string.label_result_subtitle_unit,
+                    res.fineLimeKg.roundToDecimals(1),
+                    unitKg
+                ),
+                value = res.fineLimeKg.toPresentationUnit(
+                    res.limeBagKg,
+                    Res.string.unit_bag,
+                    Res.string.unit_bags
+                )
             )
-        )
 
-        ResultRow(
-            label = stringResource(Res.string.plaster_result_fine_sand),
-            value = stringResource(
-                Res.string.label_result_unit,
-                res.fineSandM3.roundToDecimals(2),
-                stringResource(Res.string.unit_cubic_meters)
+            ResultRow(
+                label = stringResource(Res.string.plaster_result_fine_sand),
+                value = stringResource(
+                    Res.string.label_result_unit,
+                    res.fineSandM3.roundToDecimals(2),
+                    stringResource(Res.string.unit_cubic_meters)
+                )
             )
-        )
+        }
     }
 
-    PriceResultSection(res.materialCost, res.laborCost)
+    PriceResultSection(
+        materialCost = res.materialCost,
+        laborCost = res.laborCost,
+        materialDetails = res.costBreakdown
+    )
 }

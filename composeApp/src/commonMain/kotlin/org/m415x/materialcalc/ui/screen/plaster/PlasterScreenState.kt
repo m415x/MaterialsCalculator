@@ -53,6 +53,10 @@ class PlasterScreenState(
             ?: recipeOptions.firstOrNull()?.data
     )
 
+    // Selección de tipo de fino
+    var selectedFineType by mutableStateOf(FinePlasterType.LIME) // Por defecto a la cal
+    var showFineTypeDialog by mutableStateOf(false)
+
     var showMixDialog by mutableStateOf(false)
     var result by mutableStateOf<PlasterResult?>(null)
     var errorMsg by mutableStateOf<TextSource?>(null)
@@ -129,6 +133,7 @@ class PlasterScreenState(
                 isBothSides = bothSides,
                 openingsList = openings.toList(),
                 mortarDosing = selectMortar!!,
+                fineType = selectedFineType, // Pasamos el tipo de fino seleccionado
                 cementBagWeightKg = appSettings.bagCementKg,
                 limeBagWeightKg = appSettings.bagLimeKg,
                 premixBagWeightKg = appSettings.bagPremixKg,

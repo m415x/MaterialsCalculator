@@ -18,6 +18,7 @@
 
 package org.m415x.materialcalc.domain.usecase
 
+import nl.jacobras.humanreadable.HumanReadable
 import org.m415x.materialcalc.domain.common.calculateWetMaterials
 import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.domain.utils.calculateNetSurface
@@ -101,33 +102,53 @@ class CalculateWallUseCase {
             // 5. CÁLCULO DE COSTOS
             var materialCost = 0.0
             var laborCost = 0.0
+            val costBreakdown = mutableListOf<Pair<String, Double>>()
 
             if (priceSettings != null) {
+                // Ladrillos (Unidades)
+                // Buscamos por ID del ladrillo (ej: "LADRILLON", "HUECO_12", o custom ID)
+                priceSettings.materialPrices.find { it.id == brickProps.id }?.let {
+                    val cost = it.price * actualQuantityBricks
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($actualQuantityBricks x $$unitPrice)" to cost)
+                }
+
                 // Cemento (Bolsas)
                 priceSettings.materialPrices.find { it.id == MaterialIds.CEMENT }?.let {
-                    materialCost += it.price * mathMortar.cementBags
+                    val qty = mathMortar.cementBags
+                    val cost = it.price * qty
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($qty x $$unitPrice)" to cost)
                 }
 
                 // Cal (Bolsas)
-                priceSettings.materialPrices.find { it.id == MaterialIds.LIME }?.let {
-                    materialCost += it.price * mathMortar.limeBags
+                priceSettings.materialPrices.find { it.id == MaterialIds.HYDRATED_LIME }?.let {
+                    val qty = mathMortar.limeBags
+                    val cost = it.price * qty
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($qty x $$unitPrice)" to cost)
                 }
 
                 // Arena (1/2 m3)
                 priceSettings.materialPrices.find { it.id == MaterialIds.SAND }?.let {
                     val sandRounded = ceil(mathMortar.sandM3 * 2) / 2.0
-                    materialCost += it.price * sandRounded
-                }
-
-                // Ladrillos (Unidades)
-                // Buscamos por ID del ladrillo (ej: "LADRILLON", "HUECO_12", o custom ID)
-                priceSettings.materialPrices.find { it.id == brickProps.id }?.let {
-                    materialCost += it.price * actualQuantityBricks
+                    val cost = it.price * sandRounded
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($sandRounded x $$unitPrice)" to cost)
                 }
 
                 // Mano de Obra (Muro M2)
                 priceSettings.laborPrices.find { it.id == LaborIds.WALL_M2 }?.let {
-                    laborCost += it.price * netSurface
+                    val cost = it.price * netSurface
+                    laborCost += cost
+                    /*
+                        val unitPrice = HumanReadable.number(it.price.toLong())
+                        costBreakdown.add("Mano de obra ${it.name}" to cost)
+                    */
                 }
             }
 
@@ -147,7 +168,8 @@ class CalculateWallUseCase {
                     cementBagKg = cementBagWeightKg,
                     limeBagKg = limeBagWeightKg,
                     materialCost = materialCost,
-                    laborCost = laborCost
+                    laborCost = laborCost,
+                    costBreakdown = costBreakdown
                 )
             )
         } catch (e: Exception) {

@@ -23,7 +23,7 @@
     <string name="share_section_materials">*MATERIALES ESTIMADOS*</string>
     <string name="share_common_dimensions">Dimensiones:</string>
     <string name="share_common_cement">Cemento:</string>
-    <string name="share_common_lime">Cal:</string>
+    <string name="share_common_lime">Cal Hidratada:</string>
     <string name="share_common_sand">Arena:</string>
     <string name="share_common_water">Agua:</string>
     <string name="share_common_around">aprox.</string>
@@ -65,7 +65,7 @@
 
     <!-- SHARE: SLAB -->
     <string name="share_slab_title">*CÁLCULO DE LOSA*</string>
-    <string name="share_slab_mesh_section">*MALLA SIMA*</string>
+    <string name="share_slab_mesh_section">*MALLA*</string>
     <string name="share_slab_mesh_suggested">Tipo</string>
     <string name="share_slab_mesh_panels">Paneles (%1$sx%2$s m):</string>
     <string name="share_slab_iron_x">Dirección X:</string>
@@ -75,7 +75,7 @@
     <string name="share_plaster_title">*CÁLCULO DE REVOQUE*</string>
     <string name="share_plaster_wall">Pared:</string>
     <string name="share_plaster_total_surface">Superficie Total:</string>
-    <string name="share_plaster_thick_section">*1. REVOQUE GRUESO (Jaharro)*</string>
+    <string name="share_plaster_thick_section">*1. REVOQUE GRUESO*</string>
     <string name="share_plaster_fine_section">*2. REVOQUE FINO (Enlucido)*</string>
     <string name="share_plaster_option_a">*Opción A*</string>
     <string name="share_plaster_option_b">*Opción B (Tradicional: A la cal)*</string>

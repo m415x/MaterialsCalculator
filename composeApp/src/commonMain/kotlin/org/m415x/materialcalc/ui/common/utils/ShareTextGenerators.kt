@@ -258,6 +258,7 @@ fun rememberWallShareText(
             appendLine(sectionDetailsStr)
             appendLine("-------------------------")
             appendLine("*$dimensionsStr* ${length}x$height $unitM")
+            appendLine()
             appendLine("*$brickStr* $brickType")
             appendLine("    └ $brickDetail")
             appendLine()
@@ -406,13 +407,13 @@ fun rememberStructureShareText(
             appendLine("-------------------------")
             appendLine(mainIronStr)
             appendLine("● $rodsStr Ø ${result.mainDiameterMm} $unitMm")
-            appendLine("● $totalWeightStr ${result.mainIronKg.roundToDecimals(1)} $unitKg")
+            appendLine("● $totalWeightStr ${(result.mainIronKg * (1 + result.percentageMainIronWaste)).roundToDecimals(1)} $unitKg")
             appendLine("    └ $buyStr ${result.mainIronAmount} $bars12mStr")
             appendLine()
             appendLine(stirrupIronStr)
             appendLine("● $rodsStr Ø ${result.stirrupDiameterMm} $unitMm")
             appendLine("● $separationStr $eachStr ${stirrupSpacingCm.roundToDecimals(0)} $unitCm")
-            appendLine("● $totalWeightStr ${result.stirrupIronKg.roundToDecimals(1)} $unitKg")
+            appendLine("● $totalWeightStr ${(result.stirrupIronKg * (1 + result.percentageStirrupIronWaste)).roundToDecimals(1)} $unitKg")
             appendLine("    └ $buyStr ${result.stirrupIronAmount} $bars12mStr")
             appendLine()
 
@@ -488,6 +489,7 @@ fun rememberSlabShareText(
     val unitLt = stringResource(Res.string.unit_liters)
     val unitBag = stringResource(Res.string.unit_bag)
     val unitBags = stringResource(Res.string.unit_bags)
+    val unitU = stringResource(Res.string.unit_units)
 
     val costTitleStr = stringResource(Res.string.settings_prices_result_title)
     val costMaterialsStr = stringResource(Res.string.settings_prices_result_materials)
@@ -529,7 +531,7 @@ fun rememberSlabShareText(
                 appendLine(meshSectionStr)
                 appendLine("● $meshSuggestedStr ${result.suggestedMesh}")
                 if (result.meshPanelsNeeded != null) {
-                    appendLine("● $meshPanelsStr ${result.meshPanelsNeeded}")
+                    appendLine("● $meshPanelsStr ${result.meshPanelsNeeded} $unitU")
                 }
             } else {
                 appendLine(ironXStr)
@@ -590,8 +592,6 @@ fun rememberPlasterShareText(
     val aroundStr = stringResource(Res.string.share_common_around)
     val proportionStr = stringResource(Res.string.share_common_proportion)
     val fineSectionStr = stringResource(Res.string.share_plaster_fine_section)
-    val optionAStr = stringResource(Res.string.share_plaster_option_a)
-    val optionBStr = stringResource(Res.string.share_plaster_option_b)
     val premixStr = stringResource(Res.string.share_plaster_premix)
     val fineSandStr = stringResource(Res.string.share_plaster_fine_sand)
     val aerialLimeStr = stringResource(Res.string.share_plaster_aerial_lime)
@@ -675,16 +675,18 @@ fun rememberPlasterShareText(
             }
             appendLine(fineSectionStr)
             appendLine("-------------------------")
-            appendLine(optionAStr)
-            appendLine("● $premixStr ${result.finePremixKg.roundToDecimals(1)} $unitKg")
-            appendLine("    └ $aroundStr $premixBags $premixBagStr")
-            appendLine()
-            appendLine(optionBStr)
-            appendLine("● $aerialLimeStr ${result.fineLimeKg.roundToDecimals(1)} $unitKg")
-            appendLine("    └ $aroundStr $aerialLimeBags $aerialLimeBagStr")
-            appendLine("● $fineSandStr ${result.fineSandM3.roundToDecimals(2)} $unitM3")
-            appendLine("● $cementMinStr")
-            appendLine()
+            if (premixBags > 0) {
+                appendLine("● $premixStr ${result.finePremixKg.roundToDecimals(1)} $unitKg")
+                appendLine("    └ $aroundStr $premixBags $premixBagStr")
+                appendLine()
+
+            } else {
+                appendLine("● $aerialLimeStr ${result.fineLimeKg.roundToDecimals(1)} $unitKg")
+                appendLine("    └ $aroundStr $aerialLimeBags $aerialLimeBagStr")
+                appendLine("● $fineSandStr ${result.fineSandM3.roundToDecimals(2)} $unitM3")
+                appendLine("● $cementMinStr")
+                appendLine()
+            }
             if (fineDosageStr.isNotBlank()) {
                 appendLine("$proportionStr ")
                 appendLine(fineDosageStr)

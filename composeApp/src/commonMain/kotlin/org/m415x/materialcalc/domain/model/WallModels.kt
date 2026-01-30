@@ -169,11 +169,12 @@ enum class WallLayout(
  */
 data class BrickProps(
     val id: String, // Agregado para identificar el ladrillo en precios
+    val name: StringResource,
     val width: Double,
     val height: Double,
     val length: Double,
     val gasketThickness: Double, // Espesor de la junta
-    val family: BrickFamily // Nueva propiedad
+    val family: BrickFamily
 )
 
 /**
@@ -208,6 +209,7 @@ data class Aperture(
  * @property limeBagKg Peso de la bolsa de cal.
  * @property materialCost Costo estimado de materiales.
  * @property laborCost Costo estimado de mano de obra.
+ * @property costBreakdown Desglose de costos por material.
  */
 data class WallResult(
     val netAreaM2: Double,
@@ -227,5 +229,6 @@ data class WallResult(
     val limeBagKg: Int,
     // Costos
     val materialCost: Double = 0.0,
-    val laborCost: Double = 0.0
+    val laborCost: Double = 0.0,
+    val costBreakdown: List<Pair<String, Double>> = emptyList()
 )

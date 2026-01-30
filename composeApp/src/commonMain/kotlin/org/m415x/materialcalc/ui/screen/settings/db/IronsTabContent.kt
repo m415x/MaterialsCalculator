@@ -216,8 +216,7 @@ fun IronsTabContent(repository: SettingsRepository) {
                     if (meshesList.isNotEmpty()) {
                         item {
                             SettingsAccordion(
-                                title = stringResource(Res.string.structure_label_meshes),
-                                defaultExpanded = true
+                                title = stringResource(Res.string.structure_label_meshes)
                             ) {
                                 meshesList.forEach { item ->
                                     IronItemRow(

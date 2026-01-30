@@ -19,6 +19,8 @@
 package org.m415x.materialcalc.domain.model
 
 import kotlinx.serialization.Serializable
+import materialscalculator.composeapp.generated.resources.Res
+import materialscalculator.composeapp.generated.resources.label_custom
 
 /**
  * Representa un ladrillo creado por el usuario.
@@ -39,11 +41,11 @@ data class CustomBrick(
     val id: String,
     val name: String,
     val family: BrickFamily = BrickFamily.SOLID_BRICK, // Valor por defecto para migración
-    val width: Double,
-    val height: Double,
-    val length: Double,
-    val joint: Double,
-    val isBearing: Boolean = false,
+    val width: Double,               
+    val height: Double,              
+    val length: Double,              
+    val joint: Double,               
+    val isBearing: Boolean = false, 
     val description: String = "" 
 )
 
@@ -54,6 +56,7 @@ data class CustomBrick(
  */
 fun CustomBrick.toProperties() = BrickProps(
     id = this.id,
+    name = Res.string.label_custom, // Usamos un recurso genérico para custom, el nombre real está en el objeto CustomBrick
     width = this.width,
     height = this.height,
     length = this.length,

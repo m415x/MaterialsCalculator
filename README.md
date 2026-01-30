@@ -17,10 +17,11 @@ Gracias al poder de KMP, esta aplicación se ejecuta de forma nativa en:
 ## Características Principales
 
 - **Calculadora de Hormigón:** Dosificación de mezclas (H13, H17, H21) y recetas personalizadas.
-- **Mampostería:** Cálculo de ladrillos, mortero y revoques.
+- **Mampostería:** Cálculo de ladrillos, mortero y revoques con soporte para aparejos (Soga, Cabeza, Canto).
 - **Armaduras Estructurales:** Cálculo de desarrollo de barras (hierro longitudinal y estribos) con soporte para formas complejas (ganchos, patas y remates).
-- **Gestión de Materiales:** Posibilidad de añadir hierros y mezclas personalizadas que se guardan localmente.
-- **Modo Oscuro/Claro:** Interfaz adaptativa basada en Material Design 3.
+- **Sistema de Precios Dinámico:** Integración de costos unitarios de materiales y mano de obra para presupuestos inmediatos.
+- **Validación Normativa:** Avisos técnicos basados en reglamentos **CIRSOC 103 y 501** (especialmente críticos en zonas sísmicas).
+- **Gestión de Materiales:** Base de datos local para añadir hierros, mallas SIMA y mezclas personalizadas.
 
 ---
 
@@ -28,7 +29,8 @@ Gracias al poder de KMP, esta aplicación se ejecuta de forma nativa en:
 
 - **Lenguaje:** Kotlin 2.x
 - **UI Framework:** Compose Multiplatform
-- **Almacenamiento:** Multiplatform Settings (Observable)
+- **Formateo:** Soporte para texto enriquecido (AnnotatedString) y localización numérica regional.
+- **Almacenamiento:** Multiplatform Settings (Observable) y Repositorios reactivos.
 - **Calidad de Código:** Spotless para formateo y licencias.
 
 ---
@@ -59,14 +61,18 @@ Conecta un dispositivo o emulador y ejecuta:
 
 ---
 
+## Estado del Proyecto
+
+Actualmente en fase **Beta** (`1.4.0-beta.1`).
+
+- [x] Motor de precios e integración de costos.
+- [x] Lógica de validación estructural (CIRSOC).
+- [ ] Implementación de persistencia de cálculos (ViewModels & Local DB).
+
+---
+
 ## Licencia
 
 Este proyecto es software libre: puedes redistribuirlo y/o modificarlo bajo los términos de la **GNU General Public License v3.0 (GPLv3)**. Consulta el archivo [LICENSE](./LICENSE) para más detalles.
 
 _**Copyright (C) 2026 M415X**_
-
----
-
-## Estado del Proyecto
-
-Actualmente en fase **Beta** (`1.2.1-beta.3`). El motor de precios está siendo integrado.

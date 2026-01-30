@@ -72,6 +72,8 @@
     <string name="label_result_unit">%1$s %2$s</string>
     <string name="label_result_subtitle_unit">(%1$s %2$s)</string>
     <string name="label_result_waste_included">(Incluye %1$d% desperdicio)</string>
+    <string name="label_result_estimated_detail_title">Resultados Estimados</string>
+    <string name="label_result_cost_detail_title">Detalle de costos</string>
 
     <!-- ABBREVIATIONS -->
     <string name="abbr_cement">Cem</string>

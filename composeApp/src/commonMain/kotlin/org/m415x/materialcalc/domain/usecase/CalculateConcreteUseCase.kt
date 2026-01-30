@@ -18,12 +18,9 @@
 
 package org.m415x.materialcalc.domain.usecase
 
+import nl.jacobras.humanreadable.HumanReadable
 import org.m415x.materialcalc.domain.common.calculateWetMaterials
-import org.m415x.materialcalc.domain.model.ConcreteDosing
-import org.m415x.materialcalc.domain.model.ConcreteResult
-import org.m415x.materialcalc.domain.model.LaborIds
-import org.m415x.materialcalc.domain.model.MaterialIds
-import org.m415x.materialcalc.domain.model.PriceSettings
+import org.m415x.materialcalc.domain.model.*
 import kotlin.math.ceil
 
 /**
@@ -73,32 +70,45 @@ class CalculateConcreteUseCase {
             // 3. Cálculo de costos (si hay configuración de precios)
             var materialCost = 0.0
             var laborCost = 0.0
+            val costBreakdown = mutableListOf<Pair<String, Double>>()
 
             if (priceSettings != null) {
                 // Cemento (Se compra por bolsa)
                 priceSettings.materialPrices.find { it.id == MaterialIds.CEMENT }?.let {
-                    // Asumimos que el precio es por bolsa si la unidad no es explícitamente kg
-                    // O si queremos ser estrictos, verificamos si es bolsa.
-                    // Pero dado que mathConcrete.cementBags ya es un entero redondeado hacia arriba,
-                    // multiplicamos precio * cantidad de bolsas.
-                    materialCost += it.price * mathConcrete.cementBags
+                    val qty = mathConcrete.cementBags
+                    val cost = it.price * qty
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($qty x $$unitPrice)" to cost)
                 }
 
                 // Arena (Se compra por 1/2 m3, redondeamos hacia arriba a 0.5)
                 priceSettings.materialPrices.find { it.id == MaterialIds.SAND }?.let {
                     val sandRounded = ceil(mathConcrete.sandM3 * 2) / 2.0
-                    materialCost += it.price * sandRounded
+                    val cost = it.price * sandRounded
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($sandRounded x $$unitPrice)" to cost)
                 }
 
                 // Piedra (Se compra por 1/2 m3, redondeamos hacia arriba a 0.5)
                 priceSettings.materialPrices.find { it.id == MaterialIds.STONE }?.let {
                     val gravelRounded = ceil(mathConcrete.gravelM3 * 2) / 2.0
-                    materialCost += it.price * gravelRounded
+                    val cost = it.price * gravelRounded
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($gravelRounded x $$unitPrice)" to cost)
                 }
 
                 // Mano de Obra (Hormigón)
                 priceSettings.laborPrices.find { it.id == LaborIds.CONCRETE_M3 }?.let {
-                    laborCost += it.price * geometricVolume
+                    // Redondeamos el volumen a 2 decimales para mostrarlo limpio
+                    val cost = it.price * geometricVolume
+                    laborCost += cost
+                    /*
+                        val unitPrice = it.price.toInt()
+                        costBreakdown.add("Mano de obra ${it.name}" to cost)
+                    */
                 }
             }
 
@@ -114,7 +124,8 @@ class CalculateConcreteUseCase {
                     percentageConcreteWaste = percentageConcreteWaste,
                     mixingRatio = concreteDosing.descriptionProportion,
                     materialCost = materialCost,
-                    laborCost = laborCost
+                    laborCost = laborCost,
+                    costBreakdown = costBreakdown
                 )
             )
         } catch (e: Exception) {

@@ -18,6 +18,7 @@
 
 package org.m415x.materialcalc.domain.usecase
 
+import nl.jacobras.humanreadable.HumanReadable
 import org.m415x.materialcalc.domain.common.calculateWetMaterials
 import org.m415x.materialcalc.domain.model.*
 import org.m415x.materialcalc.domain.registry.SimaMeshRegistry
@@ -145,41 +146,62 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
             // CÁLCULO DE COSTOS
             var materialCost = 0.0
             var laborCost = 0.0
+            val costBreakdown = mutableListOf<Pair<String, Double>>()
 
             if (priceSettings != null) {
                 // Cemento (Bolsas)
                 priceSettings.materialPrices.find { it.id == MaterialIds.CEMENT }?.let {
-                    materialCost += it.price * mathConcrete.cementBags
+                    val cost = it.price * mathConcrete.cementBags
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} (${mathConcrete.cementBags} x $$unitPrice)" to cost)
                 }
 
                 // Arena (1/2 m3)
                 priceSettings.materialPrices.find { it.id == MaterialIds.SAND }?.let {
                     val sandRounded = ceil(mathConcrete.sandM3 * 2) / 2.0
-                    materialCost += it.price * sandRounded
+                    val cost = it.price * sandRounded
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($sandRounded x $$unitPrice)" to cost)
                 }
 
                 // Piedra (1/2 m3)
                 priceSettings.materialPrices.find { it.id == MaterialIds.STONE }?.let {
                     val gravelRounded = ceil(mathConcrete.gravelM3 * 2) / 2.0
-                    materialCost += it.price * gravelRounded
+                    val cost = it.price * gravelRounded
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($gravelRounded x $$unitPrice)" to cost)
                 }
 
                 // Hierros (Barras)
                 // Buscamos el precio del hierro principal por ID si es estándar, o por nombre si es custom
                 val mainIronId = if (customMainIron != null) customMainIron.id else mainIronDiameter.name
                 priceSettings.materialPrices.find { it.id == mainIronId }?.let {
-                    materialCost += it.price * mainIronBarsBuy
+                    val cost = it.price * mainIronBarsBuy
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($mainIronBarsBuy x $$unitPrice)" to cost)
                 }
 
                 // Buscamos el precio del hierro estribo
                 val stirrupIronId = if (customStirrupIron != null) customStirrupIron.id else stirrupIronDiameter.name
                 priceSettings.materialPrices.find { it.id == stirrupIronId }?.let {
-                    materialCost += it.price * stirrupIronBarsBuy
+                    val cost = it.price * stirrupIronBarsBuy
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($stirrupIronBarsBuy x $$unitPrice)" to cost)
                 }
 
                 // Mano de Obra (Estructura ML)
                 priceSettings.laborPrices.find { it.id == LaborIds.STRUCTURE_ML }?.let {
-                    laborCost += it.price * lengthMeters
+                    val cost = it.price * lengthMeters
+                    laborCost += cost
+                    /*
+                        val unitPrice = HumanReadable.number(it.price.toLong())
+                        costBreakdown.add("Mano de obra ${it.name}" to cost)
+                    */
                 }
             }
 
@@ -204,7 +226,8 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
                     percentageMainIronWaste = percentageMainIronWaste,
                     percentageStirrupIronWaste = percentageStirrupIronWaste,
                     materialCost = materialCost,
-                    laborCost = laborCost
+                    laborCost = laborCost,
+                    costBreakdown = costBreakdown
                 )
             )
         } catch (e: Exception) {
@@ -268,23 +291,33 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
             // CÁLCULO DE COSTOS
             var materialCost = 0.0
             var laborCost = 0.0
+            val costBreakdown = mutableListOf<Pair<String, Double>>()
 
             if (priceSettings != null) {
                 // Cemento (Bolsas)
                 priceSettings.materialPrices.find { it.id == MaterialIds.CEMENT }?.let {
-                    materialCost += it.price * mathConcrete.cementBags
+                    val cost = it.price * mathConcrete.cementBags
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} (${mathConcrete.cementBags} x $$unitPrice)" to cost)
                 }
 
                 // Arena (1/2 m3)
                 priceSettings.materialPrices.find { it.id == MaterialIds.SAND }?.let {
                     val sandRounded = ceil(mathConcrete.sandM3 * 2) / 2.0
-                    materialCost += it.price * sandRounded
+                    val cost = it.price * sandRounded
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($sandRounded x $$unitPrice)" to cost)
                 }
 
                 // Piedra (1/2 m3)
                 priceSettings.materialPrices.find { it.id == MaterialIds.STONE }?.let {
                     val gravelRounded = ceil(mathConcrete.gravelM3 * 2) / 2.0
-                    materialCost += it.price * gravelRounded
+                    val cost = it.price * gravelRounded
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($gravelRounded x $$unitPrice)" to cost)
                 }
 
                 // Hierros (Barras) - Aquí sumamos todo el hierro y calculamos barras totales
@@ -295,19 +328,30 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
                 val totalMetersX = netMetersX * (1 + wastePct)
                 val barsX = ceil(totalMetersX / 12.0).toInt()
                 priceSettings.materialPrices.find { it.id == phiX.name }?.let {
-                    materialCost += it.price * barsX
+                    val cost = it.price * barsX
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($barsX x $$unitPrice)" to cost)
                 }
 
                 // Barras Y
                 val totalMetersY = netMetersY * (1 + wastePct)
                 val barsY = ceil(totalMetersY / 12.0).toInt()
                 priceSettings.materialPrices.find { it.id == phiY.name }?.let {
-                    materialCost += it.price * barsY
+                    val cost = it.price * barsY
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($barsY x $$unitPrice)" to cost)
                 }
 
                 // Mano de Obra (Losa M3)
                 priceSettings.laborPrices.find { it.id == LaborIds.STRUCTURE_SLAB }?.let {
-                    laborCost += it.price * volumeM3 // Se cobra por m3 de hormigón llenado
+                    val cost = it.price * volumeM3 // Se cobra por m3 de hormigón llenado
+                    laborCost += cost
+                    /*
+                        val unitPrice = HumanReadable.number(it.price.toLong())
+                        costBreakdown.add("Mano de obra ${it.name}" to cost)
+                    */
                 }
             }
 
@@ -336,7 +380,8 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
                     percentageConcreteWaste = percentageConcreteWaste,
                     commercialBarLength = 12,
                     materialCost = materialCost,
-                    laborCost = laborCost
+                    laborCost = laborCost,
+                    costBreakdown = costBreakdown
                 )
             )
         } catch (e: Exception) {
@@ -395,29 +440,49 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
             // CÁLCULO DE COSTOS
             var materialCost = 0.0
             var laborCost = 0.0
+            val costBreakdown = mutableListOf<Pair<String, Double>>()
 
             if (priceSettings != null) {
                 // Cemento
                 priceSettings.materialPrices.find { it.id == MaterialIds.CEMENT }?.let {
-                    materialCost += it.price * mathConcrete.cementBags
+                    val cost = it.price * mathConcrete.cementBags
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} (${mathConcrete.cementBags} x $$unitPrice)" to cost)
                 }
                 // Arena
                 priceSettings.materialPrices.find { it.id == MaterialIds.SAND }?.let {
                     val sandRounded = ceil(mathConcrete.sandM3 * 2) / 2.0
-                    materialCost += it.price * sandRounded
+                    val cost = it.price * sandRounded
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($sandRounded x $$unitPrice)" to cost)
                 }
                 // Piedra
                 priceSettings.materialPrices.find { it.id == MaterialIds.STONE }?.let {
                     val gravelRounded = ceil(mathConcrete.gravelM3 * 2) / 2.0
-                    materialCost += it.price * gravelRounded
+                    val cost = it.price * gravelRounded
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($gravelRounded x $$unitPrice)" to cost)
                 }
 
                 // Malla
-                priceSettings.materialPrices.find { it.id == meshId }?.let { materialCost += it.price * panelsNeeded }
+                priceSettings.materialPrices.find { it.id == meshId }?.let {
+                    val cost = it.price * panelsNeeded
+                    val unitPrice = HumanReadable.number(it.price.toLong())
+                    materialCost += cost
+                    costBreakdown.add("${it.name} ($panelsNeeded x $$unitPrice)" to cost)
+                }
 
                 // Mano de Obra (Losa M3)
                 priceSettings.laborPrices.find { it.id == LaborIds.STRUCTURE_SLAB }?.let {
-                    laborCost += it.price * volumeM3
+                    val cost = it.price * volumeM3
+                    laborCost += cost
+                    /*
+                        val unitPrice = HumanReadable.number(it.price.toLong())
+                        costBreakdown.add("Mano de obra ${it.name}" to cost)
+                    */
                 }
             }
 
@@ -446,7 +511,8 @@ class CalculateStructureUseCase(private val repository: MaterialRepository) {
                     cementBagKg = cementBagWeightKg,
                     percentageConcreteWaste = percentageConcreteWaste,
                     materialCost = materialCost,
-                    laborCost = laborCost
+                    laborCost = laborCost,
+                    costBreakdown = costBreakdown
                 )
             )
         } catch (e: Exception) {

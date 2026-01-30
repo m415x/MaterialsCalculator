@@ -748,7 +748,7 @@ fun StructureResultContent(res: StructureResult) {
                 res.mainIronMeters.roundToDecimals(1),
                 unitM
             ),
-            value = (res.mainIronMeters * (1 + res.percentageMainIronWaste)).toPresentationUnit(
+            value = res.mainIronMeters.toPresentationUnit(
                 res.commercialBarLength,
                 Res.string.unit_bar,
                 Res.string.unit_bars
@@ -779,7 +779,7 @@ fun StructureResultContent(res: StructureResult) {
                 unitM,
             ),
             // Usamos la misma lógica que el cemento pero con base 12 (metros por barra)
-            value = (res.stirrupIronMeters * (1 + res.percentageStirrupIronWaste)).toPresentationUnit(
+            value = res.stirrupIronMeters.toPresentationUnit(
                 res.commercialBarLength,
                 Res.string.unit_bar,
                 Res.string.unit_bars
@@ -788,7 +788,11 @@ fun StructureResultContent(res: StructureResult) {
         )
     }
 
-    PriceResultSection(res.materialCost, res.laborCost)
+    PriceResultSection(
+        materialCost = res.materialCost,
+        laborCost = res.laborCost,
+        materialDetails = res.costBreakdown
+    )
 }
 
 @Composable
@@ -1052,7 +1056,11 @@ fun SlabResultContent(res: SlabResult, customMeshes: List<CustomIron> = emptyLis
         Spacer(modifier = Modifier.height(24.dp))
     }
 
-    PriceResultSection(res.materialCost, res.laborCost)
+    PriceResultSection(
+        materialCost = res.materialCost,
+        laborCost = res.laborCost,
+        materialDetails = res.costBreakdown
+    )
 }
 
 // Función interna para calcular separación en cm

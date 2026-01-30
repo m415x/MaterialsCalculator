@@ -106,6 +106,9 @@ enum class IronDiameter(val milimeters: Double, val linearWeightKgM: Double) {
  * @property stirrupIronKg Kilos de hierro de estribo.
  * @property stirrupIronAmount Cantidad de barras de hierro de estribo.
  * @property percentageStirrupIronWaste Porcentaje de desperdicio de hierro de estribo.
+ * @property materialCost Costo estimado de materiales.
+ * @property laborCost Costo estimado de mano de obra.
+ * @property costBreakdown Desglose de costos por material.
  */
 data class StructureResult(
     // Hormigón
@@ -131,7 +134,8 @@ data class StructureResult(
     val commercialBarLength: Int = 12,
     // Costos
     val materialCost: Double = 0.0,
-    val laborCost: Double = 0.0
+    val laborCost: Double = 0.0,
+    val costBreakdown: List<Pair<String, Double>> = emptyList()
 )
 
 /**
@@ -159,6 +163,9 @@ data class StructureResult(
  * @property waterLiters Cantidad de agua en litros
  * @property cementBagKg Peso de la bolsa de cemento
  * @property percentageConcreteWaste Porcentaje de hormigón desperdiciado
+ * @property materialCost Costo estimado de materiales.
+ * @property laborCost Costo estimado de mano de obra.
+ * @property costBreakdown Desglose de costos por material.
  */
 data class SlabResult(
     val totalWeightKg: Double,
@@ -188,5 +195,6 @@ data class SlabResult(
     val percentageConcreteWaste: Double,
     // Costos
     val materialCost: Double = 0.0,
-    val laborCost: Double = 0.0
+    val laborCost: Double = 0.0,
+    val costBreakdown: List<Pair<String, Double>> = emptyList()
 )

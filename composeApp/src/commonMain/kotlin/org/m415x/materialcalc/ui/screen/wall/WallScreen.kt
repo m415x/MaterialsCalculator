@@ -221,16 +221,18 @@ fun WallScreen(appSettings: AppSettingsState, repository: SettingsRepository) {
 
                 // Advertencia Sismorresistente
                 if (state.isSismoResistenteWarning) {
+                    Spacer(modifier = Modifier.height(8.dp))
                     WarningMessageCard(TextSource.Resource(Res.string.wall_warning_cirsoc_103_sismo))
                 }
 
                 if (state.selectedMix != null) {
                     BaseSelectorCard(
                         icon = Icons.Default.Science,
-                        title = state.selectedMix!!.name.asString(),
+                        title = stringResource(Res.string.wall_label_seat_mortar),
                         value = state.selectedMix!!.estimateProportionTxt().asString(),
                         onClick = { state.showWasteDialog = true },
                         showEditIcon = state.mortarOptions.size > 1,
+                        useButton = false,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
@@ -331,7 +333,7 @@ fun WallScreen(appSettings: AppSettingsState, repository: SettingsRepository) {
 
     if (state.showResultSheet && state.result != null) {
         val brickDimensions =
-            "${(state.selectedBrickOption?.props?.width ?: 0.0) * 100}x${(state.selectedBrickOption?.props?.height ?: 0.0) * 100}x${(state.selectedBrickOption?.props?.length ?: 0.0) * 100}"
+            "${((state.selectedBrickOption?.props?.width ?: 0.0) * 100).roundToDecimals(1)}x${((state.selectedBrickOption?.props?.height ?: 0.0) * 100).roundToDecimals(1)}x${((state.selectedBrickOption?.props?.length ?: 0.0) * 100).roundToDecimals(1)}"
         val shareText = rememberWallShareText(
             result = state.result!!,
             length = state.wallLength.toSafeDoubleOrNull() ?: 0.0,
@@ -445,5 +447,9 @@ fun WallResultContent(res: WallResult) {
         )
     }
 
-    PriceResultSection(res.materialCost, res.laborCost)
+    PriceResultSection(
+        materialCost = res.materialCost,
+        laborCost = res.laborCost,
+        materialDetails = res.costBreakdown
+    )
 }

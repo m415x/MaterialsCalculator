@@ -279,5 +279,9 @@ fun ConcreteResultContent(res: ConcreteResult) {
         )
     }
 
-    PriceResultSection(res.materialCost, res.laborCost)
+    PriceResultSection(
+        materialCost = res.materialCost,
+        laborCost = res.laborCost,
+        materialDetails = res.costBreakdown
+    )
 }
